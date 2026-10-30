@@ -1,0 +1,34 @@
+﻿{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "句栖主模块"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "句栖 · 每日一句"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "句栖"
+    },
+    {
+      "name": "EntryFormAbility_desc",
+      "value": "句栖服务卡片"
+    },
+    {
+      "name": "EntryFormAbility_label",
+      "value": "句栖卡片"
+    },
+    {
+      "name": "widget_desc",
+      "value": "每天一句，素纸一页。"
+    },
+    {
+      "name": "widget_display_name",
+      "value": "句栖 · 每日一句"
+    }
+  ]
+}
+
+

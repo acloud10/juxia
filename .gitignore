@@ -1,0 +1,39 @@
+# HarmonyOS / DevEco build outputs
+**/build/
+**/.hvigor/
+**/.cache/
+**/oh_modules/
+**/node_modules/
+**/.idea/
+**/.dsh-*
+**/.cxx/
+*.log
+
+# Local environment
+local.properties
+local.properties.*
+.env
+.env.*
+*.p12
+*.p7b
+*.cer
+*.jks
+*.keystore
+signing/
+*.app
+*.hap
+*.hsp
+
+# Signing / release material must never be committed
+build-profile.local.json5
+
+# Store screenshots and personal material
+store-assets/
+screenshots/
+*.sj4
+*.sj3
+
+# OS noise
+.DS_Store
+Thumbs.db
+desktop.ini

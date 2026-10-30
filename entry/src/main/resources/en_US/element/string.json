@@ -1,0 +1,34 @@
+﻿{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "Juxia module"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "Juxia · one line a day"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "句栖"
+    },
+    {
+      "name": "EntryFormAbility_desc",
+      "value": "Juxia service card"
+    },
+    {
+      "name": "EntryFormAbility_label",
+      "value": "句栖卡片"
+    },
+    {
+      "name": "widget_desc",
+      "value": "One line a day, on a sheet of paper."
+    },
+    {
+      "name": "widget_display_name",
+      "value": "句栖 · Daily Line"
+    }
+  ]
+}
+
+

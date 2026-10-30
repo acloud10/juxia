@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>句栖 · 隐私政策</title>
+<style>
+  :root{
+    --paper:#f6f0e3;
+    --paper-2:#fbf7ee;
+    --ink:#2b2620;
+    --ink-soft:#6f665a;
+    --line:#d9cfbc;
+    --accent:#9a5b3f;
+    --max:760px;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0;
+    background:
+      radial-gradient(1200px 600px at 20% -10%, #fffaf0 0%, transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, #f2e6cf 0%, transparent 55%),
+      var(--paper);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    line-height:1.85;
+    font-size:16px;
+  }
+  .wrap{max:var(--max); margin:0 auto; padding:56px 24px 96px;}
+  header{border-bottom:1px solid var(--line); padding-bottom:28px; margin-bottom:34px}
+  .brand{font-family:Georgia,"Songti SC","Noto Serif SC",serif; font-size:15px; letter-spacing:.32em; color:var(--ink-soft);}
+  h1{font-family:Georgia,"Songti SC","Noto Serif SC",serif; font-size:34px; line-height:1.3; margin:14px 0 10px; font-weight:600; letter-spacing:.02em}
+  .meta{color:var(--ink-soft); font-size:13.5px}
+  .meta span{margin-right:18px; white-space:nowrap}
+  .lede{background:var(--paper-2); border:1px solid var(--line); border-left:3px solid var(--accent); padding:18px 20px; margin:28px 0 10px; font-size:15.5px; color:#3a332a}
+  h2{font-family:Georgia,"Songti SC","Noto Serif SC",serif; font-size:22px; margin:42px 0 12px; font-weight:600}
+  h3{font-size:16.5px; margin:24px 0 8px; font-weight:600}
+  p{margin:10px 0}
+  ul{margin:10px 0 10px 22px; padding:0}
+  li{margin:6px 0}
+  a{color:var(--accent); text-decoration:none; border-bottom:1px solid rgba(154,91,63,.35)}
+  a:hover{border-bottom-color:var(--accent)}
+  .card{background:rgba(255,255,255,.42); border:1px solid var(--line); border-radius:12px; padding:18px 20px; margin:18px 0}
+  table{width:100%; border-collapse:collapse; margin:16px 0; font-size:14.5px}
+  th,td{text-align:left; vertical-align:top; border-bottom:1px solid var(--line); padding:10px 8px}
+  th{font-weight:600; color:var(--ink-soft); font-size:13px; letter-spacing:.04em}
+  code{font-family:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace; font-size:.92em; background:rgba(43,38,32,.06); padding:1px 5px; border-radius:4px}
+  footer{margin-top:46px; padding-top:22px; border-top:1px solid var(--line); color:var(--ink-soft); font-size:13px}
+  .toc{font-size:14.5px; columns:2; column-gap:32px; margin:18px 0 0}
+  .toc a{display:block; padding:4px 0; border-bottom:0}
+  @media (max-width:560px){
+    .wrap{padding:40px 18px 72px}
+    h1{font-size:28px}
+    .toc{columns:1}
+    table{font-size:13.5px}
+    th,td{padding:8px 6px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="brand">句栖 · JUXIA</div>
+  <h1>隐私政策</h1>
+  <div class="meta">
+    <span>生效日期：2026 年 10 月 29 日</span>
+    <span>版本：1.1</span>
+  </div>
+</header>
+
+<p class="lede">
+  句栖是一款本地优先的记录与回看工具。你的句子、备注和旧事默认只保存在这台设备上；句栖没有账号系统，不投放广告，不做用户画像，也不把句库上传到任何服务器。句栖不联网，不调用任何在线生成服务。
+</p>
+
+<div class="card">
+  <strong>一句话摘要</strong>
+  <ul>
+    <li>句子、备注、旧事、设置：本地加密保存，不上传。</li>
+    <li>句栖不联网，不调用任何在线生成服务。</li>
+    <li>备份：由你主动导出加密文件，保存在你选择的位置。</li>
+    <li>通知：本地系统提醒，不经过服务器。</li>
+    <li>没有账号、广告、统计 SDK 或云同步。</li>
+  </ul>
+</div>
+
+<nav class="toc" aria-label="目录">
+  <a href="#scope">1. 适用范围与运营者</a>
+  <a href="#data">2. 我们处理哪些信息</a>
+  <a href="#offline">3. 本地离线与不联网</a>
+  <a href="#backup">4. 备份与导出</a>
+  <a href="#notify">5. 通知与提醒</a>
+  <a href="#permissions">6. 系统权限</a>
+  <a href="#storage">7. 存储位置与保存期限</a>
+  <a href="#sharing">8. 共享、转让与公开披露</a>
+  <a href="#security">9. 安全措施</a>
+  <a href="#rights">10. 你的权利</a>
+  <a href="#children">11. 未成年人</a>
+  <a href="#changes">12. 政策更新</a>
+  <a href="#boundary">13. 非医疗建议与危机资源</a>
+  <a href="#contact">14. 联系我们</a>
+</nav>
+
+<h2 id="scope">1. 适用范围与运营者</h2>
+<p>
+  本政策适用于 HarmonyOS 应用「句栖」（包名 <code>com.juxia.app</code>，以下简称“句栖”或“本应用”）。
+  运营者为「句栖开发者」（以下简称“我们”）。本政策说明我们如何处理与你有关的信息，以及你如何控制这些信息。
+</p>
+<p>
+  句栖没有登录、注册、云同步或社交功能。你不需要提供姓名、手机号、邮箱或任何账号信息即可使用核心功能。
+</p>
+
+<h2 id="data">2. 我们处理哪些信息</h2>
+<p>句栖只处理你主动输入或在本应用内产生的以下信息：</p>
+
+<table>
+  <thead>
+    <tr><th>类别</th><th>内容</th><th>用途</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>你写下的内容</td>
+      <td>句子、鼓励、旧事、备注、归档注脚、标签/分类、绑定关系</td>
+      <td>展示、检索、回看、归档与提醒</td>
+    </tr>
+    <tr>
+      <td>句库与材料</td>
+      <td>你手动加入或导入的句子、材料文本、材料文件名与本地路径</td>
+      <td>抽取、检索与展示</td>
+    </tr>
+    <tr>
+      <td>使用状态</td>
+      <td>首次使用时间、打开天数、上次备份时间、当日心情等本地状态</td>
+      <td>计算“相伴天数”、备份提醒与当日界面</td>
+    </tr>
+    <tr>
+      <td>设置</td>
+      <td>主题、字体、皮肤、启动文案、提醒开关等</td>
+      <td>保持你的使用偏好</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="offline">3. 本地离线与不联网</h2>
+<p>
+  句栖不申请网络权限，不连接任何在线服务，也不调用任何模型或生成接口。你的句子、材料、备注和设置始终留在本机。
+</p>
+<p>
+  应用内所有“抽一句”“从材料找一句”“回信”等能力都在本地完成，不发送请求，不产生网络流量。
+</p>
+<p>
+  只有在你自己导出备份并通过系统分享或文件选择器交给其他应用时，数据才可能离开设备；这一步由你主动完成。
+</p>
+
+<h2 id="backup">4. 备份与导出</h2>
+<p>
+  备份由你主动发起。句栖会生成一个加密的备份文件，并交由系统文件选择器保存到你指定的位置。
+</p>
+<ul>
+  <li>备份文件使用你设置的备份密码加密；请妥善保管密码，遗失后无法恢复。</li>
+  <li>我们不会收到、上传或托管你的备份文件。</li>
+  <li>备份文件保存在哪里、保留多久、是否分享给他人，由你决定。</li>
+  <li>完整备份可能包含材料文件；纯数据备份只包含文本与设置，不包含材料文件本体。</li>
+  <li>如果你选择“复制备份”，加密后的备份内容会写入系统剪贴板。剪贴板可能被其他应用读取，请在使用后及时覆盖或清除。</li>
+</ul>
+
+<h2 id="notify">5. 通知与提醒</h2>
+<p>
+  句栖的“轻轻回访”使用 HarmonyOS 本地提醒能力。提醒的标题、内容和时间在你的设备上生成，不经过我们的服务器。
+</p>
+<p>
+  你可以在应用内关闭提醒，也可以在系统设置中关闭句栖的通知权限。关闭后，句栖不会继续安排新的提醒。
+</p>
+
+<h2 id="permissions">6. 系统权限</h2>
+<table>
+  <thead>
+    <tr><th>权限</th><th>用途</th><th>是否必需</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>通知/提醒</td>
+      <td>发送你设置的本地回访提醒</td>
+      <td>否；可拒绝或随时关闭</td>
+    </tr>
+    <tr>
+      <td>文件选择</td>
+      <td>由系统文件选择器完成备份的保存与恢复，句栖不申请广泛存储权限</td>
+      <td>仅在你使用备份时</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="storage">7. 存储位置与保存期限</h2>
+<p>
+  你的句子、备注、旧事、材料索引与设置保存在本机的加密数据库中。句栖不会把它们上传到我们的服务器。
+</p>
+<p>
+  保存期限由你控制：数据会一直保存在本机，直到你：
+</p>
+<ul>
+  <li>在应用内删除对应内容；</li>
+  <li>使用“清空数据”功能；</li>
+  <li>卸载句栖；或</li>
+  <li>删除你导出的备份文件。</li>
+</ul>
+<p>
+  卸载应用会移除应用私有目录中的数据；已导出到其他位置的备份文件不会被自动删除，需要你自行处理。
+</p>
+
+<h2 id="sharing">8. 共享、转让与公开披露</h2>
+<p>我们不会出售你的个人信息。除以下情形外，我们不会主动共享或公开你的信息：</p>
+<ul>
+  <li><strong>你主动导出/分享：</strong>你通过系统分享或文件选择器把备份文件交给其他应用或他人；</li>
+  <li><strong>法律要求：</strong>法律法规、司法或行政机关依法要求时。</li>
+</ul>
+<p>
+  句栖不包含广告 SDK、统计 SDK、推送服务 SDK 或社交登录 SDK，也不接入任何第三方服务。
+</p>
+
+<h2 id="security">9. 安全措施</h2>
+<ul>
+  <li>本地数据库使用系统提供的加密能力；</li>
+  <li>备份文件使用你设置的密码加密；</li>
+  <li>应用不申请网络权限，也不申请广泛存储权限，备份通过系统文件选择器完成。</li>
+</ul>
+<p>
+  请理解：没有任何技术能保证绝对安全。设备丢失、系统被攻破，或你把备份密码告知他人，都可能导致信息泄露。
+</p>
+
+<h2 id="rights">10. 你的权利</h2>
+<p>由于数据主要保存在本机，你可以直接通过应用行使以下权利：</p>
+<ul>
+  <li><strong>查看与复制：</strong>在应用内查看内容，或导出备份；</li>
+  <li><strong>更正：</strong>直接编辑句子、备注与设置；</li>
+  <li><strong>删除：</strong>删除单条内容，或清空全部数据；</li>
+  <li><strong>撤回同意：</strong>关闭提醒，或卸载应用；</li>
+  <li><strong>投诉与咨询：</strong>通过下方邮箱联系我们。</li>
+</ul>
+
+<h2 id="children">11. 未成年人</h2>
+<p>
+  句栖不面向 14 周岁以下的儿童单独提供服务。若你是未成年人，请在监护人同意和指导下使用。若你认为我们无意中处理了儿童的个人信息，请联系我们，我们会协助删除。
+</p>
+
+<h2 id="changes">12. 政策更新</h2>
+<p>
+  当功能、权限或数据处理方式发生变化时，我们可能更新本政策，并在本页面标注新的生效日期。重大变化会在应用内以适当方式提示。
+</p>
+
+<h2 id="boundary">13. 非医疗建议与危机资源</h2>
+<p>
+  句栖是记录与回看的工具，不是心理治疗、诊断或危机干预服务，也不能替代专业帮助。
+  如果你持续感到痛苦、影响到日常生活，或出现伤害自己的念头，请联系专业心理/精神科医生，或拨打当地紧急服务。
+</p>
+<p>
+  中国大陆心理援助热线：<strong>12356</strong>；紧急情况：<strong>110 / 120</strong>。
+</p>
+
+<h2 id="contact">14. 联系我们</h2>
+<p>
+  对本政策或个人信息处理有疑问、意见或投诉，请联系：
+</p>
+<div class="card">
+  <p><strong>运营者：</strong>句栖开发者</p>
+  <p><strong>邮箱：</strong><a href="mailto:acloud@petalmail.com">acloud@petalmail.com</a></p>
+  <p><strong>应用：</strong>句栖（com.juxia.app）</p>
+</div>
+
+<footer>
+  <p>本页面为句栖的隐私政策，最后更新于 2026 年 10 月 27 日。</p>
+  <p>本页面不包含 Cookie、统计脚本或第三方资源。</p>
+</footer>
+
+</div>
+</body>
+</html>
+
+
