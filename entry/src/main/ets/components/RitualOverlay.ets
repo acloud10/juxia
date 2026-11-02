@@ -76,11 +76,19 @@ export struct RitualOverlay {
     this.onClose();
   }
 
+  private toast(message: string): void {
+    try {
+      this.getUIContext().getPromptAction().showToast({ message: message });
+    } catch (e) {
+      console.error('juxia toast fail', String(e));
+    }
+  }
+
   private saveLib(): void {
     const origin: string = this.originOf();
     const ok: boolean = Store.get().addLib(this.ctx.text, this.ctx.source, origin, this.ctx.tag);
     if (!ok) {
-      this.getUIContext().getPromptAction().showToast({ message: '句库里已有这句' });
+      this.toast('句库里已有这句');
     }
     if (this.ctx.todayFlow) {
       Store.get().markDrew();
@@ -97,7 +105,7 @@ export struct RitualOverlay {
     if (this.ctx.entry === null) return;
     const text: string = this.replyText.trim();
     if (text.length === 0) {
-      this.getUIContext().getPromptAction().showToast({ message: '先写一句再回' });
+      this.toast('先写一句再回');
       return;
     }
     const ok: boolean = Store.get().addReply(this.ctx.entry!.id, text);
@@ -105,13 +113,13 @@ export struct RitualOverlay {
     this.replyCount = Store.get().repliesOf(this.ctx.entry!.id).length;
     this.replyText = '';
     this.replyOpen = false;
-    this.getUIContext().getPromptAction().showToast({ message: '回好了，下次抽到会一起出现' });
+    this.toast('回好了，下次抽到会一起出现');
   }
 
   private dislike(): void {
     const origin: string = this.originOf();
     Store.get().addDislike(this.ctx.text, this.ctx.source, origin);
-    this.getUIContext().getPromptAction().showToast({ message: '已加入排除名单，不会再出现' });
+    this.toast('已加入排除名单，不会再出现');
     this.onClose();
   }
 

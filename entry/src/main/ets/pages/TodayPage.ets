@@ -137,6 +137,14 @@ export struct TodayPage {
     this.load();
   }
 
+  private toast(message: string): void {
+    try {
+      this.getUIContext().getPromptAction().showToast({ message: message });
+    } catch (e) {
+      console.error('juxia toast fail', String(e));
+    }
+  }
+
   private startMoreDraw(kind: string): void {
     this.sheetOpen = false;
     setTimeout(() => {
@@ -147,7 +155,7 @@ export struct TodayPage {
   private saveOwn(): void {
     const text: string = this.inputText.trim();
     if (text.length === 0) {
-      this.getUIContext().getPromptAction().showToast({ message: '先写一句，哪怕很短' });
+      this.toast('先写一句，哪怕很短');
       return;
     }
     const kind: string = this.writeKind();
@@ -158,9 +166,7 @@ export struct TodayPage {
     this.inputText = '';
     this.draftRestored = false;
     this.writeOverride = '';
-    this.getUIContext().getPromptAction().showToast({
-      message: kind === 'encourage' ? '收好了。低谷的日子，它会回来找你' : '写下来了，就已经轻了一点'
-    });
+    this.toast(kind === 'encourage' ? '收好了。低谷的日子，它会回来找你' : '写下来了，就已经轻了一点');
     this.load();
   }
 
@@ -283,7 +289,7 @@ export struct TodayPage {
 
   private skipDraw(): void {
     Store.get().markDrew();
-    this.getUIContext().getPromptAction().showToast({ message: '好，今天只负责开心' });
+    this.toast('好，今天只负责开心');
     this.load();
   }
 
@@ -313,7 +319,7 @@ export struct TodayPage {
     const ctx = this.getUIContext().getHostContext() as common.UIAbilityContext;
     ReminderService.rescheduleAll(ctx);
     this.load();
-    this.getUIContext().getPromptAction().showToast({ message: '回到台前了，慢慢消化，不急' });
+    this.toast('回到台前了，慢慢消化，不急');
   }
 
   private wait(id: string): void {
@@ -326,7 +332,7 @@ export struct TodayPage {
     const ctx = this.getUIContext().getHostContext() as common.UIAbilityContext;
     ReminderService.rescheduleAll(ctx);
     this.load();
-    this.getUIContext().getPromptAction().showToast({ message: '好，30 天后再问' });
+    this.toast('好，30 天后再问');
   }
 
   @Builder

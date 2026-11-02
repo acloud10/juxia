@@ -52,6 +52,14 @@ export struct LibraryPage {
   @Local relRev: number = 0;
   private lastFind: string = '';
 
+  private toast(message: string): void {
+    try {
+      this.getUIContext().getPromptAction().showToast({ message: message });
+    } catch (e) {
+      console.error('juxia toast fail', String(e));
+    }
+  }
+
   aboutToAppear(): void {
     this.reload();
   }
@@ -104,20 +112,20 @@ export struct LibraryPage {
   private dislikeLib(e: LibEntry): void {
     Store.get().addDislike(e.text, e.source, e.origin);
     this.reload();
-    this.getUIContext().getPromptAction().showToast({ message: '已加入排除名单，句库里的这条也一并移出了' });
+    this.toast('已加入排除名单，句库里的这条也一并移出了');
   }
 
   private removeLib(e: LibEntry): void {
     Store.get().removeLib(e.id);
     this.reload();
-    this.getUIContext().getPromptAction().showToast({ message: '已移出句库' });
+    this.toast('已移出句库');
   }
 
   private undoDislike(d: DislikeEntry): void {
     Store.get().data.dislikes = Store.get().data.dislikes.filter((x: DislikeEntry) => x.text !== d.text);
     Store.get().saveSettings();
     this.reload();
-    this.getUIContext().getPromptAction().showToast({ message: '已撤销排除，它又能出现了' });
+    this.toast('已撤销排除，它又能出现了');
   }
 
   // ---------- 材料库 ----------
@@ -145,14 +153,14 @@ export struct LibraryPage {
     const name: string = this.matName.trim();
     const text: string = this.matText.trim();
     if (name.length === 0 || text.length === 0) {
-      this.getUIContext().getPromptAction().showToast({ message: '材料名和文本都要填' });
+      this.toast('材料名和文本都要填');
       return;
     }
     const editing: boolean = this.matEditId.length > 0;
     if (!editing) {
       const dup: boolean = Store.get().data.materials.some((m: MaterialEntry) => m.name === name && m.text === text);
       if (dup) {
-        this.getUIContext().getPromptAction().showToast({ message: '这份材料已经在库里了' });
+        this.toast('这份材料已经在库里了');
         return;
       }
     }
@@ -169,7 +177,7 @@ export struct LibraryPage {
         createdId = m.id;
       }
       await Store.get().reindexMaterial(id, text);
-      this.getUIContext().getPromptAction().showToast({ message: editing ? '已保存' : '已存入材料库' });
+      this.toast(editing ? '已保存' : '已存入材料库');
       this.cancelEdit();
       this.reload();
     } catch (e) {
@@ -178,7 +186,7 @@ export struct LibraryPage {
         Store.get().deleteMaterial(createdId);
         this.reload();
       }
-      this.getUIContext().getPromptAction().showToast({ message: '保存失败，请重试' });
+      this.toast('保存失败，请重试');
     } finally {
       this.matSaving = false;
       this.matProgress = '';
@@ -188,13 +196,17 @@ export struct LibraryPage {
   private removeMaterial(m: MaterialEntry): void {
     if (m.path.length > 0) {
       try {
-        fs.unlinkSync(m.path);
+        try {
+      fs.unlinkSync(m.path);
+    } catch (e) {
+      console.error('juxia material unlink fail', String(e));
+    }
       } catch (e) {
       }
     }
     Store.get().deleteMaterial(m.id);
     this.reload();
-    this.getUIContext().getPromptAction().showToast({ message: '已删除' });
+    this.toast('已删除');
   }
 
   private materialTitle(name: string): string {
@@ -284,9 +296,7 @@ export struct LibraryPage {
     this.matPreviewBusy = false;
     this.matPreviewOpen = false;
     this.reload();
-    this.getUIContext().getPromptAction().showToast({
-      message: added > 0 ? `已材料收藏 ${added} 句` : '这些句子已在句库里'
-    });
+    this.toast(added > 0 ? `已材料收藏 ${added} 句` : '这些句子已在句库里');
   }
 
   private async importTxt(): Promise<void> {
@@ -326,7 +336,7 @@ export struct LibraryPage {
       this.reload();
       this.matIndexing = true;
       this.matProgress = '正在复制文件…';
-      this.getUIContext().getPromptAction().showToast({ message: `已导入《${fileName}》，正在建立句子索引…` });
+      this.toast(`已导入《${fileName}》，正在建立句子索引…`);
       const buf = new ArrayBuffer(64 * 1024);
       let copied: number = 0;
       let n: number = 0;
@@ -338,19 +348,35 @@ export struct LibraryPage {
           setTimeout(() => resolve(), 0);
         });
       }
-      fs.closeSync(dstFile);
+      try {
+        fs.closeSync(dstFile);
+      } catch (e) {
+        console.error('juxia material close fail', String(e));
+      }
       dstFile = null;
       this.matProgress = '正在建立句子索引…';
       const count: number = await MaterialIndexer.indexFile(m.id, dst, isMarkdown);
       this.matProgress = `已索引 ${count} 句`;
-      this.getUIContext().getPromptAction().showToast({ message: `《${fileName}》已入库，可以检索了` });
+      this.toast(`《${fileName}》已入库，可以检索了`);
       this.matIndexing = false;
     } catch (e) {
-      this.getUIContext().getPromptAction().showToast({ message: '导入失败，请换一个 .txt / .md 文件' });
+      this.toast('导入失败，请换一个 .txt / .md 文件');
     } finally {
       this.matIndexing = false;
-      if (srcFile !== null) fs.closeSync(srcFile);
-      if (dstFile !== null) fs.closeSync(dstFile);
+      if (srcFile !== null) {
+        try {
+          fs.closeSync(srcFile);
+        } catch (e) {
+          console.error('juxia material close fail', String(e));
+        }
+      }
+      if (dstFile !== null) {
+        try {
+          fs.closeSync(dstFile);
+        } catch (e) {
+          console.error('juxia material close fail', String(e));
+        }
+      }
     }
   }
 
@@ -375,7 +401,7 @@ export struct LibraryPage {
       ? all.filter((m: MaterialEntry) => m.id === this.findPick)
       : all.slice();
     if (list.length === 0) {
-      this.getUIContext().getPromptAction().showToast({ message: '没有可用的材料' });
+      this.toast('没有可用的材料');
       return;
     }
     const kws: string[] = this.findKw.trim().split(/\s+/).filter((k: string) => k.length > 0);
@@ -413,18 +439,16 @@ export struct LibraryPage {
       return;
     }
     this.findText = '';
-    this.getUIContext().getPromptAction().showToast({
-      message: this.findKw.trim().length > 0
+    this.toast(this.findKw.trim().length > 0
         ? `没有找到同时含「${this.findKw.trim()}」的句子，换个关键词试试`
-        : '这份材料里没有可抽取的句子'
-    });
+        : '这份材料里没有可抽取的句子');
   }
 
   private saveFound(): void {
     if (this.findText.length === 0) return;
     const ok: boolean = Store.get().addLib(this.findText, `摘自《${this.findName}》`, 'material', '原文 · 材料检索');
     this.reload();
-    this.getUIContext().getPromptAction().showToast({ message: ok ? '已收入句库' : '句库里已有这句' });
+    this.toast(ok ? '已收入句库' : '句库里已有这句');
   }
 
   private dislikeFound(): void {
@@ -432,7 +456,7 @@ export struct LibraryPage {
     Store.get().addDislike(this.findText, `摘自《${this.findName}》`, 'material');
     this.findText = '';
     this.reload();
-    this.getUIContext().getPromptAction().showToast({ message: '已加入排除名单' });
+    this.toast('已加入排除名单');
   }
 
   private originName(o: string): string {
@@ -1258,7 +1282,7 @@ export struct LibraryPage {
             this.GhostButton('从材料找一句', () => {
               if (Store.get().data.materials.length === 0) {
                 this.showMaterials = true;
-                this.getUIContext().getPromptAction().showToast({ message: '材料库还是空的，先粘贴一段文本' });
+                this.toast('材料库还是空的，先粘贴一段文本');
                 return;
               }
               this.showMaterials = true;

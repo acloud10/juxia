@@ -93,6 +93,14 @@ struct Index {
 
   private ditherVP: number = 73;
 
+  private toast(message: string): void {
+    try {
+      this.getUIContext().getPromptAction().showToast({ message: message });
+    } catch (e) {
+      console.error('juxia toast fail', String(e));
+    }
+  }
+
   async aboutToAppear(): Promise<void> {
     try {
       const density: number = display.getDefaultDisplaySync().densityPixels;
@@ -240,7 +248,7 @@ struct Index {
     if (old.type === 'lib') {
       const pool = st.libPool().filter((q: LibEntry) => q.text !== old.text);
       if (pool.length === 0) {
-        this.getUIContext().getPromptAction().showToast({ message: '句库里没有别的句子了' });
+        this.toast('句库里没有别的句子了');
         return;
       }
       const b = pool[Math.floor(Math.random() * pool.length)];
@@ -255,7 +263,7 @@ struct Index {
       const kind: string = old.entry.kind;
       const pool = st.ownActive(kind).filter((e: OwnEntry) => e.text !== old.text);
       if (pool.length === 0) {
-        this.getUIContext().getPromptAction().showToast({ message: '这一类只有这一句' });
+        this.toast('这一类只有这一句');
         return;
       }
       const e = pool[Math.floor(Math.random() * pool.length)];
@@ -266,7 +274,7 @@ struct Index {
       next.tag = '自己写的';
       next.source = '';
     } else {
-      this.getUIContext().getPromptAction().showToast({ message: '没有可换的句子' });
+      this.toast('没有可换的句子');
       return;
     }
     this.ritualVisible = false;

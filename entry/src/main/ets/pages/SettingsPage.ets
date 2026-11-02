@@ -61,6 +61,14 @@ export struct SettingsPage {
   @Local drawOwn: boolean = true;
   @Local drawLib: boolean = true;
 
+  private toast(message: string): void {
+    try {
+      this.getUIContext().getPromptAction().showToast({ message: message });
+    } catch (e) {
+      console.error('juxia toast fail', String(e));
+    }
+  }
+
   aboutToAppear(): void {
     this.load();
   }
@@ -161,7 +169,7 @@ export struct SettingsPage {
 
   private setDays(v: number): void {
     if (v < 1 || v > 3650) {
-      this.getUIContext().getPromptAction().showToast({ message: '天数要在 1 到 3650 之间' });
+      this.toast('天数要在 1 到 3650 之间');
       return;
     }
     Store.get().data.settings.revisitDays = v;
@@ -188,9 +196,7 @@ export struct SettingsPage {
     st.saveKv();
     const ctx = this.getUIContext().getHostContext() as common.UIAbilityContext;
     ReminderService.rescheduleAll(ctx);
-    this.getUIContext().getPromptAction().showToast({
-      message: `回访时间已定为 ${this.draftHour.toString().padStart(2, '0')}:${this.draftMinute.toString().padStart(2, '0')}`
-    });
+    this.toast(`回访时间已定为 ${this.draftHour.toString().padStart(2, '0')}:${this.draftMinute.toString().padStart(2, '0')}`);
   }
 
   private saveNickname(): void {
@@ -201,12 +207,12 @@ export struct SettingsPage {
     this.nickname = v;
     this.showGreeting = Store.get().data.settings.showGreeting;
     UiState.get().nickname = v;
-    this.getUIContext().getPromptAction().showToast({ message: v.length > 0 ? `好，以后叫你「${v}」` : '已清除称呼' });
+    this.toast(v.length > 0 ? `好，以后叫你「${v}」` : '已清除称呼');
   }
 
   private toggleGreeting(): void {
     if (this.nickname.trim().length === 0) {
-      this.getUIContext().getPromptAction().showToast({ message: '先在上面写一个称呼' });
+      this.toast('先在上面写一个称呼');
       return;
     }
     this.showGreeting = !this.showGreeting;
@@ -222,7 +228,7 @@ export struct SettingsPage {
 
   private toggleDrawOwn(): void {
     if (this.drawOwn && !this.drawLib) {
-      this.getUIContext().getPromptAction().showToast({ message: '至少留一个来源；想关掉它，先打开「句库收藏」' });
+      this.toast('至少留一个来源；想关掉它，先打开「句库收藏」');
       return;
     }
     this.drawOwn = !this.drawOwn;
@@ -232,7 +238,7 @@ export struct SettingsPage {
 
   private toggleDrawLib(): void {
     if (this.drawLib && !this.drawOwn) {
-      this.getUIContext().getPromptAction().showToast({ message: '至少留一个来源；想关掉它，先打开「自己的话」' });
+      this.toast('至少留一个来源；想关掉它，先打开「自己的话」');
       return;
     }
     this.drawLib = !this.drawLib;
@@ -247,7 +253,7 @@ export struct SettingsPage {
     st.data.settings.bootText = this.bootTextInput.trim();
     st.saveKv();
     if (this.bootLong && st.data.settings.bootText.length === 0) {
-      this.getUIContext().getPromptAction().showToast({ message: '已开启，但文案为空，启动不会停留' });
+      this.toast('已开启，但文案为空，启动不会停留');
     }
   }
 
@@ -257,7 +263,7 @@ export struct SettingsPage {
     const st = Store.get();
     st.data.settings.bootText = v;
     st.saveKv();
-    this.getUIContext().getPromptAction().showToast({ message: v.length > 0 ? '启动文案已保存' : '启动文案已清空' });
+    this.toast(v.length > 0 ? '启动文案已保存' : '启动文案已清空');
   }
 
   private queueBootSave(): void {
@@ -292,7 +298,7 @@ export struct SettingsPage {
     Store.get().saveKv();
     UiState.get().appName = Store.get().data.settings.appName;
     this.nameInput = Store.get().data.settings.appName;
-    this.getUIContext().getPromptAction().showToast({ message: `好，就叫「${this.nameInput}」` });
+    this.toast(`好，就叫「${this.nameInput}」`);
   }
 
   private applyLoadedSettings(): void {
@@ -380,6 +386,7 @@ export struct SettingsPage {
   }
 
   private readAllBytes(path: string): Uint8Array {
+    try {
     const f = fs.openSync(path, fs.OpenMode.READ_ONLY);
     const chunks: Uint8Array[] = [];
     let total: number = 0;
@@ -398,19 +405,23 @@ export struct SettingsPage {
       at += c.length;
     });
     return out;
+    } catch (e) {
+      console.error('juxia read file fail', String(e));
+      return new Uint8Array(0);
+    }
   }
 
   private async exportFull(): Promise<void> {
     if (this.fullPw.length === 0 || this.fullPw !== this.fullPw2) {
-      this.getUIContext().getPromptAction().showToast({ message: '两次密语要一致，且不能为空' });
+      this.toast('两次密语要一致，且不能为空');
       return;
     }
     if (this.pwWeak(this.fullPw)) {
-      this.getUIContext().getPromptAction().showToast({ message: '这句密语太常见，换一句' });
+      this.toast('这句密语太常见，换一句');
       return;
     }
     if (this.pwScore(this.fullPw) <= 1) {
-      this.getUIContext().getPromptAction().showToast({ message: '密语偏弱，建议更长或混合字符' });
+      this.toast('密语偏弱，建议更长或混合字符');
     }
     try {
       const ctx = this.getUIContext().getHostContext() as common.UIAbilityContext;
@@ -455,18 +466,16 @@ export struct SettingsPage {
       try { fs.unlinkSync(zip); } catch (e) {}
       this.purgeBackupDir(dir);
       this.markBackedUp();
-      this.getUIContext().getPromptAction().showToast({
-        message: this.fullIncludeMaterials ? '加密包已导出（含材料）' : '加密包已导出（不含材料）'
-      });
+      this.toast(this.fullIncludeMaterials ? '加密包已导出（含材料）' : '加密包已导出（不含材料）');
     } catch (e) {
       console.error('juxia export full fail', String((e as Error).message ?? ''));
-      this.getUIContext().getPromptAction().showToast({ message: '完整包导出失败，材料过大时请分批' });
+      this.toast('完整包导出失败，材料过大时请分批');
     }
   }
 
   private async importFull(): Promise<void> {
     if (this.fullPw.length === 0) {
-      this.getUIContext().getPromptAction().showToast({ message: '先输入密语' });
+      this.toast('先输入密语');
       return;
     }
     try {
@@ -530,11 +539,9 @@ export struct SettingsPage {
       this.purgeBackupDir(dest);
       const ctx2 = this.getUIContext().getHostContext() as common.UIAbilityContext;
       ReminderService.rescheduleAll(ctx2, false);
-      this.getUIContext().getPromptAction().showToast({
-        message: lost > 0 ? `完整包已恢复；${lost} 份材料原文缺失，已移除` : '完整包已恢复，材料与索引一并回来'
-      });
+      this.toast(lost > 0 ? `完整包已恢复；${lost} 份材料原文缺失，已移除` : '完整包已恢复，材料与索引一并回来');
     } catch (e) {
-      this.getUIContext().getPromptAction().showToast({ message: '完整包恢复失败：密语不对或包已损坏' });
+      this.toast('完整包恢复失败：密语不对或包已损坏');
     }
   }
 
@@ -582,12 +589,10 @@ export struct SettingsPage {
       try { fs.unlinkSync(zip); } catch (e) {}
       this.purgeBackupDir(dir);
       this.markBackedUp();
-      this.getUIContext().getPromptAction().showToast({
-        message: this.plainIncludeMaterials ? '完整明文备份已导出（含材料）' : '完整明文备份已导出（不含材料）'
-      });
+      this.toast(this.plainIncludeMaterials ? '完整明文备份已导出（含材料）' : '完整明文备份已导出（不含材料）');
     } catch (e) {
       console.error('juxia export plain fail', String((e as Error).message ?? ''));
-      this.getUIContext().getPromptAction().showToast({ message: '明文完整备份导出失败，材料过大时请分批' });
+      this.toast('明文完整备份导出失败，材料过大时请分批');
     }
   }
 
@@ -650,11 +655,9 @@ export struct SettingsPage {
       this.purgeBackupDir(dest);
       const ctx2 = this.getUIContext().getHostContext() as common.UIAbilityContext;
       ReminderService.rescheduleAll(ctx2, false);
-      this.getUIContext().getPromptAction().showToast({
-        message: lost > 0 ? `明文备份已恢复；${lost} 份材料缺失，已移除` : '明文备份已恢复'
-      });
+      this.toast(lost > 0 ? `明文备份已恢复；${lost} 份材料缺失，已移除` : '明文备份已恢复');
     } catch (e) {
-      this.getUIContext().getPromptAction().showToast({ message: '明文备份恢复失败：文件缺失或格式不对' });
+      this.toast('明文备份恢复失败：文件缺失或格式不对');
     }
   }
 
@@ -696,7 +699,7 @@ export struct SettingsPage {
   private async exportMaterials(): Promise<void> {
     const mats: MaterialEntry[] = Store.get().data.materials.filter((m: MaterialEntry) => m.path.length > 0);
     if (mats.length === 0) {
-      this.getUIContext().getPromptAction().showToast({ message: '没有文件型材料可导出' });
+      this.toast('没有文件型材料可导出');
       return;
     }
     try {
@@ -736,9 +739,9 @@ export struct SettingsPage {
       }
       fs.closeSync(rf);
       fs.closeSync(wf);
-      this.getUIContext().getPromptAction().showToast({ message: `已导出 ${items.length} 份材料（${Math.round(stat.size / 1024)} KB）` });
+      this.toast(`已导出 ${items.length} 份材料（${Math.round(stat.size / 1024)} KB）`);
     } catch (e) {
-      this.getUIContext().getPromptAction().showToast({ message: '材料包导出失败' });
+      this.toast('材料包导出失败');
     }
   }
 
@@ -803,11 +806,9 @@ export struct SettingsPage {
         } catch (e) {
         }
       }
-      this.getUIContext().getPromptAction().showToast({
-        message: skipped > 0 ? `已恢复 ${count} 份材料，跳过 ${skipped} 份已存在` : `已恢复 ${count} 份材料并重建索引`
-      });
+      this.toast(skipped > 0 ? `已恢复 ${count} 份材料，跳过 ${skipped} 份已存在` : `已恢复 ${count} 份材料并重建索引`);
     } catch (e) {
-      this.getUIContext().getPromptAction().showToast({ message: '材料包导入失败' });
+      this.toast('材料包导入失败');
     }
   }
 
@@ -825,7 +826,7 @@ export struct SettingsPage {
       this.backupRemindOff = false;
       Store.get().data.settings.backupRemindOff = false;
       Store.get().saveKv();
-      this.getUIContext().getPromptAction().showToast({ message: '备份提醒已重新开启' });
+      this.toast('备份提醒已重新开启');
       return;
     }
     this.getUIContext().showAlertDialog({
@@ -842,7 +843,7 @@ export struct SettingsPage {
           this.backupRemindOff = true;
           Store.get().data.settings.backupRemindOff = true;
           Store.get().saveKv();
-          this.getUIContext().getPromptAction().showToast({ message: '已彻底关闭备份提醒' });
+          this.toast('已彻底关闭备份提醒');
         }
       }
     });
@@ -864,7 +865,7 @@ export struct SettingsPage {
       Store.get().resetAll();
       this.applyLoadedSettings();
       this.load();
-      this.getUIContext().getPromptAction().showToast({ message: '已清空，一切重新开始' });
+      this.toast('已清空，一切重新开始');
       return;
     }
     this.getUIContext().showAlertDialog({

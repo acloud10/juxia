@@ -44,6 +44,14 @@ export struct ArchivePage {
   @Local revisitDaysValue: number = 7;
   @Local revisitDaysText: string = '7';
 
+  private toast(message: string): void {
+    try {
+      this.getUIContext().getPromptAction().showToast({ message: message });
+    } catch (e) {
+      console.error('juxia toast fail', String(e));
+    }
+  }
+
   aboutToAppear(): void {
     this.reload();
   }
@@ -205,7 +213,7 @@ export struct ArchivePage {
     this.targetId = '';
     this.sheetOpen = false;
     this.reload();
-    this.getUIContext().getPromptAction().showToast({ message: '已记下' });
+    this.toast('已记下');
   }
 
   private openRevisit(e: OwnEntry): void {
@@ -221,6 +229,7 @@ export struct ArchivePage {
   }
 
   private askEnableNotify(ctx: common.UIAbilityContext): void {
+    try {
     this.getUIContext().showAlertDialog({
       title: '开启通知',
       message: '系统通知没有开启，回访提醒无法排进去。开启后，句栖才能在约定时间轻轻问你一次。',
@@ -230,9 +239,9 @@ export struct ArchivePage {
           ReminderService.enableNotifications(ctx).then((ok: boolean) => {
             if (ok) {
               ReminderService.rescheduleAll(ctx);
-              this.getUIContext().getPromptAction().showToast({ message: '通知已开启，提醒会重新排入' });
+              this.toast('通知已开启，提醒会重新排入');
             } else {
-              this.getUIContext().getPromptAction().showToast({ message: '仍未开启，可到系统设置里允许句栖通知' });
+              this.toast('仍未开启，可到系统设置里允许句栖通知');
             }
           });
         }
@@ -240,10 +249,13 @@ export struct ArchivePage {
       secondaryButton: {
         value: '稍后',
         action: () => {
-          this.getUIContext().getPromptAction().showToast({ message: '到期打开句栖，仍会看到回访卡' });
+          this.toast('到期打开句栖，仍会看到回访卡');
         }
       }
     });
+    } catch (e) {
+      console.error('juxia alert fail', String(e));
+    }
   }
 
   private saveRevisitTime(): void {
@@ -258,7 +270,7 @@ export struct ArchivePage {
     });
     this.sheetOpen = false;
     this.reload();
-    this.getUIContext().getPromptAction().showToast({ message: `${days} 天后轻轻问你一次` });
+    this.toast(`${days} 天后轻轻问你一次`);
   }
 
   private soon(e: OwnEntry): void {
@@ -271,7 +283,7 @@ export struct ArchivePage {
     const ctx = this.getUIContext().getHostContext() as common.UIAbilityContext;
     ReminderService.rescheduleAll(ctx);
     this.reload();
-    this.getUIContext().getPromptAction().showToast({ message: '已排进今天的回访' });
+    this.toast('已排进今天的回访');
   }
 
   private cancelRevisit(e: OwnEntry): void {
@@ -279,7 +291,7 @@ export struct ArchivePage {
     const ctx = this.getUIContext().getHostContext() as common.UIAbilityContext;
     ReminderService.rescheduleAll(ctx);
     this.reload();
-    this.getUIContext().getPromptAction().showToast({ message: '已取消这次回访' });
+    this.toast('已取消这次回访');
   }
 
   private revive(e: OwnEntry): void {
@@ -287,7 +299,7 @@ export struct ArchivePage {
     const ctx = this.getUIContext().getHostContext() as common.UIAbilityContext;
     ReminderService.rescheduleAll(ctx);
     this.reload();
-    this.getUIContext().getPromptAction().showToast({ message: '回来了，它重新参与抽签' });
+    this.toast('回来了，它重新参与抽签');
   }
 
   @Builder

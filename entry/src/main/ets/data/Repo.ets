@@ -30,16 +30,21 @@ export class Repo {
   private rowBusy: boolean = false;
 
   async init(context: common.UIAbilityContext, legacy: AppData | null): Promise<AppData> {
-    this.store = await relationalStore.getRdbStore(context, CONFIG);
-    await this.createTables();
-    const schema: string = await this.getKv('schema');
-    if (schema === '1') {
-      return await this.loadAll();
+    try {
+      this.store = await relationalStore.getRdbStore(context, CONFIG);
+      await this.createTables();
+      const schema: string = await this.getKv('schema');
+      if (schema === '1') {
+        return await this.loadAll();
+      }
+      const d: AppData = legacy !== null ? legacy : new AppData();
+      if (d.meta.firstUse === 0) d.meta.firstUse = Date.now();
+      await this.writeSnapshot(this.makeSnapshot(d));
+      return d;
+    } catch (e) {
+      console.error('juxia repo init fail', String(e));
+      return legacy !== null ? legacy : new AppData();
     }
-    const d: AppData = legacy !== null ? legacy : new AppData();
-    if (d.meta.firstUse === 0) d.meta.firstUse = Date.now();
-    await this.writeSnapshot(this.makeSnapshot(d));
-    return d;
   }
 
   saveAll(d: AppData): void {
@@ -154,22 +159,27 @@ export class Repo {
     const s = this.store;
     if (s === null || sentences.length === 0) return 0;
     let written: number = 0;
-    for (let i = 0; i < sentences.length; i += 200) {
-      const chunk: string[] = sentences.slice(i, i + 200);
-      const rows: relationalStore.ValuesBucket[] = [];
-      const ftsRows: relationalStore.ValuesBucket[] = [];
-      chunk.forEach((text: string, j: number) => {
-        rows.push({ 'material_id': materialId, 'ord': startOrd + i + j, 'text': text });
-        ftsRows.push({ 'material_id': materialId, 'ord': startOrd + i + j, 'text': text });
-      });
-      await s.batchInsert('material_sentences', rows);
-      if (this.ftsReady) {
-        try {
-          await s.batchInsert('material_fts', ftsRows);
-        } catch (e) {
+    try {
+      for (let i = 0; i < sentences.length; i += 200) {
+        const chunk: string[] = sentences.slice(i, i + 200);
+        const rows: relationalStore.ValuesBucket[] = [];
+        const ftsRows: relationalStore.ValuesBucket[] = [];
+        chunk.forEach((text: string, j: number) => {
+          rows.push({ 'material_id': materialId, 'ord': startOrd + i + j, 'text': text });
+          ftsRows.push({ 'material_id': materialId, 'ord': startOrd + i + j, 'text': text });
+        });
+        await s.batchInsert('material_sentences', rows);
+        if (this.ftsReady) {
+          try {
+            await s.batchInsert('material_fts', ftsRows);
+          } catch (e) {
+            console.error('juxia fts append fail', String(e));
+          }
         }
+        written += rows.length;
       }
-      written += rows.length;
+    } catch (e) {
+      console.error('juxia sentence append fail', String(e));
     }
     return written;
   }
@@ -192,12 +202,17 @@ export class Repo {
   async clearAllSentences(): Promise<void> {
     const s = this.store;
     if (s === null) return;
-    await s.executeSql('DELETE FROM material_sentences');
-    if (this.ftsReady) {
-      try {
-        await s.executeSql('DELETE FROM material_fts');
-      } catch (e) {
+    try {
+      await s.executeSql('DELETE FROM material_sentences');
+      if (this.ftsReady) {
+        try {
+          await s.executeSql('DELETE FROM material_fts');
+        } catch (e) {
+          console.error('juxia fts clear fail', String(e));
+        }
       }
+    } catch (e) {
+      console.error('juxia sentences clear fail', String(e));
     }
   }
 
@@ -213,60 +228,71 @@ export class Repo {
   async allSentences(materialId: string, limit: number = 0): Promise<string[]> {
     const s = this.store;
     if (s === null) return [];
-    let sql: string = 'SELECT text FROM material_sentences WHERE material_id = ? ORDER BY ord';
-    const args: relationalStore.ValueType[] = [materialId];
-    if (limit > 0) {
-      sql += ' LIMIT ?';
-      args.push(limit);
-    }
-    const rs = await s.querySql(sql, args);
     const out: string[] = [];
-    while (rs.goToNextRow()) {
-      out.push(rs.getString(rs.getColumnIndex('text')));
+    try {
+      let sql: string = 'SELECT text FROM material_sentences WHERE material_id = ? ORDER BY ord';
+      const args: relationalStore.ValueType[] = [materialId];
+      if (limit > 0) {
+        sql += ' LIMIT ?';
+        args.push(limit);
+      }
+      const rs = await s.querySql(sql, args);
+      while (rs.goToNextRow()) {
+        out.push(rs.getString(rs.getColumnIndex('text')));
+      }
+      rs.close();
+    } catch (e) {
+      console.error('juxia sentences read fail', String(e));
     }
-    rs.close();
     return out;
   }
 
-  async searchSentences(keywords: string[], materialId: string): Promise<string[]> {    const s = this.store;
+  async searchSentences(keywords: string[], materialId: string): Promise<string[]> {
+    const s = this.store;
     if (s === null) return [];
-    if (this.ftsReady && keywords.length > 0) {
-      try {
-        let fsql: string = 'SELECT text FROM material_fts WHERE material_fts MATCH ?';
-        const fargs: relationalStore.ValueType[] = [this.ftsQuery(keywords)];
-        if (materialId.length > 0) {
-          fsql += ' AND material_id = ?';
-          fargs.push(materialId);
+    try {
+      if (this.ftsReady && keywords.length > 0) {
+        try {
+          let fsql: string = 'SELECT text FROM material_fts WHERE material_fts MATCH ?';
+          const fargs: relationalStore.ValueType[] = [this.ftsQuery(keywords)];
+          if (materialId.length > 0) {
+            fsql += ' AND material_id = ?';
+            fargs.push(materialId);
+          }
+          fsql += ' LIMIT 120';
+          const frs = await s.querySql(fsql, fargs);
+          const fout: string[] = [];
+          while (frs.goToNextRow()) {
+            fout.push(frs.getString(frs.getColumnIndex('text')));
+          }
+          frs.close();
+          if (fout.length > 0) return fout;
+        } catch (e) {
+          console.error('juxia fts search fail', String(e));
         }
-        fsql += ' LIMIT 120';
-        const frs = await s.querySql(fsql, fargs);
-        const fout: string[] = [];
-        while (frs.goToNextRow()) {
-          fout.push(frs.getString(frs.getColumnIndex('text')));
-        }
-        frs.close();
-        if (fout.length > 0) return fout;
-      } catch (e) {
       }
+      let sql: string = 'SELECT text FROM material_sentences WHERE 1=1';
+      const args: relationalStore.ValueType[] = [];
+      keywords.forEach((kw: string) => {
+        sql += ' AND text LIKE ?';
+        args.push('%' + kw + '%');
+      });
+      if (materialId.length > 0) {
+        sql += ' AND material_id = ?';
+        args.push(materialId);
+      }
+      sql += ' LIMIT 120';
+      const rs = await s.querySql(sql, args);
+      const out: string[] = [];
+      while (rs.goToNextRow()) {
+        out.push(rs.getString(rs.getColumnIndex('text')));
+      }
+      rs.close();
+      return out;
+    } catch (e) {
+      console.error('juxia sentence search fail', String(e));
+      return [];
     }
-    let sql: string = 'SELECT text FROM material_sentences WHERE 1=1';
-    const args: relationalStore.ValueType[] = [];
-    keywords.forEach((kw: string) => {
-      sql += ' AND text LIKE ?';
-      args.push('%' + kw + '%');
-    });
-    if (materialId.length > 0) {
-      sql += ' AND material_id = ?';
-      args.push(materialId);
-    }
-    sql += ' LIMIT 120';
-    const rs = await s.querySql(sql, args);
-    const out: string[] = [];
-    while (rs.goToNextRow()) {
-      out.push(rs.getString(rs.getColumnIndex('text')));
-    }
-    rs.close();
-    return out;
   }
 
   private async writeSnapshot(snap: Snapshot): Promise<void> {
@@ -303,54 +329,63 @@ export class Repo {
       }
       s.commit();
     } catch (e) {
-      s.rollBack();
+      try {
+        s.rollBack();
+      } catch (e2) {
+        console.error('juxia rollback fail', String(e2));
+      }
+      console.error('juxia write snapshot fail', String(e));
     }
   }
 
   private async createTables(): Promise<void> {
     const s = this.store;
     if (s === null) return;
-    await s.executeSql(
-      'CREATE TABLE IF NOT EXISTS own (' +
-      'id TEXT PRIMARY KEY, kind TEXT, text TEXT, note TEXT, bindIds TEXT, ' +
-      'createdAt INTEGER, archCat TEXT, archNote TEXT, archAt INTEGER, ' +
-      'revisitAt INTEGER, snoozeUntil INTEGER, foot TEXT, notes TEXT, replyToId TEXT)'
-    );
-    await s.executeSql(
-      'CREATE TABLE IF NOT EXISTS lib (' +
-      'id TEXT PRIMARY KEY, text TEXT, source TEXT, origin TEXT, tag TEXT, createdAt INTEGER, bindIds TEXT)'
-    );
-    try {
-      await s.executeSql('ALTER TABLE lib ADD COLUMN bindIds TEXT');
-    } catch (e) {
-      // 列已存在：忽略
-    }
-    try {
-      await s.executeSql('ALTER TABLE own ADD COLUMN replyToId TEXT');
-    } catch (e) {
-      // 列已存在：忽略
-    }
-    await s.executeSql(
-      'CREATE TABLE IF NOT EXISTS dislikes (text TEXT PRIMARY KEY, source TEXT, origin TEXT, at INTEGER)'
-    );
-    await s.executeSql(
-      'CREATE TABLE IF NOT EXISTS materials (id TEXT PRIMARY KEY, name TEXT, text TEXT, path TEXT, size INTEGER, createdAt INTEGER)'
-    );
-    await s.executeSql(
-      'CREATE TABLE IF NOT EXISTS material_sentences (material_id TEXT, ord INTEGER, text TEXT, PRIMARY KEY(material_id, ord))'
-    );
     try {
       await s.executeSql(
-        'CREATE VIRTUAL TABLE IF NOT EXISTS material_fts USING fts5(text, material_id UNINDEXED, ord UNINDEXED, tokenize=trigram)'
+        'CREATE TABLE IF NOT EXISTS own (' +
+        'id TEXT PRIMARY KEY, kind TEXT, text TEXT, note TEXT, bindIds TEXT, ' +
+        'createdAt INTEGER, archCat TEXT, archNote TEXT, archAt INTEGER, ' +
+        'revisitAt INTEGER, snoozeUntil INTEGER, foot TEXT, notes TEXT, replyToId TEXT)'
       );
-      this.ftsReady = true;
+      await s.executeSql(
+        'CREATE TABLE IF NOT EXISTS lib (' +
+        'id TEXT PRIMARY KEY, text TEXT, source TEXT, origin TEXT, tag TEXT, createdAt INTEGER, bindIds TEXT)'
+      );
+      try {
+        await s.executeSql('ALTER TABLE lib ADD COLUMN bindIds TEXT');
+      } catch (e) {
+        // 列已存在：忽略
+      }
+      try {
+        await s.executeSql('ALTER TABLE own ADD COLUMN replyToId TEXT');
+      } catch (e) {
+        // 列已存在：忽略
+      }
+      await s.executeSql(
+        'CREATE TABLE IF NOT EXISTS dislikes (text TEXT PRIMARY KEY, source TEXT, origin TEXT, at INTEGER)'
+      );
+      await s.executeSql(
+        'CREATE TABLE IF NOT EXISTS materials (id TEXT PRIMARY KEY, name TEXT, text TEXT, path TEXT, size INTEGER, createdAt INTEGER)'
+      );
+      await s.executeSql(
+        'CREATE TABLE IF NOT EXISTS material_sentences (material_id TEXT, ord INTEGER, text TEXT, PRIMARY KEY(material_id, ord))'
+      );
+      try {
+        await s.executeSql(
+          'CREATE VIRTUAL TABLE IF NOT EXISTS material_fts USING fts5(text, material_id UNINDEXED, ord UNINDEXED, tokenize=trigram)'
+        );
+        this.ftsReady = true;
+      } catch (e) {
+        this.ftsReady = false;
+      }
+      if (this.ftsReady) {
+        await this.rebuildFtsIfNeeded();
+      }
+      await s.executeSql('CREATE TABLE IF NOT EXISTS kv (k TEXT PRIMARY KEY, v TEXT)');
     } catch (e) {
-      this.ftsReady = false;
+      console.error('juxia create tables fail', String(e));
     }
-    if (this.ftsReady) {
-      await this.rebuildFtsIfNeeded();
-    }
-    await s.executeSql('CREATE TABLE IF NOT EXISTS kv (k TEXT PRIMARY KEY, v TEXT)');
   }
 
   private async rebuildFtsIfNeeded(): Promise<void> {
@@ -376,13 +411,18 @@ export class Repo {
   private async getKv(key: string): Promise<string> {
     const s = this.store;
     if (s === null) return '';
-    const rs = await s.querySql('SELECT v FROM kv WHERE k = ?', [key]);
-    let v: string = '';
-    if (rs.goToFirstRow()) {
-      v = rs.getString(rs.getColumnIndex('v'));
+    try {
+      const rs = await s.querySql('SELECT v FROM kv WHERE k = ?', [key]);
+      let v: string = '';
+      if (rs.goToFirstRow()) {
+        v = rs.getString(rs.getColumnIndex('v'));
+      }
+      rs.close();
+      return v;
+    } catch (e) {
+      console.error('juxia kv read fail', String(e));
+      return '';
     }
-    rs.close();
-    return v;
   }
 
   private parseStrings(s: string): string[] {
@@ -407,6 +447,7 @@ export class Repo {
     const d = new AppData();
     const s = this.store;
     if (s === null) return d;
+    try {
     const own = await s.querySql('SELECT * FROM own ORDER BY createdAt DESC');
     while (own.goToNextRow()) {
       const e = new OwnEntry();
@@ -479,6 +520,9 @@ export class Repo {
       }
     }
     kv.close();
+    } catch (e) {
+      console.error('juxia load all fail', String(e));
+    }
     return d;
   }
 
@@ -540,7 +584,11 @@ export class Repo {
     const s = this.store;
     if (s === null) return;
     this.pushRow(async () => {
-      await s.insert(table, b, relationalStore.ConflictResolution.ON_CONFLICT_REPLACE);
+      try {
+        await s.insert(table, b, relationalStore.ConflictResolution.ON_CONFLICT_REPLACE);
+      } catch (e) {
+        console.error('juxia upsert fail', table, String(e));
+      }
     });
   }
 
@@ -548,9 +596,13 @@ export class Repo {
     const s = this.store;
     if (s === null) return;
     this.pushRow(async () => {
-      const p = new relationalStore.RdbPredicates(table);
-      p.equalTo('id', id);
-      await s.delete(p);
+      try {
+        const p = new relationalStore.RdbPredicates(table);
+        p.equalTo('id', id);
+        await s.delete(p);
+      } catch (e) {
+        console.error('juxia delete fail', table, String(e));
+      }
     });
   }
 
@@ -588,9 +640,13 @@ export class Repo {
     const s = this.store;
     if (s === null) return;
     this.pushRow(async () => {
-      const p = new relationalStore.RdbPredicates('dislikes');
-      p.equalTo('text', text);
-      await s.delete(p);
+      try {
+        const p = new relationalStore.RdbPredicates('dislikes');
+        p.equalTo('text', text);
+        await s.delete(p);
+      } catch (e) {
+        console.error('juxia dislike delete fail', String(e));
+      }
     });
   }
 }

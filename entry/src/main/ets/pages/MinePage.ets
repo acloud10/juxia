@@ -271,7 +271,7 @@ export struct MinePage {
           Store.get().removeOwn(e.id);
           this.closePanel();
           this.reload();
-          this.getUIContext().getPromptAction().showToast({ message: '已删除' });
+          this.toast('已删除' );
         }
       }
     });
@@ -295,7 +295,7 @@ export struct MinePage {
             this.noteInput = '';
             this.closePanel();
             this.reload();
-            this.getUIContext().getPromptAction().showToast({ message: '备注已删除' });
+            this.toast('备注已删除' );
           }
         }
       }
@@ -337,19 +337,27 @@ export struct MinePage {
     return e === undefined ? new OwnEntry() : e;
   }
 
+  private toast(message: string): void {
+    try {
+      this.getUIContext().getPromptAction().showToast({ message: message });
+    } catch (e) {
+      console.error('juxia toast fail', String(e));
+    }
+  }
+
   private saveNote(): void {
     const ok: boolean = Store.get().setNote(this.targetId, this.noteInput.trim());
     Store.get().clearDraft('note_' + this.targetId);
     this.closePanel();
     this.reload();
-    this.getUIContext().getPromptAction().showToast({ message: ok ? '备注已保存' : '这条已经不在台前了' });
+    this.toast(ok ? '备注已保存' : '这条已经不在台前了' );
   }
 
   private doArchive(): void {
     const e = Store.get().data.own.find((x: OwnEntry) => x.id === this.targetId);
     if (!e) {
       this.closePanel();
-      this.getUIContext().getPromptAction().showToast({ message: '这条已经不在台前了' });
+      this.toast('这条已经不在台前了' );
       return;
     }
     const days: number = (e.kind === 'wound' && this.withRevisit) ? Store.get().data.settings.revisitDays : 0;
@@ -358,13 +366,13 @@ export struct MinePage {
       const ctx = this.getUIContext().getHostContext() as common.UIAbilityContext;
       ReminderService.rescheduleAll(ctx).then((ok: boolean) => {
         if (!ok) {
-          this.getUIContext().getPromptAction().showToast({ message: '系统通知没排进去；到期打开句栖仍会看到回访卡' });
+          this.toast('系统通知没排进去；到期打开句栖仍会看到回访卡' );
         }
       });
     }
     this.closePanel();
     this.reload();
-    this.getUIContext().getPromptAction().showToast({ message: '已收进回忆区' });
+    this.toast('已收进回忆区' );
   }
 
   private candidates(e: OwnEntry): OwnEntry[] {
@@ -386,7 +394,7 @@ export struct MinePage {
     }
     this.bindRev++;
     this.reload();
-    this.getUIContext().getPromptAction().showToast({ message: bound ? '已绑定' : '已解绑' });
+    this.toast(bound ? '已绑定' : '已解绑' );
   }
 
   private toggleShowReflect(): void {
@@ -404,7 +412,7 @@ export struct MinePage {
 
   private saveReflect(): void {
     if (!Store.get().addReflect(this.refText)) {
-      this.getUIContext().getPromptAction().showToast({ message: '先写一句再保存' });
+      this.toast('先写一句再保存' );
       return;
     }
     const list: OwnEntry[] = Store.get().reflects();
@@ -412,7 +420,7 @@ export struct MinePage {
     this.refText = '';
     this.closePanel();
     this.reload();
-    this.getUIContext().getPromptAction().showToast({ message: '已记下这条省身' });
+    this.toast('已记下这条省身' );
   }
 
   private openReflectNote(e: OwnEntry): void {
@@ -429,7 +437,7 @@ export struct MinePage {
     this.refNoteInput = '';
     this.closePanel();
     this.reload();
-    this.getUIContext().getPromptAction().showToast({ message: '备注已加上' });
+    this.toast('备注已加上' );
   }
 
   private openReflectEdit(e: OwnEntry): void {
@@ -441,12 +449,12 @@ export struct MinePage {
 
   private saveReflectEdit(): void {
     if (!Store.get().updateOwnText(this.targetId, this.refEditText)) {
-      this.getUIContext().getPromptAction().showToast({ message: '正文不能为空' });
+      this.toast('正文不能为空' );
       return;
     }
     this.closePanel();
     this.reload();
-    this.getUIContext().getPromptAction().showToast({ message: '省身已更新' });
+    this.toast('省身已更新' );
   }
 
   private deleteReflect(e: OwnEntry): void {
@@ -464,7 +472,7 @@ export struct MinePage {
           Store.get().removeOwn(e.id);
           this.refOpenId = '';
           this.reload();
-          this.getUIContext().getPromptAction().showToast({ message: '已删除' });
+          this.toast('已删除' );
         }
       }
     });

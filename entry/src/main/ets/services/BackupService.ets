@@ -10,13 +10,18 @@ const TAG_LEN: number = 16;
 
 export class BackupService {
   static serialize(data: AppData): string {
-    return JSON.stringify(data, (key: string, value: Object): Object | undefined => {
-      if (typeof key === 'string' && (key === 'ai' || key.startsWith('ai'))) return undefined;
-      return value;
-    });
+    try {
+      return JSON.stringify(data, (key: string, value: Object): Object | undefined => {
+        if (typeof key === 'string' && (key === 'ai' || key.startsWith('ai'))) return undefined;
+        return value;
+      });
+    } catch (e) {
+      throw new Error('备份序列化失败：' + String(e));
+    }
   }
 
   static async encrypt(data: AppData, password: string): Promise<string> {
+    try {
     const random = cryptoFramework.createRandom();
     const salt: Uint8Array = random.generateRandomSync(SALT_LEN).data;
     const iv: Uint8Array = random.generateRandomSync(IV_LEN).data;
@@ -47,9 +52,13 @@ export class BackupService {
     all.set(iv, SALT_LEN);
     all.set(out.data, SALT_LEN + IV_LEN);
     return 'SJ3.' + new util.Base64Helper().encodeToStringSync(all);
+    } catch (e) {
+      throw new Error('加密备份失败：' + String(e));
+    }
   }
 
   static async decrypt(payload: string, password: string): Promise<AppData> {
+    try {
     let text: string = payload.trim();
     if (text.startsWith('SJ3.')) {
       text = text.slice(4);
@@ -77,9 +86,13 @@ export class BackupService {
     const decoder = util.TextDecoder.create('utf-8');
     const json: string = decoder.decodeToString(out.data);
     return JSON.parse(json) as AppData;
+    } catch (e) {
+      throw new Error('解密备份失败：' + String(e));
+    }
   }
 
   static async encryptBytes(plain: Uint8Array, password: string): Promise<Uint8Array> {
+    try {
     const random = cryptoFramework.createRandom();
     const salt: Uint8Array = random.generateRandomSync(SALT_LEN).data;
     const iv: Uint8Array = random.generateRandomSync(IV_LEN).data;
@@ -102,9 +115,13 @@ export class BackupService {
     all.set(iv, 3 + SALT_LEN);
     all.set(out.data, 3 + SALT_LEN + IV_LEN);
     return all;
+    } catch (e) {
+      throw new Error('加密文件失败：' + String(e));
+    }
   }
 
   static async decryptBytes(raw: Uint8Array, password: string): Promise<Uint8Array> {
+    try {
     if (raw.length < 3 + SALT_LEN + IV_LEN + TAG_LEN + 1 ||
       raw[0] !== 0x53 || raw[1] !== 0x4A || raw[2] !== 0x34) {
       throw new Error('不是 SJ4 完整加密包');
@@ -126,6 +143,9 @@ export class BackupService {
     cipher.initSync(cryptoFramework.CryptoMode.DECRYPT_MODE, symKey, params);
     const out = cipher.doFinalSync({ data: ct });
     return out.data;
+    } catch (e) {
+      throw new Error('解密文件失败：' + String(e));
+    }
   }
 
   private static utf8(text: string): Uint8Array {
@@ -165,15 +185,19 @@ export class BackupService {
   }
 
   private static async deriveKey(password: string, salt: Uint8Array): Promise<Uint8Array> {
-    const spec: cryptoFramework.PBKDF2Spec = {
-      algName: 'PBKDF2',
-      password: password,
-      salt: salt,
-      iterations: ITERATIONS,
-      keySize: 32
-    };
-    const secret = await cryptoFramework.createKdf('PBKDF2|SHA256').generateSecret(spec);
-    return secret.data;
+    try {
+      const spec: cryptoFramework.PBKDF2Spec = {
+        algName: 'PBKDF2',
+        password: password,
+        salt: salt,
+        iterations: ITERATIONS,
+        keySize: 32
+      };
+      const secret = await cryptoFramework.createKdf('PBKDF2|SHA256').generateSecret(spec);
+      return secret.data;
+    } catch (e) {
+      throw new Error('派生备份密钥失败：' + String(e));
+    }
   }
 
   static valid(d: AppData): boolean {

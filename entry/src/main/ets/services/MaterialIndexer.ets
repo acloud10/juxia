@@ -55,7 +55,13 @@ export class MaterialIndexer {
     } catch (e) {
       return 'utf-8';
     } finally {
-      if (file !== null) fs.closeSync(file);
+      if (file !== null) {
+        try {
+          fs.closeSync(file);
+        } catch (e) {
+          console.error('juxia material close fail', String(e));
+        }
+      }
     }
   }
 
@@ -102,7 +108,13 @@ export class MaterialIndexer {
     } catch (e) {
       return 0;
     } finally {
-      if (file !== null) fs.closeSync(file);
+      if (file !== null) {
+        try {
+          fs.closeSync(file);
+        } catch (e) {
+          console.error('juxia material close fail', String(e));
+        }
+      }
     }
   }
 }

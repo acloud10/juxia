@@ -36,9 +36,20 @@ export class Store {
     if (this.ready) {
       return;
     }
-    this.prefs = await preferences.getPreferences(context, PREF_NAME);
+    try {
+      this.prefs = await preferences.getPreferences(context, PREF_NAME);
+    } catch (e) {
+      console.error('juxia prefs init fail', String(e));
+      return;
+    }
     let legacy: AppData | null = null;
-    const raw: string = await this.prefs.get('appdata', '') as string;
+    let raw: string = '';
+    try {
+      raw = await this.prefs.get('appdata', '') as string;
+    } catch (e) {
+      console.error('juxia prefs read fail', String(e));
+      raw = '';
+    }
     if (raw.length > 0) {
       try {
         legacy = JSON.parse(raw) as AppData;
@@ -154,10 +165,20 @@ export class Store {
   private persistPrefs(): void {
     const p = this.prefs;
     if (p === null) return;
-    const s: string = JSON.stringify(this.data);
-    p.put('appdata', s).then(() => {
-      p.flush();
-    });
+    try {
+      const s: string = JSON.stringify(this.data);
+      p.put('appdata', s).then(() => {
+        try {
+          p.flush();
+        } catch (e) {
+          console.error('juxia prefs flush fail', String(e));
+        }
+      }).catch((e: Error) => {
+        console.error('juxia prefs put fail', String(e));
+      });
+    } catch (e) {
+      console.error('juxia prefs serialize fail', String(e));
+    }
   }
 
   bump(): void {
