@@ -407,6 +407,7 @@ export struct SettingsPage {
     return out;
     } catch (e) {
       console.error('juxia read file fail', String(e));
+      this.toast('读取备份文件失败，请重试。');
       return new Uint8Array(0);
     }
   }

@@ -32,4 +32,6 @@ export class UiState {
   @Trace systemDark: boolean = false;
   @Trace systemFontScale: number = 1;
   @Trace themeMode: string = 'system';
+  @Trace errorMessage: string = '';
+  @Trace errorRev: number = 0;
 }

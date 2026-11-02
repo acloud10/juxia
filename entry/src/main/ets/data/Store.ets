@@ -9,6 +9,7 @@ import { Repo } from './Repo';
 import { clearLegacyKey } from '../services/LegacyKeyCleanup';
 import { splitSentences } from '../utils/TextSplit';
 import { UiState } from '../state/UiState';
+import { AppError } from '../services/AppError';
 
 const PREF_NAME: string = 'juxia_store';
 
@@ -39,6 +40,7 @@ export class Store {
     try {
       this.prefs = await preferences.getPreferences(context, PREF_NAME);
     } catch (e) {
+      AppError.report('本地设置读取失败，应用会以默认设置启动。');
       console.error('juxia prefs init fail', String(e));
       return;
     }
@@ -47,6 +49,7 @@ export class Store {
     try {
       raw = await this.prefs.get('appdata', '') as string;
     } catch (e) {
+      AppError.report('本地设置读取失败，可能使用默认设置。');
       console.error('juxia prefs read fail', String(e));
       raw = '';
     }
@@ -171,12 +174,15 @@ export class Store {
         try {
           p.flush();
         } catch (e) {
-          console.error('juxia prefs flush fail', String(e));
+          AppError.report('设置保存失败，请重试。');
+            console.error('juxia prefs flush fail', String(e));
         }
       }).catch((e: Error) => {
-        console.error('juxia prefs put fail', String(e));
+        AppError.report('设置保存失败，请重试。');
+      console.error('juxia prefs put fail', String(e));
       });
     } catch (e) {
+      AppError.report('设置序列化失败，请重试。');
       console.error('juxia prefs serialize fail', String(e));
     }
   }

@@ -3,6 +3,7 @@ import { fileIo as fs } from '@kit.CoreFileKit';
 import { util } from '@kit.ArkTS';
 import { Store } from '../data/Store';
 import { splitSentences, stripMarkdown } from '../utils/TextSplit';
+import { AppError } from './AppError';
 
 export class MaterialIndexer {
   private static lastBreak(s: string): number {
@@ -106,6 +107,7 @@ export class MaterialIndexer {
       }
       return ord;
     } catch (e) {
+      AppError.report('材料索引失败，请重新导入该文件。');
       return 0;
     } finally {
       if (file !== null) {

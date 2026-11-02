@@ -15,6 +15,7 @@ import { LibraryPage } from './LibraryPage';
 import { ArchivePage } from './ArchivePage';
 import { SettingsPage } from './SettingsPage';
 import { UiState } from '../state/UiState';
+import { AppError } from '../services/AppError';
 
 @Entry
 @ComponentV2
@@ -53,6 +54,18 @@ struct Index {
   @Monitor('ui.openRevisit')
   onOpenRevisit(monitor: IMonitor): void {
     this.applyOpenRevisit();
+  }
+
+  @Monitor('ui.errorRev')
+  onErrorRev(monitor: IMonitor): void {
+    this.flushError();
+  }
+
+  private flushError(): void {
+    const message: string = this.ui.errorMessage;
+    if (message.length === 0) return;
+    this.toast(message);
+    AppError.clear();
   }
 
   private applyOpenRevisit(): void {
@@ -118,6 +131,7 @@ struct Index {
     }
     const ctx = this.getUIContext().getHostContext() as common.UIAbilityContext;
     await Store.get().init(ctx);
+    this.flushError();
     const st = Store.get();
     this.bootLong = st.data.settings.bootLong;
     this.bootText = st.data.settings.bootText;
