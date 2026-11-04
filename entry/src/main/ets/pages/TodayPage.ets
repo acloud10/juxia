@@ -131,6 +131,10 @@ export struct TodayPage {
     this.sheetOpen = false;
     this.writeOverride = kind;
     this.choice = 'write';
+    if (this.mood.length === 0) {
+      this.mood = kind === 'wound' ? 'bad' : 'good';
+      Store.get().data.day.mood = this.mood;
+    }
     Store.get().data.day.wrote = false;
     Store.get().data.day.drew = false;
     Store.get().saveKv();
@@ -747,7 +751,7 @@ export struct TodayPage {
           this.sheetOpen = false;
         })
       Column({ space: 10 }) {
-      Text(this.sheetMode === 'write' ? '再写一句' : (this.sheetMode === 'source' ? '还没有可以抽的句子' : '再抽一句'))
+      Text(this.sheetMode === 'write' ? (this.wrote ? '再写一句' : '写一句') : (this.sheetMode === 'source' ? '还没有可以抽的句子' : '再抽一句'))
         .fontSize(18)
         .letterSpacing(3)
         .fontFamily(FONT_SERIF)
