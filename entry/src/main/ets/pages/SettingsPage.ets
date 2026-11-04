@@ -833,7 +833,7 @@ export struct SettingsPage {
     }
     this.getUIContext().showAlertDialog({
       title: '彻底关闭备份提醒？',
-      message: '关闭后，句栖不再提醒你备份。数据只在这台设备上，误删、卸载或换机都可能无法恢复。可以随时回来重新开启。',
+      message: '关闭后，句栖不再提醒你备份。数据只在这台设备上（自己导出的数据除外，取决于自己存放的位置），误删、卸载或换机都可能无法恢复。可以随时回来重新开启。',
       primaryButton: {
         value: '取消',
         action: () => {
@@ -894,7 +894,7 @@ export struct SettingsPage {
 
   private async selfTest(): Promise<void> {
     const pass: string = 'juxia-selftest-2026';
-    let msg: string = '自检中…';
+    let msg: string = '正在检查备份…';
     this.selfTestMsg = msg;
     try {
       const enc: string = await BackupService.encrypt(Store.get().data, pass);
@@ -904,16 +904,16 @@ export struct SettingsPage {
         dec.lib.length === Store.get().data.lib.length &&
         dec.materials.length === Store.get().data.materials.length;
       msg = ok
-        ? `解密自检通过：own ${dec.own.length} / lib ${dec.lib.length} / 材料 ${dec.materials.length}`
-        : '解密自检失败：数据不一致';
+        ? '备份自检通过。'
+        : '备份自检失败。数据没有通过一致性检查。';
     } catch (e) {
-      msg = '解密自检失败：' + String((e as Error).message ?? '');
+      msg = '备份自检失败，请重启应用后再试。';
     }
     this.selfTestMsg = msg;
   }
 
   private async testReminder(): Promise<void> {
-    this.selfTestMsg = '提醒自检中…';
+    this.selfTestMsg = '正在检查提醒状态…';
     const ctx = this.getUIContext().getHostContext() as common.UIAbilityContext;
     await ReminderService.rescheduleAll(ctx, true);
     this.selfTestMsg = await ReminderService.status(ctx);
@@ -1162,7 +1162,7 @@ export struct SettingsPage {
 
         this.GroupTitle('回访')
         Column() {
-          Text('「已解决 / 已放下」的事，可选在若干天后轻轻问一次。经不住回访的会回到台前。')
+          Text('「已解决 / 已放下」的事，可选在若干天后轻轻问一次。如果回访时发现还没准备好，可以回到台前。')
             .fontSize(12.5)
             .lineHeight(22)
             .fontColor(this.t().inkSoft)
@@ -1849,7 +1849,7 @@ export struct SettingsPage {
               })
           }
           .width('100%')
-          Text('关闭后不再提醒；数据只在这台设备上，误删、卸载或换机都可能无法恢复。')
+          Text('关闭后不再提醒；数据只在这台设备上（自己导出的数据除外，取决于自己存放的位置），误删、卸载或换机都可能无法恢复。')
             .fontSize(11.5)
             .lineHeight(20)
             .fontColor(this.t().inkSoft)
@@ -1888,13 +1888,13 @@ export struct SettingsPage {
         if (this.openSection === 'about') {
         this.GroupTitle('关于')
         Column({ space: 6 }) {
-          Text('句栖 · 原生 ArkUI 版')
+          Text('句栖')
             .fontSize(13)
             .fontColor(this.t().ink)
             .gesture(LongPressGesture().onAction(() => {
               this.selfTest();
             }))
-          Text(`存储：${Store.get().storageMode()} · 密语备份 SJ3 · 宋体子集`)
+          Text(`存储：${Store.get().storageMode()} · 本地备份`)
             .fontSize(12)
             .lineHeight(22)
             .fontColor(this.t().inkSoft)

@@ -156,8 +156,7 @@ export class ReminderService {
       const list: reminderAgentManager.ReminderRequest[] = await reminderAgentManager.getValidReminders();
       return `通知${enabled ? '已开启' : '未开启'}；系统里已有 ${list.length} 条句栖提醒`;
     } catch (e) {
-      const err = e as Error;
-      return '读取提醒状态失败：' + (err.message.length > 0 ? err.message : '未知原因');
+      return '读取提醒状态失败，请重启应用后再试。';
     }
   }
 }

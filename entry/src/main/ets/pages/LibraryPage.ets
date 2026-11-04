@@ -1415,7 +1415,7 @@ export struct LibraryPage {
 
         Blank()
 
-        Text('句库数据只存在这台设备上')
+        Text('句库数据只存在这台设备上（自己导出的数据除外，取决于自己存放的位置）')
           .fontSize(11.5)
           .fontColor(this.t().inkSoft)
           .width('100%')

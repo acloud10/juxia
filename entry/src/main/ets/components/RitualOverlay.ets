@@ -343,7 +343,7 @@ export struct RitualOverlay {
               this.onBind(this.ctx.entry!.id);
             }
           })
-          this.QuietAction('标记退役', () => {
+          this.QuietAction('不再参与抽签', () => {
             if (this.ctx.entry !== null) {
               this.onArchive(this.ctx.entry!.id);
             }

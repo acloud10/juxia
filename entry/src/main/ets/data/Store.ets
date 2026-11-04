@@ -77,7 +77,7 @@ export class Store {
   }
 
   storageMode(): string {
-    return this.useDb ? 'RDB · 加密' : 'Preferences';
+    return this.useDb ? '本地加密存储' : '本地存储';
   }
 
   private normalize(): void {

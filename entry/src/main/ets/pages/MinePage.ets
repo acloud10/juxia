@@ -674,7 +674,7 @@ export struct MinePage {
   @Builder
   ArchivePanel(e: OwnEntry) {
     Column({ space: 0 }) {
-      Text('标记退役')
+      Text('不再参与抽签')
         .fontSize(14)
         .letterSpacing(2)
         .fontFamily(FONT_SERIF)
@@ -801,7 +801,7 @@ export struct MinePage {
           this.QuietButton('绑定旧事', () => {
             this.openBind(e);
           })
-          this.QuietButton('标记退役', () => {
+          this.QuietButton('不再参与抽签', () => {
             this.openArchive(e);
           })
         } else {
@@ -1293,7 +1293,7 @@ export struct MinePage {
   build() {
     Scroll() {
       Column() {
-        this.Label('我的话 · 只有这台设备看得到')
+        this.Label('我的话 · 未导出时只有这台设备看得到')
         TextInput({ text: this.q, placeholder: '搜索：句子或备注' })
           .height(42)
           .fontSize(14)
