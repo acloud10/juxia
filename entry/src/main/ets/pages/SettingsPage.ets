@@ -1894,7 +1894,7 @@ export struct SettingsPage {
             .gesture(LongPressGesture().onAction(() => {
               this.selfTest();
             }))
-          Text(`存储：${Store.get().storageMode()} · 本地备份`)
+          Text(`存储：${Store.get().storageMode()} · 备份由你导出`)
             .fontSize(12)
             .lineHeight(22)
             .fontColor(this.t().inkSoft)
