@@ -289,7 +289,7 @@ export struct TodayPage {
 
   private skipDraw(): void {
     Store.get().markDrew();
-    this.toast('好，今天只负责开心');
+    this.toast('好，今天先到这儿。');
     this.load();
   }
 
