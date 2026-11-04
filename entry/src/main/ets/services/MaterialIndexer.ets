@@ -107,7 +107,7 @@ export class MaterialIndexer {
       }
       return ord;
     } catch (e) {
-      AppError.report('材料索引失败，请重新导入该文件。');
+      AppError.report('材料索引失败。', '回到材料库重新导入；原文件不会被删除。');
       return 0;
     } finally {
       if (file !== null) {

@@ -43,7 +43,7 @@ export class Repo {
       await this.writeSnapshot(this.makeSnapshot(d));
       return d;
     } catch (e) {
-      AppError.report('本地数据打开失败，本次修改可能无法保存。请重启应用后再试。');
+      AppError.report('本地数据打开失败。', '重启应用后再试。若仍失败，不要清空数据；如能进入设置，先尝试导出备份。', true);
       console.error('juxia repo init fail', String(e));
       return legacy !== null ? legacy : new AppData();
     }
@@ -181,7 +181,7 @@ export class Repo {
         written += rows.length;
       }
     } catch (e) {
-      AppError.report('材料索引保存失败，材料可能不完整。请重新导入。');
+      AppError.report('材料索引保存失败。', '回到材料库重试导入；原文件不会被删除。');
       console.error('juxia sentence append fail', String(e));
     }
     return written;
@@ -215,7 +215,7 @@ export class Repo {
         }
       }
     } catch (e) {
-      AppError.report('材料索引清理失败，请重试。');
+      AppError.report('材料索引清理失败。', '回到材料库重试删除或重新导入；不要清空全部数据。');
       console.error('juxia sentences clear fail', String(e));
     }
   }
@@ -246,7 +246,7 @@ export class Repo {
       }
       rs.close();
     } catch (e) {
-      AppError.report('材料内容读取失败，请重试。');
+      AppError.report('材料内容读取失败。', '重启应用后再试；不要清空材料。');
       console.error('juxia sentences read fail', String(e));
     }
     return out;
@@ -295,7 +295,7 @@ export class Repo {
       rs.close();
       return out;
     } catch (e) {
-      AppError.report('材料检索失败，请重试。');
+      AppError.report('材料检索失败。', '重试；如仍失败，重启应用后再试。');
       console.error('juxia sentence search fail', String(e));
       return [];
     }
@@ -340,7 +340,7 @@ export class Repo {
       } catch (e2) {
         console.error('juxia rollback fail', String(e2));
       }
-      AppError.report('保存失败，刚才的修改可能没有写入本机。请重试。');
+      AppError.report('保存失败。', '检查手机存储空间后重试；如反复失败，先尝试导出备份，并避免继续修改。', true);
       console.error('juxia write snapshot fail', String(e));
     }
   }
@@ -391,7 +391,7 @@ export class Repo {
       }
       await s.executeSql('CREATE TABLE IF NOT EXISTS kv (k TEXT PRIMARY KEY, v TEXT)');
     } catch (e) {
-      AppError.report('本地数据库初始化失败，应用可能无法保存数据。');
+      AppError.report('本地数据库初始化失败。', '重启应用后再试；不要清空数据。如仍失败，联系开发者。', true);
       console.error('juxia create tables fail', String(e));
     }
   }
@@ -529,7 +529,7 @@ export class Repo {
     }
     kv.close();
     } catch (e) {
-      AppError.report('读取本地数据失败，部分内容可能没有显示。');
+      AppError.report('读取本地数据失败。', '重启应用后再试；不要清空数据。', true);
       console.error('juxia load all fail', String(e));
     }
     return d;
@@ -596,7 +596,7 @@ export class Repo {
       try {
         await s.insert(table, b, relationalStore.ConflictResolution.ON_CONFLICT_REPLACE);
       } catch (e) {
-        AppError.report('保存失败，请重试。');
+        AppError.report('保存失败。', '检查存储空间后重试；若仍失败，重启应用。');
         console.error('juxia upsert fail', table, String(e));
       }
     });
@@ -611,7 +611,7 @@ export class Repo {
         p.equalTo('id', id);
         await s.delete(p);
       } catch (e) {
-        AppError.report('删除失败，请重试。');
+        AppError.report('删除失败。', '重试；若仍失败，重启应用。');
         console.error('juxia delete fail', table, String(e));
       }
     });
@@ -656,7 +656,7 @@ export class Repo {
         p.equalTo('text', text);
         await s.delete(p);
       } catch (e) {
-        AppError.report('删除排除项失败，请重试。');
+        AppError.report('删除排除项失败。', '重试；若仍失败，重启应用。');
         console.error('juxia dislike delete fail', String(e));
       }
     });

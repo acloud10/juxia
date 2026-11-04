@@ -33,5 +33,7 @@ export class UiState {
   @Trace systemFontScale: number = 1;
   @Trace themeMode: string = 'system';
   @Trace errorMessage: string = '';
+  @Trace errorHint: string = '';
+  @Trace errorCanOpenSettings: boolean = false;
   @Trace errorRev: number = 0;
 }

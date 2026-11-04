@@ -11,6 +11,7 @@ import { ReminderService } from '../services/ReminderService';
 import { MaterialIndexer } from '../services/MaterialIndexer';
 import { Tokens, getTokens, FONT_SERIF } from '../theme/Theme';
 import { UiState } from '../state/UiState';
+import { AppError } from '../services/AppError';
 
 
 class MatPackItem {
@@ -407,7 +408,7 @@ export struct SettingsPage {
     return out;
     } catch (e) {
       console.error('juxia read file fail', String(e));
-      this.toast('读取备份文件失败，请重试。');
+      AppError.report('读取备份文件失败。', '确认文件仍在原位置，重新选择；不要删除原文件。');
       return new Uint8Array(0);
     }
   }
@@ -470,7 +471,7 @@ export struct SettingsPage {
       this.toast(this.fullIncludeMaterials ? '加密包已导出（含材料）' : '加密包已导出（不含材料）');
     } catch (e) {
       console.error('juxia export full fail', String((e as Error).message ?? ''));
-      this.toast('完整包导出失败，材料过大时请分批');
+      AppError.report('完整包导出失败。', '检查手机存储空间后重试；材料过多时先不勾选材料，分批导出。');
     }
   }
 
@@ -542,7 +543,7 @@ export struct SettingsPage {
       ReminderService.rescheduleAll(ctx2, false);
       this.toast(lost > 0 ? `完整包已恢复；${lost} 份材料原文缺失，已移除` : '完整包已恢复，材料与索引一并回来');
     } catch (e) {
-      this.toast('完整包恢复失败：密语不对或包已损坏');
+      AppError.report('完整备份恢复失败。', '确认密语正确、备份文件完整后重试；不要删除原文件。');
     }
   }
 
@@ -593,7 +594,7 @@ export struct SettingsPage {
       this.toast(this.plainIncludeMaterials ? '完整明文备份已导出（含材料）' : '完整明文备份已导出（不含材料）');
     } catch (e) {
       console.error('juxia export plain fail', String((e as Error).message ?? ''));
-      this.toast('明文完整备份导出失败，材料过大时请分批');
+      AppError.report('完整明文备份导出失败。', '检查存储空间后重试；材料过多时先不勾选材料。');
     }
   }
 
@@ -658,7 +659,7 @@ export struct SettingsPage {
       ReminderService.rescheduleAll(ctx2, false);
       this.toast(lost > 0 ? `明文备份已恢复；${lost} 份材料缺失，已移除` : '明文备份已恢复');
     } catch (e) {
-      this.toast('明文备份恢复失败：文件缺失或格式不对');
+      AppError.report('明文备份恢复失败。', '确认备份文件完整、格式正确后重试；不要删除原文件。');
     }
   }
 
@@ -742,7 +743,7 @@ export struct SettingsPage {
       fs.closeSync(wf);
       this.toast(`已导出 ${items.length} 份材料（${Math.round(stat.size / 1024)} KB）`);
     } catch (e) {
-      this.toast('材料包导出失败');
+      AppError.report('材料包导出失败。', '检查存储空间后重试；文件过多时先分批。');
     }
   }
 
@@ -809,7 +810,7 @@ export struct SettingsPage {
       }
       this.toast(skipped > 0 ? `已恢复 ${count} 份材料，跳过 ${skipped} 份已存在` : `已恢复 ${count} 份材料并重建索引`);
     } catch (e) {
-      this.toast('材料包导入失败');
+      AppError.report('材料包导入失败。', '确认压缩包完整、未被修改后重试。');
     }
   }
 

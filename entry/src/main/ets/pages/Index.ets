@@ -64,8 +64,44 @@ struct Index {
   private flushError(): void {
     const message: string = this.ui.errorMessage;
     if (message.length === 0) return;
-    this.toast(message);
-    AppError.clear();
+    const hint: string = this.ui.errorHint;
+    const full: string = hint.length > 0 ? message + '\n\n' + hint : message;
+    try {
+      if (this.ui.errorCanOpenSettings) {
+        this.getUIContext().showAlertDialog({
+          title: '出了点问题',
+          message: full,
+          primaryButton: {
+            value: '知道了',
+            action: () => {
+              AppError.clear();
+            }
+          },
+          secondaryButton: {
+            value: '去设置',
+            action: () => {
+              AppError.clear();
+              this.switchTab(4);
+              this.ui.settingsSection = 'data';
+            }
+          }
+        });
+      } else {
+        this.getUIContext().showAlertDialog({
+          title: '出了点问题',
+          message: full,
+          primaryButton: {
+            value: '知道了',
+            action: () => {
+              AppError.clear();
+            }
+          }
+        });
+      }
+    } catch (e) {
+      this.toast(full);
+      AppError.clear();
+    }
   }
 
   private applyOpenRevisit(): void {

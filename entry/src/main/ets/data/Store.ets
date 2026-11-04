@@ -40,7 +40,7 @@ export class Store {
     try {
       this.prefs = await preferences.getPreferences(context, PREF_NAME);
     } catch (e) {
-      AppError.report('本地设置读取失败，应用会以默认设置启动。');
+      AppError.report('本地设置读取失败。', '重启应用后再试；不要清空数据。');
       console.error('juxia prefs init fail', String(e));
       return;
     }
@@ -49,7 +49,7 @@ export class Store {
     try {
       raw = await this.prefs.get('appdata', '') as string;
     } catch (e) {
-      AppError.report('本地设置读取失败，可能使用默认设置。');
+      AppError.report('本地设置读取失败。', '重启应用后再试；不要清空数据。');
       console.error('juxia prefs read fail', String(e));
       raw = '';
     }
@@ -174,15 +174,15 @@ export class Store {
         try {
           p.flush();
         } catch (e) {
-          AppError.report('设置保存失败，请重试。');
+          AppError.report('设置保存失败。', '检查存储空间后重试；若仍失败，重启应用。');
             console.error('juxia prefs flush fail', String(e));
         }
       }).catch((e: Error) => {
-        AppError.report('设置保存失败，请重试。');
+        AppError.report('设置保存失败。', '检查存储空间后重试；若仍失败，重启应用。');
       console.error('juxia prefs put fail', String(e));
       });
     } catch (e) {
-      AppError.report('设置序列化失败，请重试。');
+      AppError.report('设置保存失败。', '重启应用后再试。');
       console.error('juxia prefs serialize fail', String(e));
     }
   }
