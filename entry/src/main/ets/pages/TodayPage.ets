@@ -262,7 +262,7 @@ export struct TodayPage {
       ctx.type = 'lib';
       ctx.text = q.text;
       ctx.source = q.source;
-      ctx.badge = fromEncourage ? '句库 · 借一句' : '句库 · 收藏';
+      ctx.badge = fromEncourage ? '句库 · 取一句' : '句库 · 收藏';
       ctx.tag = q.tag.length > 0 ? q.tag : '原文';
       ctx.origin = q.origin;
       ctx.todayFlow = todayFlow;
@@ -784,7 +784,7 @@ export struct TodayPage {
           this.SheetAction('抽一句鼓励（自己写的）', true, () => {
             this.startMoreDraw('encourage');
           })
-          this.SheetAction('从收藏/材料里借一句', false, () => {
+          this.SheetAction('从收藏/材料里取一句', false, () => {
             this.startMoreDraw('lib');
           })
         } else {
@@ -924,7 +924,7 @@ export struct TodayPage {
                 ? '自己的话暂时不参与抽签。可以从句库取一句。'
                 : (this.encCount > 0
                   ? `从你写过的 ${this.encCount} 句鼓励里，抽一句还给今天的你。`
-                  : '你的鼓励池还是空的——这次先从句库借一句给你。等你写下第一句自己的鼓励，它就会回到抽签里。'))
+                  : '你的鼓励池还是空的——这次先从句库取一句给你。等你写下第一句自己的鼓励，它就会回到抽签里。'))
                 .fontSize(12.5)
                 .lineHeight(24)
                 .fontColor(this.t().inkSoft)

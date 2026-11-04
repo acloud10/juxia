@@ -761,7 +761,7 @@ export struct ArchivePage {
         } else {
           if (this.categoryList().length === 0) {
             Column({ space: 6 }) {
-              Text(this.q.length > 0 ? '没有找到' : '这一类是空的')
+              Text(this.q.length > 0 ? '没有找到' : '这一类还没有句子')
                 .fontSize(14)
                 .fontFamily(FONT_SERIF)
                 .fontColor(this.t().inkStrong)

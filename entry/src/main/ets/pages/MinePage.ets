@@ -259,7 +259,7 @@ export struct MinePage {
   private confirmDeleteEntry(e: OwnEntry): void {
     this.getUIContext().showAlertDialog({
       title: '删除这句话？',
-      message: '连同它的备注、绑定关系一起删除，无法恢复。',
+      message: '连同它的备注、关联关系一起删除，无法恢复。',
       primaryButton: {
         value: '取消',
         action: () => {
@@ -394,7 +394,7 @@ export struct MinePage {
     }
     this.bindRev++;
     this.reload();
-    this.toast(bound ? '已绑定' : '已解绑' );
+    this.toast(bound ? '已关联' : '已解除关联' );
   }
 
   private toggleShowReflect(): void {
@@ -606,7 +606,7 @@ export struct MinePage {
         .fontColor(this.t().inkStrong)
         .width('100%')
         .margin({ bottom: 6 })
-      Text('可绑多件，再点一次解绑。两边是同一根线。')
+      Text('可关联多件，再点一次解除。两边是同一根线。')
         .fontSize(11.5)
         .fontColor(this.t().inkSoft)
         .width('100%')
@@ -626,7 +626,7 @@ export struct MinePage {
           .margin({ bottom: 6 })
       }
       if (this.candidates(e).length === 0) {
-        Text(e.kind === 'encourage' ? '树洞还是空的。先写一件难过的事，再回来绑定。' : '鼓励池还是空的。先写一句鼓励，再回来关联。')
+        Text(e.kind === 'encourage' ? '树洞还是空的。先写一件难过的事，再回来关联。' : '鼓励池还是空的。先写一句鼓励，再回来关联。')
           .fontSize(12)
           .lineHeight(21)
           .fontColor(this.t().inkSoft)
@@ -640,7 +640,7 @@ export struct MinePage {
             .fontFamily(FONT_SERIF)
             .fontColor(this.t().ink)
             .layoutWeight(1)
-          Text(this.isBound(e, x) ? '解绑' : (e.kind === 'encourage' ? '绑定' : '关联'))
+          Text(this.isBound(e, x) ? '解除关联' : '关联')
             .fontSize(12)
             .fontColor(this.isBound(e, x) ? this.t().inkSoft : this.t().bg)
             .backgroundColor(this.isBound(e, x) ? this.t().card : this.t().ink)
@@ -798,7 +798,7 @@ export struct MinePage {
           this.openNote(e);
         })
         if (e.kind === 'encourage') {
-          this.QuietButton('绑定旧事', () => {
+          this.QuietButton('关联旧事', () => {
             this.openBind(e);
           })
           this.QuietButton('不再参与抽签', () => {
@@ -1329,7 +1329,7 @@ export struct MinePage {
 
         Blank()
 
-        Text('鼓励与旧事可以互相绑定；旧事归档时会自动给鼓励留下注脚')
+        Text('鼓励与旧事可以互相关联；旧事归档时会自动给鼓励留下注脚')
           .fontSize(11.5)
           .lineHeight(22)
           .fontColor(this.t().inkSoft)

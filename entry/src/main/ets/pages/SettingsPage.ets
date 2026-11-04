@@ -468,10 +468,10 @@ export struct SettingsPage {
       try { fs.unlinkSync(zip); } catch (e) {}
       this.purgeBackupDir(dir);
       this.markBackedUp();
-      this.toast(this.fullIncludeMaterials ? '加密包已导出（含材料）' : '加密包已导出（不含材料）');
+      this.toast(this.fullIncludeMaterials ? '加密备份已导出（含材料）' : '加密备份已导出（不含材料）');
     } catch (e) {
       console.error('juxia export full fail', String((e as Error).message ?? ''));
-      AppError.report('完整包导出失败。', '检查手机存储空间后重试；材料过多时先不勾选材料，分批导出。');
+      AppError.report('完整备份导出失败。', '检查手机存储空间后重试；材料过多时先不勾选材料，分批导出。');
     }
   }
 
@@ -541,7 +541,7 @@ export struct SettingsPage {
       this.purgeBackupDir(dest);
       const ctx2 = this.getUIContext().getHostContext() as common.UIAbilityContext;
       ReminderService.rescheduleAll(ctx2, false);
-      this.toast(lost > 0 ? `完整包已恢复；${lost} 份材料原文缺失，已移除` : '完整包已恢复，材料与索引一并回来');
+      this.toast(lost > 0 ? `完整备份已恢复；${lost} 份材料原文缺失，已移除` : '完整备份已恢复，材料与索引一并回来');
     } catch (e) {
       AppError.report('完整备份恢复失败。', '确认密语正确、备份文件完整后重试；不要删除原文件。');
     }
@@ -577,7 +577,7 @@ export struct SettingsPage {
       await zlib.compressFile(dir, zip, { level: zlib.CompressLevel.COMPRESS_LEVEL_DEFAULT_COMPRESSION });
       const pickerCtx = new picker.DocumentViewPicker(ctx);
       const opts = new picker.DocumentSaveOptions();
-      opts.newFileNames = [`句栖完整明文备份-${stamp}.zip`];
+      opts.newFileNames = [`句栖完整不加密备份-${stamp}.zip`];
       const uris: string[] = await pickerCtx.save(opts);
       if (uris.length === 0) {
         try { fs.unlinkSync(zip); } catch (e) {}
@@ -591,10 +591,10 @@ export struct SettingsPage {
       try { fs.unlinkSync(zip); } catch (e) {}
       this.purgeBackupDir(dir);
       this.markBackedUp();
-      this.toast(this.plainIncludeMaterials ? '完整明文备份已导出（含材料）' : '完整明文备份已导出（不含材料）');
+      this.toast(this.plainIncludeMaterials ? '完整不加密备份已导出（含材料）' : '完整不加密备份已导出（不含材料）');
     } catch (e) {
       console.error('juxia export plain fail', String((e as Error).message ?? ''));
-      AppError.report('完整明文备份导出失败。', '检查存储空间后重试；材料过多时先不勾选材料。');
+      AppError.report('完整不加密备份导出失败。', '检查存储空间后重试；材料过多时先不勾选材料。');
     }
   }
 
@@ -657,9 +657,9 @@ export struct SettingsPage {
       this.purgeBackupDir(dest);
       const ctx2 = this.getUIContext().getHostContext() as common.UIAbilityContext;
       ReminderService.rescheduleAll(ctx2, false);
-      this.toast(lost > 0 ? `明文备份已恢复；${lost} 份材料缺失，已移除` : '明文备份已恢复');
+      this.toast(lost > 0 ? `不加密备份已恢复；${lost} 份材料缺失，已移除` : '不加密备份已恢复');
     } catch (e) {
-      AppError.report('明文备份恢复失败。', '确认备份文件完整、格式正确后重试；不要删除原文件。');
+      AppError.report('不加密备份恢复失败。', '确认备份文件完整、格式正确后重试；不要删除原文件。');
     }
   }
 
@@ -1620,7 +1620,7 @@ export struct SettingsPage {
         if (this.openSection === 'data') {
         this.GroupTitle('完整加密备份')
         Column({ space: 8 }) {
-          Text('数据、句子关系、省身与备注、材料一起打包，再用密语加密成 .sj4。')
+          Text('数据、句子关系、省身与备注、材料一起打包，再用备份密码（密语）加密成 .sj4。')
             .fontSize(13)
             .lineHeight(22)
             .fontColor(this.t().inkStrong)
@@ -1643,12 +1643,12 @@ export struct SettingsPage {
           }
           .width('100%')
           Row({ space: 8 }) {
-            this.Btn('导出加密包', true, () => {
+            this.Btn('导出加密备份', true, () => {
               this.fullPanel = 'out';
               this.fullPw = '';
               this.fullPw2 = '';
             })
-            this.Btn('导入加密包', false, () => {
+            this.Btn('导入加密备份', false, () => {
               this.fullPanel = 'in';
               this.fullPw = '';
             })
@@ -1682,7 +1682,7 @@ export struct SettingsPage {
                 this.fullPw2 = v;
               })
             Row({ space: 8 }) {
-              this.Btn('生成加密包', true, () => {
+              this.Btn('生成加密备份', true, () => {
                 this.exportFull();
               })
               this.Btn('关闭', false, () => {
@@ -1722,7 +1722,7 @@ export struct SettingsPage {
         .borderRadius(this.t().radiusCard)
         .border({ width: 1, color: this.t().line })
 
-        this.GroupTitle('完整非加密备份')
+        this.GroupTitle('完整不加密备份')
         Column({ space: 8 }) {
           Text('数据、句子关系、省身与备注、材料一起打包成 .zip，不加密；拿到文件的人可以直接查看。')
             .fontSize(13)
@@ -1747,17 +1747,17 @@ export struct SettingsPage {
           }
           .width('100%')
           Row({ space: 8 }) {
-            this.Btn('导出明文包', true, () => {
+            this.Btn('导出不加密备份', true, () => {
               this.plainPanel = 'out';
             })
-            this.Btn('导入明文包', false, () => {
+            this.Btn('导入不加密备份', false, () => {
               this.plainPanel = 'in';
             })
           }
           .width('100%')
           if (this.plainPanel === 'out') {
             Row({ space: 8 }) {
-              this.Btn('生成明文包', true, () => {
+              this.Btn('生成不加密备份', true, () => {
                 this.exportPlainFull();
               })
               this.Btn('关闭', false, () => {
@@ -1765,7 +1765,7 @@ export struct SettingsPage {
               })
             }
             .width('100%')
-            Text('明文包不需要密语，请自行保管。')
+            Text('不加密备份不需要密语，请自行保管。')
               .fontSize(11.5)
               .fontColor(this.t().inkSoft)
               .width('100%')
@@ -1825,7 +1825,7 @@ export struct SettingsPage {
         Column({ space: 8 }) {
           Row() {
             Column({ space: 4 }) {
-              Text(this.backupRemindOff ? '提醒已关闭' : '提醒开启中')
+              Text(this.backupRemindOff ? '提醒已关闭' : '提醒已开启')
                 .fontSize(13.5)
                 .fontColor(this.t().ink)
               Text(this.backupDaysText())

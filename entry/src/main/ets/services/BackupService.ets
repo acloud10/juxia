@@ -124,7 +124,7 @@ export class BackupService {
     try {
     if (raw.length < 3 + SALT_LEN + IV_LEN + TAG_LEN + 1 ||
       raw[0] !== 0x53 || raw[1] !== 0x4A || raw[2] !== 0x34) {
-      throw new Error('不是 SJ4 完整加密包');
+      throw new Error('不是 SJ4 完整加密备份');
     }
     const salt: Uint8Array = raw.slice(3, 3 + SALT_LEN);
     const iv: Uint8Array = raw.slice(3 + SALT_LEN, 3 + SALT_LEN + IV_LEN);
