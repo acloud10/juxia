@@ -210,7 +210,7 @@ export struct RitualOverlay {
         .opacity(this.open ? 0 : 1)
         .animation({ duration: 300 })
 
-      Text('展 开')
+      Text('展开')
         .fontSize(14)
         .fontFamily(FONT_SERIF)
         .letterSpacing(8)
