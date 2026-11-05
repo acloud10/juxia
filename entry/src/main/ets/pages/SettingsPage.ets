@@ -475,6 +475,29 @@ export struct SettingsPage {
     }
   }
 
+  private confirmRestore(kind: string): void {
+    const encrypted: boolean = kind === 'sj4';
+    this.getUIContext().showAlertDialog({
+      title: '恢复完整备份？',
+      message: '恢复会覆盖当前全部数据：句子、旧事、回忆、备注、省身、句库、设置和材料。若备份不含材料，材料库会为空。建议先导出当前备份；此操作不可撤销。',
+      primaryButton: {
+        value: '取消',
+        action: () => {
+        }
+      },
+      secondaryButton: {
+        value: '继续恢复',
+        action: () => {
+          if (encrypted) {
+            this.importFull();
+          } else {
+            this.importPlainFull();
+          }
+        }
+      }
+    });
+  }
+
   private async importFull(): Promise<void> {
     if (this.fullPw.length === 0) {
       this.toast('先输入密语');
@@ -1707,13 +1730,18 @@ export struct SettingsPage {
               })
             Row({ space: 8 }) {
               this.Btn('选择 .sj4 导入', true, () => {
-                this.importFull();
+                this.confirmRestore('sj4');
               })
               this.Btn('关闭', false, () => {
                 this.fullPanel = '';
               })
             }
             .width('100%')
+            Text('恢复会覆盖当前全部数据；若包内不含材料，材料库会为空。建议先导出当前备份。')
+              .fontSize(11.5)
+              .lineHeight(20)
+              .fontColor(this.t().inkSoft)
+              .width('100%')
           }
         }
         .width('100%')
@@ -1773,7 +1801,7 @@ export struct SettingsPage {
           if (this.plainPanel === 'in') {
             Row({ space: 8 }) {
               this.Btn('选择 .zip 导入', true, () => {
-                this.importPlainFull();
+                this.confirmRestore('zip');
               })
               this.Btn('关闭', false, () => {
                 this.plainPanel = '';
