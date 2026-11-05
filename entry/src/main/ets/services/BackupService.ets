@@ -11,10 +11,7 @@ const TAG_LEN: number = 16;
 export class BackupService {
   static serialize(data: AppData): string {
     try {
-      return JSON.stringify(data, (key: string, value: Object): Object | undefined => {
-        if (typeof key === 'string' && (key === 'ai' || key.startsWith('ai'))) return undefined;
-        return value;
-      });
+      return JSON.stringify(data);
     } catch (e) {
       throw new Error('备份序列化失败：' + String(e));
     }

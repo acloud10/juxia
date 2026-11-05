@@ -319,13 +319,13 @@ export struct ArchivePage {
   }
 
   @Builder
-  Chip(label: string, active: boolean, action: () => void) {
+  Chip(label: string, value: string, action: () => void) {
     Text(label)
       .fontSize(11.5)
       .letterSpacing(1)
-      .fontColor(active ? this.t().sealInk : this.t().inkSoft)
-      .backgroundColor(active ? this.t().seal : this.t().card)
-      .border({ width: 1, color: active ? Color.Transparent : this.t().line })
+      .fontColor(this.tab === value ? this.t().sealInk : this.t().inkSoft)
+      .backgroundColor(this.tab === value ? this.t().seal : this.t().card)
+      .border({ width: 1, color: this.tab === value ? Color.Transparent : this.t().line })
       .borderRadius(999)
       .padding({ left: 14, right: 14, top: 8, bottom: 8 })
       .margin({ right: 6, bottom: 6 })
@@ -724,19 +724,19 @@ export struct ArchivePage {
         }
 
         Flex({ wrap: FlexWrap.Wrap }) {
-          this.Chip('时间线', this.tab === 'timeline', () => {
+          this.Chip('时间线', 'timeline', () => {
             this.tab = 'timeline';
           })
-          this.Chip('已解决', this.tab === 'resolved', () => {
+          this.Chip('已解决', 'resolved', () => {
             this.tab = 'resolved';
           })
-          this.Chip('已放下', this.tab === 'letgo', () => {
+          this.Chip('已放下', 'letgo', () => {
             this.tab = 'letgo';
           })
-          this.Chip('看起来很蠢', this.tab === 'silly', () => {
+          this.Chip('看起来很蠢', 'silly', () => {
             this.tab = 'silly';
           })
-          this.Chip('听腻了', this.tab === 'tired', () => {
+          this.Chip('听腻了', 'tired', () => {
             this.tab = 'tired';
           })
         }

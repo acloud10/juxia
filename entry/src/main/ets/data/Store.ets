@@ -139,6 +139,52 @@ export class Store {
       }
       e.note = '';
     });
+
+    // 严格按当前模型重建设置/日状态/元数据，丢弃旧版本遗留字段（如 hkCache、hk*、ai*）。
+    // 当前没有需要兼容的旧用户，不做字段级保留。
+    const oldSettings: Settings = d.settings;
+    const cleanSettings: Settings = new Settings();
+    cleanSettings.ritualMode = oldSettings.ritualMode;
+    cleanSettings.revisitDays = oldSettings.revisitDays;
+    cleanSettings.revisitHour = oldSettings.revisitHour;
+    cleanSettings.revisitMinute = oldSettings.revisitMinute;
+    cleanSettings.theme = oldSettings.theme;
+    cleanSettings.skin = oldSettings.skin;
+    cleanSettings.showDays = oldSettings.showDays;
+    cleanSettings.appName = oldSettings.appName;
+    cleanSettings.bootLong = oldSettings.bootLong;
+    cleanSettings.bootText = oldSettings.bootText;
+    cleanSettings.bootHoldMs = oldSettings.bootHoldMs;
+    cleanSettings.bootFontScale = oldSettings.bootFontScale;
+    cleanSettings.backupRemindOff = oldSettings.backupRemindOff;
+    cleanSettings.drawCount = oldSettings.drawCount;
+    cleanSettings.drawOwn = oldSettings.drawOwn;
+    cleanSettings.drawLib = oldSettings.drawLib;
+    cleanSettings.nickname = oldSettings.nickname;
+    cleanSettings.showGreeting = oldSettings.showGreeting;
+    cleanSettings.showReflect = oldSettings.showReflect;
+    cleanSettings.fontScale = oldSettings.fontScale;
+    cleanSettings.fontScaleFollow = oldSettings.fontScaleFollow;
+    cleanSettings.privacyAccepted = oldSettings.privacyAccepted;
+    d.settings = cleanSettings;
+
+    const oldDay: DayState = d.day;
+    const cleanDay: DayState = new DayState();
+    cleanDay.date = oldDay.date;
+    cleanDay.mood = oldDay.mood;
+    cleanDay.wrote = oldDay.wrote;
+    cleanDay.drew = oldDay.drew;
+    cleanDay.backupDismissed = oldDay.backupDismissed;
+    d.day = cleanDay;
+
+    const oldMeta: MetaState = d.meta;
+    const cleanMeta: MetaState = new MetaState();
+    cleanMeta.firstUse = oldMeta.firstUse;
+    cleanMeta.seen = oldMeta.seen;
+    cleanMeta.lastBackupAt = oldMeta.lastBackupAt;
+    cleanMeta.openDays = oldMeta.openDays.slice();
+    cleanMeta.revisitReminderIds = oldMeta.revisitReminderIds;
+    d.meta = cleanMeta;
   }
 
   private persist(): void {
