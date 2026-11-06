@@ -118,30 +118,30 @@ export class BackupService {
   }
 
   static async decryptBytes(raw: Uint8Array, password: string): Promise<Uint8Array> {
-    try {
     if (raw.length < 3 + SALT_LEN + IV_LEN + TAG_LEN + 1 ||
       raw[0] !== 0x53 || raw[1] !== 0x4A || raw[2] !== 0x34) {
       throw new Error('不是 SJ4 完整加密备份');
     }
-    const salt: Uint8Array = raw.slice(3, 3 + SALT_LEN);
-    const iv: Uint8Array = raw.slice(3 + SALT_LEN, 3 + SALT_LEN + IV_LEN);
-    const body: Uint8Array = raw.slice(3 + SALT_LEN + IV_LEN);
-    const ct: Uint8Array = body.slice(0, body.length - TAG_LEN);
-    const tag: Uint8Array = body.slice(body.length - TAG_LEN);
-    const key: Uint8Array = await BackupService.deriveKey(password, salt);
-    const symKey = await cryptoFramework.createSymKeyGenerator('AES256').convertKey({ data: key });
-    const cipher = cryptoFramework.createCipher('AES256|GCM|NoPadding');
-    const params: cryptoFramework.GcmParamsSpec = {
-      algName: 'GcmParamsSpec',
-      iv: { data: iv },
-      aad: { data: new Uint8Array(0) },
-      authTag: { data: tag }
-    };
-    cipher.initSync(cryptoFramework.CryptoMode.DECRYPT_MODE, symKey, params);
-    const out = cipher.doFinalSync({ data: ct });
-    return out.data;
+    try {
+      const salt: Uint8Array = raw.slice(3, 3 + SALT_LEN);
+      const iv: Uint8Array = raw.slice(3 + SALT_LEN, 3 + SALT_LEN + IV_LEN);
+      const body: Uint8Array = raw.slice(3 + SALT_LEN + IV_LEN);
+      const ct: Uint8Array = body.slice(0, body.length - TAG_LEN);
+      const tag: Uint8Array = body.slice(body.length - TAG_LEN);
+      const key: Uint8Array = await BackupService.deriveKey(password, salt);
+      const symKey = await cryptoFramework.createSymKeyGenerator('AES256').convertKey({ data: key });
+      const cipher = cryptoFramework.createCipher('AES256|GCM|NoPadding');
+      const params: cryptoFramework.GcmParamsSpec = {
+        algName: 'GcmParamsSpec',
+        iv: { data: iv },
+        aad: { data: new Uint8Array(0) },
+        authTag: { data: tag }
+      };
+      cipher.initSync(cryptoFramework.CryptoMode.DECRYPT_MODE, symKey, params);
+      const out = cipher.doFinalSync({ data: ct });
+      return out.data;
     } catch (e) {
-      throw new Error('解密文件失败：' + String(e));
+      throw new Error('密语错误或备份文件损坏');
     }
   }
 

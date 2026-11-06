@@ -196,9 +196,13 @@ export class Repo {
         try {
           await s.executeSql('DELETE FROM material_fts WHERE material_id = ?', [materialId]);
         } catch (e) {
+          console.error('juxia fts clear one fail', String(e));
+          AppError.report('材料索引清理失败。', '材料已删除，但搜索索引可能未完全清理；重启应用后可重试。');
         }
       }
     } catch (e) {
+      console.error('juxia sentence clear one fail', String(e));
+      AppError.report('材料内容清理失败。', '删除可能未完成；请重启应用后重试，不要继续大量修改。');
     }
   }
 
@@ -413,6 +417,8 @@ export class Repo {
         await s.executeSql('INSERT INTO material_fts(material_id, ord, text) SELECT material_id, ord, text FROM material_sentences');
       }
     } catch (e) {
+      console.error('juxia fts rebuild fail', String(e));
+      AppError.report('材料搜索索引修复失败。', '材料仍可打开，但搜索可能不完整；重启应用后再试。');
     }
   }
 

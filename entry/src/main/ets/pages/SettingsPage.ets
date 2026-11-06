@@ -20,6 +20,15 @@ class MatPackItem {
   size: number = 0;
 }
 
+class FullManifest {
+  format: string = 'juxia-full';
+  version: number = 1;
+  createdAt: number = 0;
+  dataBytes: number = 0;
+  materialCount: number = 0;
+  includeMaterials: boolean = false;
+}
+
 @ComponentV2
 export struct SettingsPage {
   @Param skin: string = 'classic';
@@ -360,6 +369,41 @@ export struct SettingsPage {
     return '';
   }
 
+  private writeFullManifest(dir: string, dataPath: string, materialCount: number,
+    includeMaterials: boolean, createdAt: number): void {
+    const st = fs.statSync(dataPath);
+    const m: FullManifest = new FullManifest();
+    m.createdAt = createdAt;
+    m.dataBytes = st.size;
+    m.materialCount = materialCount;
+    m.includeMaterials = includeMaterials;
+    const f = fs.openSync(dir + '/manifest.json', fs.OpenMode.CREATE | fs.OpenMode.READ_WRITE | fs.OpenMode.TRUNC);
+    fs.writeSync(f.fd, JSON.stringify(m));
+    fs.closeSync(f);
+  }
+
+  private verifyFullManifest(baseDir: string, dataPath: string, d: AppData): void {
+    const manifestPath: string = this.findFile(baseDir, 'manifest.json');
+    if (manifestPath.length === 0) return;
+    let m: FullManifest;
+    try {
+      const text: string = util.TextDecoder.create('utf-8').decodeToString(this.readAllBytes(manifestPath));
+      m = JSON.parse(text) as FullManifest;
+    } catch (e) {
+      throw new Error('备份清单损坏');
+    }
+    if (m.format !== 'juxia-full' || m.version !== 1) {
+      throw new Error('备份清单版本不兼容');
+    }
+    const st = fs.statSync(dataPath);
+    if (st.size !== m.dataBytes) {
+      throw new Error('备份校验失败：数据大小不一致');
+    }
+    if (d.materials.length !== m.materialCount) {
+      throw new Error('备份校验失败：材料数量不一致');
+    }
+  }
+
   private purgeBackupDir(dir: string): void {
     const matDir: string = dir + '/materials';
     try {
@@ -440,15 +484,23 @@ export struct SettingsPage {
       const mf = fs.openSync(dir + '/data.json', fs.OpenMode.CREATE | fs.OpenMode.READ_WRITE | fs.OpenMode.TRUNC);
       fs.writeSync(mf.fd, JSON.stringify(obj));
       fs.closeSync(mf);
+      this.writeFullManifest(dir, dir + '/data.json', obj.materials.length, this.fullIncludeMaterials, stamp);
       if (this.fullIncludeMaterials) {
+        let failedMaterials: number = 0;
         obj.materials.forEach((m: MaterialEntry) => {
           if (m.path.length > 0) {
             try {
               fs.copyFileSync(m.path, matDir + '/' + m.id + '.txt');
             } catch (e) {
+              failedMaterials++;
             }
           }
         });
+        if (failedMaterials > 0) {
+          this.purgeBackupDir(dir);
+          AppError.report('材料复制失败，完整备份未生成。', `有 ${failedMaterials} 份材料无法复制；请检查材料文件是否还在，或先不勾选材料导出。`);
+          return;
+        }
       }
       const zip: string = ctx.cacheDir + '/full_' + stamp + '.zip';
       await zlib.compressFile(dir, zip, { level: zlib.CompressLevel.COMPRESS_LEVEL_DEFAULT_COMPRESSION });
@@ -526,6 +578,7 @@ export struct SettingsPage {
       const text: string = util.TextDecoder.create('utf-8').decodeToString(this.readAllBytes(dataPath));
       const d = JSON.parse(text) as AppData;
       if (!BackupService.valid(d)) throw new Error('shape');
+      this.verifyFullManifest(baseDir, dataPath, d);
       const matDir: string = ctx.filesDir + '/materials';
       // 覆盖前先清掉旧材料文件，否则每恢复一次就留下一批孤儿
       try {
@@ -545,6 +598,7 @@ export struct SettingsPage {
       }
       if (Store.get().data.materials.length > 0) {
       }
+      let failedMaterials: number = 0;
       for (const m of Store.get().data.materials) {
         const src: string = baseDir + '/materials/' + m.id + '.txt';
         const target: string = matDir + '/' + m.id + '.txt';
@@ -555,6 +609,7 @@ export struct SettingsPage {
           Store.get().clearMaterialIndex(m.id);
           await MaterialIndexer.indexFile(m.id, target);
         } catch (e) {
+          failedMaterials++;
         }
       }
       const lost: number = this.pruneMissingMaterials();
@@ -564,9 +619,18 @@ export struct SettingsPage {
       this.purgeBackupDir(dest);
       const ctx2 = this.getUIContext().getHostContext() as common.UIAbilityContext;
       ReminderService.rescheduleAll(ctx2, false);
-      this.toast(lost > 0 ? `完整备份已恢复；${lost} 份材料原文缺失，已移除` : '完整备份已恢复，材料与索引一并回来');
+      this.toast(failedMaterials > 0
+        ? `完整备份已恢复；${failedMaterials} 份材料恢复失败，已移除`
+        : (lost > 0 ? `完整备份已恢复；${lost} 份材料原文缺失，已移除` : '完整备份已恢复，材料与索引一并回来'));
     } catch (e) {
-      AppError.report('完整备份恢复失败。', '确认密语正确、备份文件完整后重试；不要删除原文件。');
+      const message: string = String((e as Error).message ?? '');
+      if (message.includes('不是 SJ4')) {
+        AppError.report('选择的不是 .sj4 完整加密备份。', '请选择由句栖导出的 .sj4 文件；不要把 .zip 改名成 .sj4。');
+      } else if (message.includes('密语')) {
+        AppError.report('密语不对，或备份文件已损坏。', '确认密语正确；若仍失败，换一个备份文件。原文件不要删除。');
+      } else {
+        AppError.report('完整备份恢复失败。', '确认文件完整、格式正确后重试；不要删除原文件。');
+      }
     }
   }
 
@@ -586,15 +650,23 @@ export struct SettingsPage {
       const mf = fs.openSync(dir + '/data.json', fs.OpenMode.CREATE | fs.OpenMode.READ_WRITE | fs.OpenMode.TRUNC);
       fs.writeSync(mf.fd, JSON.stringify(obj));
       fs.closeSync(mf);
+      this.writeFullManifest(dir, dir + '/data.json', obj.materials.length, this.plainIncludeMaterials, stamp);
       if (this.plainIncludeMaterials) {
+        let failedMaterials: number = 0;
         obj.materials.forEach((m: MaterialEntry) => {
           if (m.path.length > 0) {
             try {
               fs.copyFileSync(m.path, matDir + '/' + m.id + '.txt');
             } catch (e) {
+              failedMaterials++;
             }
           }
         });
+        if (failedMaterials > 0) {
+          this.purgeBackupDir(dir);
+          AppError.report('材料复制失败，完整备份未生成。', `有 ${failedMaterials} 份材料无法复制；请检查材料文件是否还在，或先不勾选材料导出。`);
+          return;
+        }
       }
       const zip: string = ctx.cacheDir + '/plain_' + stamp + '.zip';
       await zlib.compressFile(dir, zip, { level: zlib.CompressLevel.COMPRESS_LEVEL_DEFAULT_COMPRESSION });
@@ -645,6 +717,7 @@ export struct SettingsPage {
       const text: string = util.TextDecoder.create('utf-8').decodeToString(this.readAllBytes(dataPath));
       const d = JSON.parse(text) as AppData;
       if (!BackupService.valid(d)) throw new Error('shape');
+      this.verifyFullManifest(baseDir, dataPath, d);
       const matDir: string = ctx.filesDir + '/materials';
       try {
         const olds: string[] = fs.listFileSync(matDir);
@@ -661,6 +734,7 @@ export struct SettingsPage {
         fs.mkdirSync(matDir);
       } catch (e) {
       }
+      let failedMaterials: number = 0;
       for (const m of Store.get().data.materials) {
         const src: string = baseDir + '/materials/' + m.id + '.txt';
         const target: string = matDir + '/' + m.id + '.txt';
@@ -671,6 +745,7 @@ export struct SettingsPage {
           Store.get().clearMaterialIndex(m.id);
           await MaterialIndexer.indexFile(m.id, target);
         } catch (e) {
+          failedMaterials++;
         }
       }
       const lost: number = this.pruneMissingMaterials();
@@ -680,7 +755,9 @@ export struct SettingsPage {
       this.purgeBackupDir(dest);
       const ctx2 = this.getUIContext().getHostContext() as common.UIAbilityContext;
       ReminderService.rescheduleAll(ctx2, false);
-      this.toast(lost > 0 ? `不加密备份已恢复；${lost} 份材料缺失，已移除` : '不加密备份已恢复');
+      this.toast(failedMaterials > 0
+        ? `不加密备份已恢复；${failedMaterials} 份材料恢复失败，已移除`
+        : (lost > 0 ? `不加密备份已恢复；${lost} 份材料缺失，已移除` : '不加密备份已恢复'));
     } catch (e) {
       AppError.report('不加密备份恢复失败。', '确认备份文件完整、格式正确后重试；不要删除原文件。');
     }
@@ -733,6 +810,7 @@ export struct SettingsPage {
       const dir: string = ctx.cacheDir + '/matpack_' + stamp;
       fs.mkdirSync(dir);
       const items: MatPackItem[] = [];
+      let failedMaterials: number = 0;
       mats.forEach((m: MaterialEntry) => {
         try {
           fs.copyFileSync(m.path, dir + '/' + m.id + '.txt');
@@ -742,6 +820,7 @@ export struct SettingsPage {
           it.size = m.size;
           items.push(it);
         } catch (e) {
+          failedMaterials++;
         }
       });
       const mf = fs.openSync(dir + '/manifest.json', fs.OpenMode.CREATE | fs.OpenMode.READ_WRITE | fs.OpenMode.TRUNC);
@@ -764,7 +843,9 @@ export struct SettingsPage {
       }
       fs.closeSync(rf);
       fs.closeSync(wf);
-      this.toast(`已导出 ${items.length} 份材料（${Math.round(stat.size / 1024)} KB）`);
+      this.toast(failedMaterials > 0
+        ? `已导出 ${items.length} 份，${failedMaterials} 份失败（${Math.round(stat.size / 1024)} KB）`
+        : `已导出 ${items.length} 份材料（${Math.round(stat.size / 1024)} KB）`);
     } catch (e) {
       AppError.report('材料包导出失败。', '检查存储空间后重试；文件过多时先分批。');
     }
@@ -810,6 +891,7 @@ export struct SettingsPage {
       }
       let count: number = 0;
       let skipped: number = 0;
+      let failed: number = 0;
       if (items.length > 0) {
       }
       for (const it of items) {
@@ -829,9 +911,12 @@ export struct SettingsPage {
           await MaterialIndexer.indexFile(newId, dst);
           count++;
         } catch (e) {
+          failed++;
         }
       }
-      this.toast(skipped > 0 ? `已恢复 ${count} 份材料，跳过 ${skipped} 份已存在` : `已恢复 ${count} 份材料并重建索引`);
+      this.toast(failed > 0
+        ? `已恢复 ${count} 份，跳过 ${skipped} 份，失败 ${failed} 份`
+        : (skipped > 0 ? `已恢复 ${count} 份材料，跳过 ${skipped} 份已存在` : `已恢复 ${count} 份材料并重建索引`));
     } catch (e) {
       AppError.report('材料包导入失败。', '确认压缩包完整、未被修改后重试。');
     }
