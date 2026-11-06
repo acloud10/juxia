@@ -22,6 +22,7 @@ export default class EntryAbility extends UIAbility {
         UiState.get().openRevisit = true;
       }
     } catch (e) {
+      console.error('juxia wish handle fail', String(e));
     }
   }
 

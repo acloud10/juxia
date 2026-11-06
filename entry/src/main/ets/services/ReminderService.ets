@@ -70,6 +70,7 @@ export class ReminderService {
         try {
           await reminderAgentManager.cancelReminder(id);
         } catch (err) {
+          console.error('juxia reminder cancel old fail', String(err));
         }
       }
     }
@@ -78,6 +79,7 @@ export class ReminderService {
     try {
       await reminderAgentManager.cancelAllReminders();
     } catch (e) {
+      console.error('juxia reminder cancel all fail', String(e));
     }
 
     if (requestPermission) {
@@ -128,6 +130,7 @@ export class ReminderService {
       try {
         await reminderAgentManager.cancelReminder(map[key]);
       } catch (err) {
+        console.error('juxia reminder cancel one fail', String(err));
       }
     }
     st.data.meta.revisitReminderIds = {};

@@ -804,6 +804,7 @@ export class Store {
       p.putSync('draft_' + kind, JSON.stringify({ d: todayStr(), t: text }));
       p.flushSync();
     } catch (e) {
+      console.error('juxia draft save fail', kind, String(e));
     }
   }
 
@@ -816,6 +817,7 @@ export class Store {
       const o = JSON.parse(raw) as DraftPayload;
       if (o.d === todayStr()) return o.t ?? '';
     } catch (e) {
+      console.error('juxia draft load fail', kind, String(e));
     }
     return '';
   }
@@ -827,6 +829,7 @@ export class Store {
       p.deleteSync('draft_' + kind);
       p.flushSync();
     } catch (e) {
+      console.error('juxia draft clear fail', kind, String(e));
     }
   }
 }

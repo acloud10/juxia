@@ -531,6 +531,7 @@ export class Repo {
         else if (k === 'day') d.day = JSON.parse(v) as DayState;
         else if (k === 'meta') d.meta = JSON.parse(v) as MetaState;
       } catch (e) {
+        console.error('juxia kv row parse fail', k, String(e));
       }
     }
     kv.close();
@@ -589,6 +590,7 @@ export class Repo {
         try {
           await t();
         } catch (e) {
+          console.error('juxia row task fail', String(e));
         }
       }
     }

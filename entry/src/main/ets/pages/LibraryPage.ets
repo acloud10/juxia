@@ -196,12 +196,9 @@ export struct LibraryPage {
   private removeMaterial(m: MaterialEntry): void {
     if (m.path.length > 0) {
       try {
-        try {
-      fs.unlinkSync(m.path);
-    } catch (e) {
-      console.error('juxia material unlink fail', String(e));
-    }
+        fs.unlinkSync(m.path);
       } catch (e) {
+        console.error('juxia material unlink fail', String(e));
       }
     }
     Store.get().deleteMaterial(m.id);
@@ -316,6 +313,7 @@ export struct LibraryPage {
       try {
         fs.mkdirSync(dir);
       } catch (e) {
+        console.error('juxia material dir ensure fail', String(e));
       }
       let fileName: string = '材料';
       const segs: string[] = uris[0].split('/');

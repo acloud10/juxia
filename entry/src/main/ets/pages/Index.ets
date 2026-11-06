@@ -215,6 +215,7 @@ struct Index {
         w.setWindowBackgroundColor(d ? '#14110b' : '#F6F0E3');
       });
     } catch (e) {
+      console.error('juxia window background fail', String(e));
     }
   }
 

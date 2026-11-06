@@ -167,6 +167,7 @@ export struct SettingsPage {
         const ctx = this.getUIContext().getHostContext() as common.UIAbilityContext;
         ctx.getApplicationContext().setFontSizeScale(sys);
       } catch (e) {
+        console.error('juxia system font scale fail', String(e));
       }
     }, 30) as number;
   }
@@ -365,6 +366,7 @@ export struct SettingsPage {
         }
       }
     } catch (e) {
+      console.error('juxia backup file search fail', String(e));
     }
     return '';
   }
@@ -587,14 +589,17 @@ export struct SettingsPage {
           try {
             fs.unlinkSync(matDir + '/' + name);
           } catch (e) {
+            console.error('juxia old material unlink fail', name, String(e));
           }
         });
       } catch (e) {
+        console.error('juxia old material list fail', String(e));
       }
       await Store.get().replaceAll(d);
       try {
         fs.mkdirSync(matDir);
       } catch (e) {
+        console.error('juxia material dir ensure fail', String(e));
       }
       if (Store.get().data.materials.length > 0) {
       }
@@ -725,14 +730,17 @@ export struct SettingsPage {
           try {
             fs.unlinkSync(matDir + '/' + name);
           } catch (e) {
+            console.error('juxia old material unlink fail', name, String(e));
           }
         });
       } catch (e) {
+        console.error('juxia old material list fail', String(e));
       }
       await Store.get().replaceAll(d);
       try {
         fs.mkdirSync(matDir);
       } catch (e) {
+        console.error('juxia material dir ensure fail', String(e));
       }
       let failedMaterials: number = 0;
       for (const m of Store.get().data.materials) {
@@ -888,6 +896,7 @@ export struct SettingsPage {
       try {
         fs.mkdirSync(matDir);
       } catch (e) {
+        console.error('juxia material dir ensure fail', String(e));
       }
       let count: number = 0;
       let skipped: number = 0;

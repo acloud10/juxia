@@ -86,6 +86,7 @@ export struct MinePage {
         this.kbHeight = h / display.getDefaultDisplaySync().densityPixels;
       });
     } catch (e) {
+      console.error('juxia keyboard bind fail', String(e));
     }
   }
 
