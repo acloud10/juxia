@@ -3,7 +3,7 @@ import { curves } from '@kit.ArkUI';
 import { window, display } from '@kit.ArkUI';
 import { common } from '@kit.AbilityKit';
 import { Store } from '../data/Store';
-import { OwnEntry, LibEntry, NoteItem, fmtDate } from '../model/Types';
+import { OwnEntry, LibEntry, NoteItem, fmtDate, todayStr } from '../model/Types';
 import { ReminderService } from '../services/ReminderService';
 import { Tokens, getTokens, FONT_SERIF, FONT_SANS } from '../theme/Theme';
 import { ArrayDataSource } from '../utils/DataSource';
@@ -138,7 +138,7 @@ export struct MinePage {
     this.refs = st.reflects();
     this.showRef = st.data.settings.showReflect;
     if (!this.refMonthInit) {
-      const now: string = fmtDate(Date.now()).slice(0, 7);
+      const now: string = todayStr().slice(0, 7);
       this.refOpenYears = [now.slice(0, 4)];
       this.refOpenMonths = [now];
       this.refMonthInit = true;
@@ -163,7 +163,7 @@ export struct MinePage {
   private refYearGroups(): ReflectYear[] {
     const out: ReflectYear[] = [];
     this.refShown().forEach((e: OwnEntry) => {
-      const monthKey: string = fmtDate(e.createdAt).slice(0, 7);
+      const monthKey: string = todayStr(new Date(e.createdAt)).slice(0, 7);
       const yearKey: string = monthKey.slice(0, 4);
       let yi: number = out.findIndex((y: ReflectYear) => y.key === yearKey);
       if (yi < 0) {
@@ -178,7 +178,7 @@ export struct MinePage {
       if (mi < 0) {
         const m: ReflectGroup = new ReflectGroup();
         m.key = monthKey;
-        m.label = `${monthKey.slice(5, 7)} 月`;
+        m.label = `${parseInt(monthKey.slice(5, 7), 10)} 月`;
         y.months.push(m);
         mi = y.months.length - 1;
       }
