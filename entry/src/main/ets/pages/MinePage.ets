@@ -3,7 +3,7 @@ import { curves } from '@kit.ArkUI';
 import { window, display } from '@kit.ArkUI';
 import { common } from '@kit.AbilityKit';
 import { Store } from '../data/Store';
-import { OwnEntry, LibEntry, NoteItem, fmtDate, todayStr } from '../model/Types';
+import { OwnEntry, LibEntry, NoteItem, fmtDate } from '../model/Types';
 import { ReminderService } from '../services/ReminderService';
 import { Tokens, getTokens, FONT_SERIF, FONT_SANS } from '../theme/Theme';
 import { ArrayDataSource } from '../utils/DataSource';
@@ -138,7 +138,7 @@ export struct MinePage {
     this.refs = st.reflects();
     this.showRef = st.data.settings.showReflect;
     if (!this.refMonthInit) {
-      const now: string = todayStr().slice(0, 7);
+      const now: string = this.monthKeyOf(Date.now());
       this.refOpenYears = [now.slice(0, 4)];
       this.refOpenMonths = [now];
       this.refMonthInit = true;
@@ -160,11 +160,17 @@ export struct MinePage {
     return this.filteredReflects().slice(0, this.refLimit);
   }
 
+  // 省身分组的键：固定 YYYY-MM，与展示用的中文日期解耦
+  private monthKeyOf(ts: number): string {
+    const d = new Date(ts);
+    return `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`;
+  }
+
   private refYearGroups(): ReflectYear[] {
     const out: ReflectYear[] = [];
     this.refShown().forEach((e: OwnEntry) => {
-      const monthKey: string = todayStr(new Date(e.createdAt)).slice(0, 7);
-      const yearKey: string = monthKey.slice(0, 4);
+      const key: string = this.monthKeyOf(e.createdAt);
+      const yearKey: string = key.slice(0, 4);
       let yi: number = out.findIndex((y: ReflectYear) => y.key === yearKey);
       if (yi < 0) {
         const y: ReflectYear = new ReflectYear();
@@ -174,11 +180,11 @@ export struct MinePage {
         yi = out.length - 1;
       }
       const y: ReflectYear = out[yi];
-      let mi: number = y.months.findIndex((m: ReflectGroup) => m.key === monthKey);
+      let mi: number = y.months.findIndex((m: ReflectGroup) => m.key === key);
       if (mi < 0) {
         const m: ReflectGroup = new ReflectGroup();
-        m.key = monthKey;
-        m.label = `${parseInt(monthKey.slice(5, 7), 10)} 月`;
+        m.key = key;
+        m.label = `${Number(key.slice(5, 7))} 月`;
         y.months.push(m);
         mi = y.months.length - 1;
       }
