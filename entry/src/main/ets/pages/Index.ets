@@ -462,6 +462,11 @@ struct Index {
 
   build() {
     Stack({ alignContent: Alignment.Bottom }) {
+      // 最底层兜底：API 26 不再设置原生窗口底色，用页面底色覆盖系统默认色。
+      Column()
+        .width('100%')
+        .height('100%')
+        .backgroundColor(this.dark ? '#14110b' : '#F6F0E3')
       if (this.skin !== 'plain') {
         Column()
           .width('100%')
