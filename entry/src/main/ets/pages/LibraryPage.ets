@@ -488,6 +488,7 @@ export struct LibraryPage {
         .fontFamily(FONT_SERIF)
         .fontColor(this.t().inkStrong)
       Text(count)
+        .fontFamily(FONT_SANS)
         .fontSize(10)
         .fontColor(this.t().inkSoft)
         .backgroundColor(this.t().card)
@@ -497,6 +498,7 @@ export struct LibraryPage {
         .margin({ left: 8 })
       Blank()
       Text(open ? '−' : '＋')
+        .fontFamily(FONT_SANS)
         .fontSize(16)
         .fontColor(this.t().seal)
     }
@@ -517,6 +519,7 @@ export struct LibraryPage {
         .fontFamily(FONT_SERIF)
         .fontColor(this.t().inkStrong)
       Text(`${this.filteredLibs().length} 句`)
+        .fontFamily(FONT_SANS)
         .fontSize(10)
         .fontColor(this.t().inkSoft)
         .backgroundColor(this.t().card)
@@ -526,6 +529,7 @@ export struct LibraryPage {
         .margin({ left: 8 })
       Blank()
       Text(this.showLib ? '−' : '＋')
+        .fontFamily(FONT_SANS)
         .fontSize(16)
         .fontColor(this.t().seal)
     }
@@ -548,6 +552,7 @@ export struct LibraryPage {
         .fontFamily(FONT_SERIF)
         .fontColor(this.t().inkStrong)
       Text(`${this.replies.length} 句`)
+        .fontFamily(FONT_SANS)
         .fontSize(10)
         .fontColor(this.t().inkSoft)
         .backgroundColor(this.t().card)
@@ -557,6 +562,7 @@ export struct LibraryPage {
         .margin({ left: 8 })
       Blank()
       Text(this.showReplies ? '−' : '＋')
+        .fontFamily(FONT_SANS)
         .fontSize(16)
         .fontColor(this.t().seal)
     }
@@ -586,6 +592,7 @@ export struct LibraryPage {
         .width('100%')
       if (this.replySource(e).length > 0) {
         Text(`回的是：${this.replySource(e)}`)
+          .fontFamily(FONT_SANS)
           .fontSize(11.5)
           .lineHeight(21)
           .fontColor(this.t().inkSoft)
@@ -595,6 +602,7 @@ export struct LibraryPage {
           .margin({ top: 4 })
       }
       Text(fmtDate(e.createdAt))
+        .fontFamily(FONT_SANS)
         .fontSize(10)
         .fontColor(this.t().inkSoft)
         .margin({ top: 4 })
@@ -614,6 +622,7 @@ export struct LibraryPage {
           .fontFamily(FONT_SERIF)
           .fontColor(this.t().inkStrong)
         Text(`${this.matCount} 份`)
+          .fontFamily(FONT_SANS)
           .fontSize(10)
           .fontColor(this.t().inkSoft)
           .backgroundColor(this.t().card)
@@ -622,6 +631,7 @@ export struct LibraryPage {
           .padding({ left: 9, right: 9, top: 2, bottom: 2 })
           .margin({ left: 8 })
         Text('?')
+          .fontFamily(FONT_SANS)
           .fontSize(10)
           .fontColor(this.t().seal)
           .border({ width: 1, color: this.t().seal })
@@ -635,6 +645,7 @@ export struct LibraryPage {
           })
         Blank()
         Text(this.showMaterials ? '−' : '＋')
+          .fontFamily(FONT_SANS)
           .fontSize(16)
           .fontColor(this.t().seal)
       }
@@ -645,6 +656,7 @@ export struct LibraryPage {
       })
       if (this.matIndexing) {
         Text(this.matProgress)
+          .fontFamily(FONT_SANS)
           .fontSize(11.5)
           .fontColor(this.t().seal)
           .width('100%')
@@ -652,6 +664,7 @@ export struct LibraryPage {
       }
       if (this.showMatRules) {
         Text('一、断句：空行分隔句子；单个换行按空格处理；段内句号不再单独切。\n二、长度：不按字数判断是不是句子；长句在卡片里可以滚动阅读。\n三、关键词：留空随机；多个词用空格隔开，必须全部出现。\n四、范围：默认全部材料随机挑一份，也可以先选定某一份。\n五、原则：全程本机，不改写，抽出的一定是原文并注明材料名。\n六、批量收藏：材料行点「预览」，可逐句选择；已在句库、已在排除名单的不默认选，同一材料内重复只留一条。\n七、格式：支持 .txt 和 Markdown（.md / .markdown）；Markdown 会先去掉标记再分句。')
+          .fontFamily(FONT_SANS)
           .fontSize(11.5)
           .lineHeight(21)
           .fontColor(this.t().inkSoft)
@@ -674,6 +687,7 @@ export struct LibraryPage {
         .fontFamily(FONT_SERIF)
         .fontColor(this.t().inkStrong)
       Text(`${this.dislikes.length} 条`)
+        .fontFamily(FONT_SANS)
         .fontSize(10)
         .fontColor(this.t().inkSoft)
         .backgroundColor(this.t().card)
@@ -683,6 +697,7 @@ export struct LibraryPage {
         .margin({ left: 8 })
       Blank()
       Text(this.showDislikes ? '−' : '＋')
+        .fontFamily(FONT_SANS)
         .fontSize(16)
         .fontColor(this.t().seal)
     }
@@ -699,6 +714,7 @@ export struct LibraryPage {
   @Builder
   Chip(label: string, active: boolean, action: () => void) {
     Text(label)
+      .fontFamily(FONT_SANS)
       .fontSize(11.5)
       .letterSpacing(1.2)
       .fontColor(active ? this.t().sealInk : this.t().inkSoft)
@@ -771,6 +787,7 @@ export struct LibraryPage {
   RelRow(x: OwnEntry) {
     Row({ space: 8 }) {
       Text(x.kind === 'encourage' ? '鼓励' : '旧事')
+        .fontFamily(FONT_SANS)
         .fontSize(10)
         .fontColor(this.t().inkSoft)
         .backgroundColor(this.t().card)
@@ -778,6 +795,7 @@ export struct LibraryPage {
         .borderRadius(999)
         .padding({ left: 8, right: 8, top: 2, bottom: 2 })
       Text(x.text)
+        .fontFamily(FONT_SANS)
         .fontSize(12.5)
         .lineHeight(20)
         .fontColor(this.t().ink)
@@ -785,6 +803,7 @@ export struct LibraryPage {
         .textOverflow({ overflow: TextOverflow.Ellipsis })
         .layoutWeight(1)
       Text(this.relOn(x.id) ? '已关联' : '关联')
+        .fontFamily(FONT_SANS)
         .fontSize(11)
         .fontColor(this.relOn(x.id) ? this.t().seal : this.t().inkSoft)
     }
@@ -800,6 +819,7 @@ export struct LibraryPage {
   RelPanel(e: LibEntry) {
     Column({ space: 0 }) {
       Text('这条收藏可以同时关联自己的鼓励和旧事。点一下切换。')
+        .fontFamily(FONT_SANS)
         .fontSize(11)
         .lineHeight(19)
         .fontColor(this.t().inkSoft)
@@ -807,6 +827,7 @@ export struct LibraryPage {
         .margin({ top: 4, bottom: 2 })
       if (this.relEnc().length === 0 && this.relWnd().length === 0) {
         Text('你还没有写过鼓励或旧事，先去今日页写一句。')
+          .fontFamily(FONT_SANS)
           .fontSize(12)
           .fontColor(this.t().inkSoft)
           .width('100%')
@@ -835,6 +856,7 @@ export struct LibraryPage {
         .width('100%')
       Row({ space: 6 }) {
         Text(e.source.length > 0 ? e.source : '无出处')
+          .fontFamily(FONT_SANS)
           .fontSize(10.5)
           .letterSpacing(1)
           .fontColor(this.t().inkSoft)
@@ -842,6 +864,7 @@ export struct LibraryPage {
           .textOverflow({ overflow: TextOverflow.Ellipsis })
           .layoutWeight(1)
         Text(e.tag)
+          .fontFamily(FONT_SANS)
           .fontSize(10)
           .letterSpacing(1)
           .fontColor(this.t().seal)
@@ -865,6 +888,7 @@ export struct LibraryPage {
         })
         if (e.bindIds.length > 0) {
           Text(`已关联 ${e.bindIds.length}`)
+            .fontFamily(FONT_SANS)
             .fontSize(10.5)
             .fontColor(this.t().seal)
             .padding({ left: 8, right: 8, top: 6, bottom: 6 })
@@ -885,6 +909,7 @@ export struct LibraryPage {
   MaterialList() {
     if (this.matCount === 0) {
       Text('材料库还是空的。把你的摘抄、某本书的文本粘贴进来，或选择一个 .txt / .md 文件。')
+        .fontFamily(FONT_SANS)
         .fontSize(12.5)
         .lineHeight(24)
         .fontColor(this.t().inkSoft)
@@ -915,6 +940,7 @@ export struct LibraryPage {
               .textOverflow({ overflow: TextOverflow.Ellipsis })
               .layoutWeight(1)
             Text(this.materialSize(m))
+              .fontFamily(FONT_SANS)
               .fontSize(10)
               .fontColor(this.t().inkSoft)
               .backgroundColor(this.t().card)
@@ -937,6 +963,7 @@ export struct LibraryPage {
           }
           .width('100%')
           Text(this.materialBrief(m))
+            .fontFamily(FONT_SANS)
             .fontSize(12)
             .lineHeight(22)
             .fontColor(this.t().inkSoft)
@@ -969,6 +996,7 @@ export struct LibraryPage {
             .fontColor(this.t().inkStrong)
           Blank()
           Text('×')
+            .fontFamily(FONT_SANS)
             .fontSize(22)
             .fontColor(this.t().inkSoft)
             .padding({ left: 8, right: 8 })
@@ -978,6 +1006,7 @@ export struct LibraryPage {
         }
         .width('100%')
         Text(this.matPreviewName)
+          .fontFamily(FONT_SANS)
           .fontSize(11.5)
           .fontColor(this.t().inkSoft)
           .width('100%')
@@ -985,6 +1014,7 @@ export struct LibraryPage {
           .textOverflow({ overflow: TextOverflow.Ellipsis })
         if (this.matPreviewLoading) {
           Text('正在读取句子…')
+            .fontFamily(FONT_SANS)
             .fontSize(12.5)
             .fontColor(this.t().inkSoft)
             .width('100%')
@@ -992,6 +1022,7 @@ export struct LibraryPage {
         } else {
           Row({ space: 4 }) {
             Text(`已选 ${this.matPick.length} / 共 ${this.matPreviewItems.length} 句`)
+              .fontFamily(FONT_SANS)
               .fontSize(11)
               .fontColor(this.t().seal)
             Blank()
@@ -1005,6 +1036,7 @@ export struct LibraryPage {
           .width('100%')
           if (this.matPreviewItems.length === 0) {
             Text('这份材料还没有切出句子。')
+              .fontFamily(FONT_SANS)
               .fontSize(12.5)
               .fontColor(this.t().inkSoft)
               .width('100%')
@@ -1017,10 +1049,12 @@ export struct LibraryPage {
                   Column({ space: 0 }) {
                     Row({ space: 6 }) {
                       Text(this.matPick.includes(t) ? '✓' : '○')
+                        .fontFamily(FONT_SANS)
                         .fontSize(13)
                         .fontColor(this.matPick.includes(t) ? this.t().seal : this.t().inkSoft)
                         .width(18)
                       Text(t)
+                        .fontFamily(FONT_SANS)
                         .fontSize(13)
                         .lineHeight(24)
                         .fontColor(this.previewInLib(t) || this.previewExcluded(t)
@@ -1032,12 +1066,14 @@ export struct LibraryPage {
                     .padding({ top: 8, bottom: 6 })
                     if (this.previewInLib(t) || this.previewExcluded(t)) {
                       Text(this.previewInLib(t) ? '已在句库' : '已在排除名单')
+                        .fontFamily(FONT_SANS)
                         .fontSize(10)
                         .fontColor(this.t().inkSoft)
                         .width('100%')
                         .padding({ left: 24, bottom: 4 })
                     } else if (t.length > 200) {
                       Text(`长句 · ${t.length} 字`)
+                        .fontFamily(FONT_SANS)
                         .fontSize(10)
                         .fontColor(this.t().seal)
                         .width('100%')
@@ -1110,6 +1146,7 @@ export struct LibraryPage {
       })
       .margin({ top: 8 })
     Text('支持 UTF-8 / UTF-16 / GB18030 的 .txt 和 Markdown（.md / .markdown）文本。可以直接导入原始文本；句栖会按空行分句，单个换行按空格处理。')
+      .fontFamily(FONT_SANS)
       .fontSize(11)
       .lineHeight(19)
       .fontColor(this.t().inkSoft)
@@ -1136,12 +1173,14 @@ export struct LibraryPage {
     .margin({ top: 8 })
     if (this.matSaving) {
       Text(this.matProgress.length > 0 ? this.matProgress : '请稍等，正在保存…')
+        .fontFamily(FONT_SANS)
         .fontSize(11.5)
         .fontColor(this.t().seal)
         .width('100%')
         .margin({ top: 4 })
     }
     Text('材料只存在本机。检索时只抽原文并注明材料名，不编造。没有固定大小上限，但大文件（数 MB 以上）导入与检索都会明显变慢，建议按书拆分，并用空行分隔句子再导入。')
+      .fontFamily(FONT_SANS)
       .fontSize(11.5)
       .lineHeight(22)
       .fontColor(this.t().inkSoft)
@@ -1159,6 +1198,7 @@ export struct LibraryPage {
         .fontColor(this.t().inkStrong)
         .width('100%')
       Text('关键词用空格隔开，表示全部包含；留空则随机抽一句。')
+        .fontFamily(FONT_SANS)
         .fontSize(11.5)
         .fontColor(this.t().inkSoft)
         .width('100%')
@@ -1206,6 +1246,7 @@ export struct LibraryPage {
             .wordBreak(WordBreak.BREAK_ALL)
             .width('100%')
           Text(`摘自《${this.findName}》 · 原文检索`)
+            .fontFamily(FONT_SANS)
             .fontSize(10.5)
             .letterSpacing(1)
             .fontColor(this.t().inkSoft)
@@ -1250,6 +1291,7 @@ export struct LibraryPage {
           .fontColor(this.t().inkStrong)
         Blank()
         Text(this.showFind ? '收起' : '找一句')
+          .fontFamily(FONT_SANS)
           .fontSize(12.5)
           .fontColor(this.t().seal)
           .padding({ left: 10, right: 10, top: 8, bottom: 8 })
@@ -1288,6 +1330,7 @@ export struct LibraryPage {
             })
           }
           Text('收藏和材料检索都可以取一句；应用不自带句子，内容由你自己加入。')
+            .fontFamily(FONT_SANS)
             .fontSize(12.5)
             .lineHeight(23)
             .fontColor(this.t().inkSoft)
@@ -1314,6 +1357,7 @@ export struct LibraryPage {
                   .fontFamily(FONT_SERIF)
                   .fontColor(this.t().inkStrong)
                 Text(this.qLib.length > 0 ? '换个词试试。' : '还没有收藏。去材料库找一句；也可以自己写。')
+                  .fontFamily(FONT_SANS)
                   .fontSize(12)
                   .lineHeight(22)
                   .fontColor(this.t().inkSoft)
@@ -1339,6 +1383,7 @@ export struct LibraryPage {
           Column({ space: 0 }) {
             if (this.replies.length === 0) {
               Text('还没有回信。抽到自己的句子时，可以回它一句。')
+                .fontFamily(FONT_SANS)
                 .fontSize(12.5)
                 .lineHeight(24)
                 .fontColor(this.t().inkSoft)
@@ -1367,6 +1412,7 @@ export struct LibraryPage {
           Column({ space: 0 }) {
             if (this.dislikes.length === 0) {
               Text('还没有排除任何句子。点「不喜欢」会记到这里，不再出现在抽签与收藏里。')
+                .fontFamily(FONT_SANS)
                 .fontSize(12.5)
                 .lineHeight(24)
                 .fontColor(this.t().inkSoft)
@@ -1385,6 +1431,7 @@ export struct LibraryPage {
                     .width('100%')
                   Row({ space: 6 }) {
                     Text(this.originName(d.origin))
+                      .fontFamily(FONT_SANS)
                       .fontSize(10)
                       .fontColor(this.t().inkSoft)
                       .backgroundColor(this.t().card)
@@ -1414,6 +1461,7 @@ export struct LibraryPage {
         Blank()
 
         Text('句库数据只存在这台设备上（自己导出的数据除外，取决于自己存放的位置）')
+          .fontFamily(FONT_SANS)
           .fontSize(11.5)
           .fontColor(this.t().inkSoft)
           .width('100%')

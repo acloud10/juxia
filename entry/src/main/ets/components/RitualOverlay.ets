@@ -2,7 +2,7 @@
 
 import { RitualCtx, sealCN, todayStr } from '../model/Types';
 import { Store } from '../data/Store';
-import { Tokens, getTokens, FONT_SERIF } from '../theme/Theme';
+import { Tokens, getTokens, FONT_SERIF, FONT_SANS } from '../theme/Theme';
 import { scalePath, pathScale } from '../utils/PathScale';
 import { UiState } from '../state/UiState';
 
@@ -302,6 +302,7 @@ export struct RitualOverlay {
   @Builder
   PrimaryAction(label: string, action: () => void) {
     Text(label)
+      .fontFamily(FONT_SANS)
       .fontSize(14)
       .letterSpacing(1.5)
       .fontColor(this.t().bg)
@@ -314,6 +315,7 @@ export struct RitualOverlay {
   @Builder
   QuietAction(label: string, action: () => void) {
     Text(label)
+      .fontFamily(FONT_SANS)
       .fontSize(12.5)
       .letterSpacing(1.2)
       .fontColor(this.t().inkSoft)
@@ -326,6 +328,7 @@ export struct RitualOverlay {
     Column({ space: 8 }) {
       if (this.ctx.type === 'own' && this.replyCount > 0) {
         Text(`你回过它 ${this.replyCount} 句`)
+          .fontFamily(FONT_SANS)
           .fontSize(11)
           .letterSpacing(1)
           .fontColor(this.t().inkSoft)
@@ -351,6 +354,7 @@ export struct RitualOverlay {
         }
       } else if (this.ctx.type === 'own' && this.ctx.entry !== null && this.ctx.entry!.kind === 'wound') {
         Text('还没准备好就放回去，完全没关系。')
+          .fontFamily(FONT_SANS)
           .fontSize(12)
           .fontColor(this.t().inkSoft)
           .margin({ bottom: 4 })
@@ -389,6 +393,7 @@ export struct RitualOverlay {
   LongReveal() {
     Column({ space: 14 }) {
       Text(this.ctx.badge)
+        .fontFamily(FONT_SANS)
         .fontSize(10)
         .letterSpacing(3.4)
         .fontColor(this.t().seal)
@@ -407,6 +412,7 @@ export struct RitualOverlay {
       .edgeEffect(EdgeEffect.Spring)
       if (this.showSource) {
         Text(this.ctx.source)
+          .fontFamily(FONT_SANS)
           .fontSize(12)
           .fontColor(this.t().ink)
           .width('88%')
@@ -446,6 +452,7 @@ export struct RitualOverlay {
         Row() {
           Blank()
           Text(`出处 · ${this.ctx.tag}`)
+            .fontFamily(FONT_SANS)
             .fontSize(10.5)
             .letterSpacing(1.6)
             .fontColor(this.t().inkSoft)
@@ -463,6 +470,7 @@ export struct RitualOverlay {
           Row() {
             Blank()
             Text(this.ctx.source)
+              .fontFamily(FONT_SANS)
               .fontSize(12)
               .fontColor(this.t().ink)
               .padding({ right: 20, top: 8 })
@@ -492,6 +500,7 @@ export struct RitualOverlay {
   ClassicReveal() {
     Column() {
       Text(this.ctx.badge)
+        .fontFamily(FONT_SANS)
         .fontSize(10)
         .letterSpacing(3.4)
         .fontColor(this.t().seal)
@@ -499,6 +508,7 @@ export struct RitualOverlay {
       this.CharLine()
       if (this.showSource) {
         Text(this.ctx.source)
+          .fontFamily(FONT_SANS)
           .fontSize(12)
           .fontColor(this.t().ink)
           .margin({ top: 12 })
@@ -567,11 +577,13 @@ export struct RitualOverlay {
 
       Column({ space: 2 }) {
         Text(this.appName.slice(0, 2))
+          .fontFamily(FONT_SANS)
           .fontSize(10)
           .fontWeight(FontWeight.Medium)
           .fontColor(this.t().seal)
           .letterSpacing(1)
         Text(sealCN(todayStr()))
+          .fontFamily(FONT_SANS)
           .fontSize(5.5)
           .fontColor(this.t().seal)
           .opacity(0.9)
@@ -605,6 +617,7 @@ export struct RitualOverlay {
           .fontColor(this.t().inkStrong)
           .width('100%')
         Text(this.ctx.text)
+          .fontFamily(FONT_SANS)
           .fontSize(12)
           .lineHeight(22)
           .fontColor(this.t().inkSoft)
@@ -656,6 +669,7 @@ export struct RitualOverlay {
           Row() {
             Blank()
             Text('跳过 ›')
+              .fontFamily(FONT_SANS)
               .fontSize(11.5)
               .letterSpacing(2)
               .fontColor(this.t().inkSoft)

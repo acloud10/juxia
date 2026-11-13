@@ -321,6 +321,7 @@ export struct ArchivePage {
   @Builder
   Chip(label: string, value: string, action: () => void) {
     Text(label)
+      .fontFamily(FONT_SANS)
       .fontSize(11.5)
       .letterSpacing(1)
       .fontColor(this.tab === value ? this.t().sealInk : this.t().inkSoft)
@@ -359,6 +360,7 @@ export struct ArchivePage {
   @Builder
   NoteLine(text: string) {
     Text(text)
+      .fontFamily(FONT_SANS)
       .fontSize(13)
       .lineHeight(24)
       .fontColor(this.t().ink)
@@ -416,6 +418,7 @@ export struct ArchivePage {
         .width('100%')
       Flex({ wrap: FlexWrap.Wrap }) {
         Text(e.revisitAt <= Date.now() ? '已到期' : `还有 ${Math.ceil((e.revisitAt - Date.now()) / 86400000)} 天`)
+          .fontFamily(FONT_SANS)
           .fontSize(10.5)
           .fontColor(e.revisitAt <= Date.now() ? this.t().sealInk : this.t().inkSoft)
           .backgroundColor(e.revisitAt <= Date.now() ? this.t().seal : this.t().card)
@@ -423,6 +426,7 @@ export struct ArchivePage {
           .borderRadius(999)
           .padding({ left: 9, right: 9, top: 2, bottom: 2 })
         Text(fmtMD(e.revisitAt))
+          .fontFamily(FONT_SANS)
           .fontSize(11)
           .fontColor(this.t().inkSoft)
         this.QuietButton('提前到今天', () => {
@@ -450,6 +454,7 @@ export struct ArchivePage {
         .fontColor(this.t().inkStrong)
         .width('100%')
       Text(`${fmtDate(e.archAt)} 标记为「${this.catName(e.archCat)}」`)
+        .fontFamily(FONT_SANS)
         .fontSize(10.5)
         .letterSpacing(1)
         .fontColor(this.t().inkSoft)
@@ -465,6 +470,7 @@ export struct ArchivePage {
         Text(e.revisitAt > 0
           ? `回访：${fmtMD(e.revisitAt)} 轻轻问一次${e.snoozeUntil > Date.now() ? `（再等等到 ${fmtMD(e.snoozeUntil)}）` : ''}`
           : '未设回访')
+          .fontFamily(FONT_SANS)
           .fontSize(10.5)
           .fontColor(this.t().inkSoft)
           .width('100%')
@@ -499,6 +505,7 @@ export struct ArchivePage {
     Row({ space: 5 }) {
       Column().width(8).height(8).borderRadius(3).backgroundColor(color)
       Text(label).fontSize(10.5).fontColor(this.t().inkSoft)
+        .fontFamily(FONT_SANS)
     }
     .margin({ right: 14, bottom: 4 })
   }
@@ -507,6 +514,7 @@ export struct ArchivePage {
   Timeline() {
     Column({ space: 0 }) {
       Text('每月收进回忆区的句子数，按类别堆叠；下面的时间线是这些句子留下的备注——你的第二本日记。')
+        .fontFamily(FONT_SANS)
         .fontSize(12.5)
         .lineHeight(23)
         .fontColor(this.t().inkSoft)
@@ -515,6 +523,7 @@ export struct ArchivePage {
         ForEach(this.months(), (m: MonthStat) => {
           Column({ space: 0 }) {
             Text(`${m.total}`)
+              .fontFamily(FONT_SANS)
               .fontSize(9)
               .fontColor(this.t().inkSoft)
             Column({ space: 0 }) {
@@ -536,6 +545,7 @@ export struct ArchivePage {
             .backgroundColor(this.t().lineSoft)
             .borderRadius({ topLeft: 4, topRight: 4 })
             Text(m.label)
+              .fontFamily(FONT_SANS)
               .fontSize(9)
               .fontColor(this.t().inkSoft)
               .margin({ top: 4 })
@@ -561,6 +571,7 @@ export struct ArchivePage {
       LazyForEach(this.tlDs, (n: TlNote) => {
         Column({ space: 0 }) {
           Text(`${fmtDate(n.at)} · ${this.catName(n.cat)}`)
+            .fontFamily(FONT_SANS)
             .fontSize(10)
             .letterSpacing(1.5)
             .fontColor(this.t().inkSoft)
@@ -574,6 +585,7 @@ export struct ArchivePage {
             .margin({ top: 2 })
           if (n.note.length > 0) {
             Text(n.note)
+              .fontFamily(FONT_SANS)
               .fontSize(13)
               .lineHeight(24)
               .fontColor(this.t().ink)
@@ -603,6 +615,7 @@ export struct ArchivePage {
         .fontColor(this.t().inkStrong)
         .width('100%')
       Text(`默认 ${Store.get().data.settings.revisitDays} 天，可单独改。从今天起算，天数会随着时间减少，到点由系统提醒你；通知排不进去时，到期打开句栖也会看到回访卡。`)
+        .fontFamily(FONT_SANS)
         .fontSize(11.5)
         .lineHeight(20)
         .fontColor(this.t().inkSoft)
@@ -680,6 +693,7 @@ export struct ArchivePage {
             .fontFamily(FONT_SERIF)
             .fontColor(this.t().inkStrong)
           Text(`${this.revisitList().length} 件`)
+            .fontFamily(FONT_SANS)
             .fontSize(10)
             .fontColor(this.t().inkSoft)
             .backgroundColor(this.t().card)
@@ -689,6 +703,7 @@ export struct ArchivePage {
             .margin({ left: 8 })
           Blank()
           Text(this.showRevisit ? '−' : '＋')
+            .fontFamily(FONT_SANS)
             .fontSize(16)
             .fontColor(this.t().seal)
         }
@@ -705,6 +720,7 @@ export struct ArchivePage {
           Column({ space: 0 }) {
             if (this.revisitList().length === 0) {
               Text('还没有约定回访。把一件旧事标记为「已解决 / 已放下」时，可以约一个时间。')
+                .fontFamily(FONT_SANS)
                 .fontSize(12.5)
                 .lineHeight(24)
                 .fontColor(this.t().inkSoft)
@@ -766,6 +782,7 @@ export struct ArchivePage {
                 .fontFamily(FONT_SERIF)
                 .fontColor(this.t().inkStrong)
               Text(this.q.length > 0 ? '换个词试试。' : '空着也挺好。')
+                .fontFamily(FONT_SANS)
                 .fontSize(12)
                 .lineHeight(22)
                 .fontColor(this.t().inkSoft)
@@ -786,6 +803,7 @@ export struct ArchivePage {
         Blank()
 
         Text('回忆区只保留自己的话；句库条目用排除名单管理')
+          .fontFamily(FONT_SANS)
           .fontSize(11.5)
           .fontColor(this.t().inkSoft)
           .width('100%')

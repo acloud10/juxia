@@ -6,7 +6,7 @@ import { window } from '@kit.ArkUI';
 import { Store } from '../data/Store';
 import { ReminderService } from '../services/ReminderService';
 import { RitualCtx, OwnEntry, LibEntry } from '../model/Types';
-import { Tokens, getTokens, FONT_SERIF } from '../theme/Theme';
+import { Tokens, getTokens, FONT_SERIF, FONT_SANS } from '../theme/Theme';
 import { TopBar, TabIcon } from '../components/Chrome';
 import { RitualOverlay } from '../components/RitualOverlay';
 import { TodayPage } from './TodayPage';
@@ -159,8 +159,8 @@ struct Index {
     }
     try {
       this.getUIContext().getFont().registerFont({
-        familyName: 'JuxiaSerif',
-        familySrc: $rawfile('fonts/NotoSerifSC-Sub.ttf')
+        familyName: 'JuxiaYozai',
+        familySrc: $rawfile('fonts/Yozai-Regular.ttf')
       });
     } catch (e) {
       // 字体注册失败时回退到系统字体
@@ -347,6 +347,7 @@ struct Index {
             color: this.tab === index ? (this.dark ? this.t().inkSoft : '#ffffff') : this.t().inkSoft
           })
           Text(label)
+            .fontFamily(FONT_SANS)
             .fontSize(10)
             .letterSpacing(2)
             .fontColor(this.tab === index ? (this.dark ? this.t().inkSoft : '#ffffff') : this.t().inkSoft)
@@ -404,16 +405,19 @@ struct Index {
           .fontSize(22)
           .fontColor(this.t().ink)
         Text('句栖把句子、备注、旧事和设置加密保存在本机，不上传；没有账号、广告或统计。')
+          .fontFamily(FONT_SANS)
           .fontSize(13)
           .lineHeight(23)
           .fontColor(this.t().inkSoft)
           .width('100%')
         Text('句栖不联网、不上传。备份由你主动导出，通知是本地提醒。')
+          .fontFamily(FONT_SANS)
           .fontSize(13)
           .lineHeight(23)
           .fontColor(this.t().inkSoft)
           .width('100%')
         Text('查看完整隐私政策')
+          .fontFamily(FONT_SANS)
           .fontSize(13)
           .fontColor(this.t().seal)
           .width('100%')
@@ -423,6 +427,7 @@ struct Index {
           })
         Row({ space: 10 }) {
           Text('不同意')
+            .fontFamily(FONT_SANS)
             .fontSize(13.5)
             .fontColor(this.t().inkSoft)
             .layoutWeight(1)
@@ -435,6 +440,7 @@ struct Index {
               ctx.terminateSelf();
             })
           Text('同意并继续')
+            .fontFamily(FONT_SANS)
             .fontSize(13.5)
             .fontColor(this.t().bg)
             .layoutWeight(1)

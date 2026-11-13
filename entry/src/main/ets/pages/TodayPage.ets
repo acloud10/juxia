@@ -404,6 +404,7 @@ export struct TodayPage {
   @Builder
   ChoiceButton(label: string, action: () => void) {
     Text(label)
+      .fontFamily(FONT_SANS)
       .fontSize(14)
       .fontColor(this.t().bg)
       .backgroundColor(this.t().ink)
@@ -423,6 +424,7 @@ export struct TodayPage {
         .fontColor(this.t().inkStrong)
         .width('100%')
       Text('写一句、抽一句，都只是选项，不是任务。这里没有连续打卡，也不会催你。')
+        .fontFamily(FONT_SANS)
         .fontSize(12)
         .lineHeight(21)
         .fontColor(this.t().inkSoft)
@@ -452,6 +454,7 @@ export struct TodayPage {
         .fontColor(this.t().inkStrong)
         .width('100%')
       Text('写一句和抽一句，没有先后。想做哪个就点哪个。')
+        .fontFamily(FONT_SANS)
         .fontSize(12)
         .lineHeight(21)
         .fontColor(this.t().inkSoft)
@@ -468,6 +471,7 @@ export struct TodayPage {
       .width('100%')
       .margin({ top: 4 })
       Text('不写也没关系，不抽也没关系。这里没有打卡，也没有必须完成的事。')
+        .fontFamily(FONT_SANS)
         .fontSize(11)
         .lineHeight(19)
         .fontColor(this.t().inkSoft)
@@ -498,6 +502,7 @@ export struct TodayPage {
           .fontColor(this.t().inkStrong)
           .width('100%')
         Text(sub)
+          .fontFamily(FONT_SANS)
           .fontSize(10)
           .lineHeight(16)
           .letterSpacing(this.skin === 'plain' ? 0.2 : 1)
@@ -558,6 +563,7 @@ export struct TodayPage {
           })
         if (this.draftRestored) {
           Text('已恢复未保存的草稿')
+            .fontFamily(FONT_SANS)
             .fontSize(11)
             .fontColor(this.t().seal)
             .width('100%')
@@ -565,6 +571,7 @@ export struct TodayPage {
         }
         Row({ space: 4 }) {
           Text('写不出来？换个视角')
+            .fontFamily(FONT_SANS)
             .fontSize(12.5)
             .fontColor(this.t().seal)
             .onClick(() => {
@@ -575,6 +582,7 @@ export struct TodayPage {
         .margin({ top: 6 })
         if (this.showGuide) {
           Text('如果你的家人或朋友正处在低谷，你会说什么？')
+            .fontFamily(FONT_SANS)
             .fontSize(13)
             .lineHeight(24)
             .fontColor(this.t().ink)
@@ -611,12 +619,14 @@ export struct TodayPage {
           })
         if (this.draftRestored) {
           Text('已恢复未保存的草稿')
+            .fontFamily(FONT_SANS)
             .fontSize(11)
             .fontColor(this.t().seal)
             .width('100%')
             .margin({ top: 6 })
         }
         Text('不用着急，也不用写得好。这里没有别人，想到哪写到哪，我陪你慢慢写。')
+          .fontFamily(FONT_SANS)
           .fontSize(12.5)
           .lineHeight(23)
           .fontColor(this.t().inkSoft)
@@ -648,6 +658,7 @@ export struct TodayPage {
   RevisitCard(e: OwnEntry) {
     Column({ space: 0 }) {
       Text(`你曾在 ${fmtMD(e.archAt)} 把这件事标记为「${this.catName(e.archCat)}」，约定这时轻轻问一次：`)
+        .fontFamily(FONT_SANS)
         .fontSize(12.5)
         .lineHeight(23)
         .fontColor(this.t().inkSoft)
@@ -660,6 +671,7 @@ export struct TodayPage {
         .width('100%')
         .margin({ top: 10, bottom: 8 })
       Text('现在想起它，感觉怎么样？')
+        .fontFamily(FONT_SANS)
         .fontSize(12.5)
         .fontColor(this.t().inkSoft)
         .width('100%')
@@ -759,6 +771,7 @@ export struct TodayPage {
         .width('100%')
       if (this.sheetMode === 'source') {
         Text('先写一句自己的话，或去材料库/句库加入一句。')
+          .fontFamily(FONT_SANS)
           .fontSize(12)
           .lineHeight(22)
           .fontColor(this.t().inkSoft)
@@ -773,6 +786,7 @@ export struct TodayPage {
         })
       } else if (this.sheetMode === 'write') {
         Text('两种都可以写，不分今天的心情。')
+          .fontFamily(FONT_SANS)
           .fontSize(12)
           .fontColor(this.t().inkSoft)
           .width('100%')
@@ -836,6 +850,7 @@ export struct TodayPage {
               .fontColor(this.t().inkStrong)
               .margin({ bottom: 14 })
             Text('每天可以写一句：心情好时写一句鼓励自己的，心情糟时写下那件让你难过的事。\n也可以抽一句自己的话——低谷时抽鼓励，平顺时抽旧事来消化。写和抽，没有先后。\n没有句子时，可以自己写，或从材料库加入。')
+              .fontFamily(FONT_SANS)
               .fontSize(12.5)
               .lineHeight(28)
               .fontColor(this.t().inkSoft)
@@ -868,6 +883,7 @@ export struct TodayPage {
               .fontColor(this.t().inkStrong)
               .width('100%')
             Text('写一句自己的话；也可以从材料库或句库加入。')
+              .fontFamily(FONT_SANS)
               .fontSize(12.5)
               .lineHeight(23)
               .fontColor(this.t().inkSoft)
@@ -929,6 +945,7 @@ export struct TodayPage {
                 : (this.encCount > 0
                   ? `从你写过的 ${this.encCount} 句鼓励里，抽一句还给今天的你。`
                   : '你的鼓励池还是空的——这次先从句库取一句给你。等你写下第一句自己的鼓励，它就会回到抽签里。'))
+                .fontFamily(FONT_SANS)
                 .fontSize(12.5)
                 .lineHeight(24)
                 .fontColor(this.t().inkSoft)
@@ -954,6 +971,7 @@ export struct TodayPage {
                 Text(Store.get().data.settings.drawOwn
                   ? `树洞里有 ${this.woundCount} 件还没消化的事。要不要抽一件，趁有能量时看看它？`
                   : `树洞里有 ${this.woundCount} 件还没消化的事，但自己的话暂时不参与抽签。可以去「设置」打开，或从句库取一句。`)
+                  .fontFamily(FONT_SANS)
                   .fontSize(12.5)
                   .lineHeight(24)
                   .fontColor(this.t().inkSoft)
@@ -981,6 +999,7 @@ export struct TodayPage {
                 Text(Store.get().data.settings.drawLib
                   ? '树洞是空的，没有积压的旧事——这本身就是好事。也可以从句库抽一句，给今天收个尾。'
                   : '树洞是空的，没有积压的旧事——这本身就是好事。句库暂时不参与抽签，可以再写一句。')
+                  .fontFamily(FONT_SANS)
                   .fontSize(12.5)
                   .lineHeight(24)
                   .fontColor(this.t().inkSoft)
@@ -1039,6 +1058,7 @@ export struct TodayPage {
             Text(Store.get().data.meta.lastBackupAt > 0
               ? '距离上次备份已超过 14 天——这里的一切只存在这台设备上（自己导出的数据除外，取决于自己存放的位置），清理数据就会消失。花一分钟做个密语备份吧。'
               : '你还没做过备份——这里的一切只存在这台设备上（自己导出的数据除外，取决于自己存放的位置），清理数据就会全部消失。花一分钟做个密语备份吧。')
+              .fontFamily(FONT_SANS)
               .fontSize(12)
               .lineHeight(22)
               .fontColor(this.t().inkSoft)

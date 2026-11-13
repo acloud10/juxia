@@ -1,4 +1,4 @@
-﻿import { Tokens, getTokens, FONT_SERIF } from '../theme/Theme';
+import { Tokens, getTokens, FONT_SANS } from '../theme/Theme';
 import { PRIVACY_TEXT } from './PrivacyText';
 import { UiState } from '../state/UiState';
 
@@ -19,11 +19,12 @@ struct PrivacyPage {
     Column() {
       Row() {
         Text('隐私政策')
-          .fontFamily(FONT_SERIF)
+          .fontFamily(FONT_SANS)
           .fontSize(18)
           .fontColor(this.t().ink)
         Blank()
         Text('返回')
+          .fontFamily(FONT_SANS)
           .fontSize(13)
           .fontColor(this.t().inkSoft)
           .onClick(() => {
@@ -36,6 +37,7 @@ struct PrivacyPage {
 
       Scroll() {
         Text(PRIVACY_TEXT)
+          .fontFamily(FONT_SANS)
           .fontSize(14)
           .lineHeight(24)
           .fontColor(this.t().ink)

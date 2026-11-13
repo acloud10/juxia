@@ -1,17 +1,18 @@
 # Third-party notices
 
-## Noto Serif SC
+## Yozai / 悠哉字体
 
-`entry/src/main/resources/rawfile/fonts/NotoSerifSC-Sub.ttf` is a subset of
-Noto Serif SC, used in the app under the family name `JuxiaSerif`.
+`entry/src/main/resources/rawfile/fonts/Yozai-Regular.ttf` is the Yozai
+handwriting font, used in the app under the family name `JuxiaYozai`.
 
-Noto Serif SC is part of Noto CJK and is distributed under the
+Yozai is derived from Y.OzFont and is distributed under the
 SIL Open Font License, Version 1.1.
 
-Source: https://github.com/notofonts/noto-cjk
+Source: https://github.com/lxgw/yozai-font
 
-The subset was produced for this application. The font file is redistributed
-under the same license; the application code is licensed separately under MIT.
+The font is redistributed under the same license; the application code is
+licensed separately under MIT. Reserved font names "Yozai" and "悠哉" are
+retained by the original project.
 
 ---
 

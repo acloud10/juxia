@@ -1,5 +1,5 @@
 // 句栖 · 全局外观组件：顶栏、导航、晴雨图标
-import { Tokens, getTokens, FONT_SERIF } from '../theme/Theme';
+import { Tokens, getTokens, FONT_SERIF, FONT_SANS } from '../theme/Theme';
 import { weekdayCN } from '../model/Types';
 import { scalePath, pathScale } from '../utils/PathScale';
 import { UiState } from '../state/UiState';
@@ -77,11 +77,13 @@ export struct TopBar {
 
       Column({ space: 4 }) {
         Text(this.dateText())
+          .fontFamily(FONT_SANS)
           .fontSize(10.5)
           .letterSpacing(2.4)
           .fontColor(this.t().inkSoft)
         if (this.showDays) {
           Text(`相伴第 ${this.dayCount} 天`)
+            .fontFamily(FONT_SANS)
             .fontSize(10.5)
             .letterSpacing(2.4)
             .fontColor(this.t().inkSoft)

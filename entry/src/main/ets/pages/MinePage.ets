@@ -553,6 +553,7 @@ export struct MinePage {
   @Builder
   NoteLine(text: string) {
     Text(text)
+      .fontFamily(FONT_SANS)
       .fontSize(13)
       .lineHeight(24)
       .fontColor(this.t().ink)
@@ -614,6 +615,7 @@ export struct MinePage {
         .width('100%')
         .margin({ bottom: 6 })
       Text('可关联多件，再点一次解除。两边是同一根线。')
+        .fontFamily(FONT_SANS)
         .fontSize(11.5)
         .fontColor(this.t().inkSoft)
         .width('100%')
@@ -634,6 +636,7 @@ export struct MinePage {
       }
       if (this.candidates(e).length === 0) {
         Text(e.kind === 'encourage' ? '树洞还是空的。先写一件难过的事，再回来关联。' : '鼓励池还是空的。先写一句鼓励，再回来关联。')
+          .fontFamily(FONT_SANS)
           .fontSize(12)
           .lineHeight(21)
           .fontColor(this.t().inkSoft)
@@ -648,6 +651,7 @@ export struct MinePage {
             .fontColor(this.t().ink)
             .layoutWeight(1)
           Text(this.isBound(e, x) ? '解除关联' : '关联')
+            .fontFamily(FONT_SANS)
             .fontSize(12)
             .fontColor(this.isBound(e, x) ? this.t().inkSoft : this.t().bg)
             .backgroundColor(this.isBound(e, x) ? this.t().card : this.t().ink)
@@ -689,6 +693,7 @@ export struct MinePage {
         .width('100%')
         .margin({ bottom: 6 })
       Text('标记后不再被抽到，分门别类收进回忆区。')
+        .fontFamily(FONT_SANS)
         .fontSize(11.5)
         .fontColor(this.t().inkSoft)
         .width('100%')
@@ -720,6 +725,7 @@ export struct MinePage {
       if (e.kind === 'wound') {
         Row({ space: 8 }) {
           Text(this.withRevisit ? '✓' : '')
+            .fontFamily(FONT_SANS)
             .fontSize(12)
             .fontColor(this.t().sealInk)
             .backgroundColor(this.withRevisit ? this.t().seal : this.t().card)
@@ -729,6 +735,7 @@ export struct MinePage {
             .height(20)
             .textAlign(TextAlign.Center)
           Text(`${Store.get().data.settings.revisitDays} 天后轻轻问我一次（归档后可在回忆里单独改天数）`)
+            .fontFamily(FONT_SANS)
             .fontSize(12.5)
             .fontColor(this.t().inkSoft)
         }
@@ -760,6 +767,7 @@ export struct MinePage {
   @Builder
   CatChip(cat: string, label: string) {
     Text(label)
+      .fontFamily(FONT_SANS)
       .fontSize(11.5)
       .letterSpacing(1)
       .fontColor(this.archCat === cat ? this.t().sealInk : this.t().inkSoft)
@@ -783,11 +791,13 @@ export struct MinePage {
         .width('100%')
       Flex({ wrap: FlexWrap.Wrap }) {
         Text(fmtDate(e.createdAt))
+          .fontFamily(FONT_SANS)
           .fontSize(10.5)
           .letterSpacing(1)
           .fontColor(this.t().inkSoft)
         ForEach(this.boundNames(e), (n: string, idx: number) => {
           Text(e.kind === 'encourage' ? `曾陪我度过「${n.length > 12 ? n.slice(0, 12) + '…' : n}」` : `有「${n.length > 12 ? n.slice(0, 12) + '…' : n}」陪着`)
+            .fontFamily(FONT_SANS)
             .fontSize(10.5)
             .fontColor(this.t().inkSoft)
         }, (n: string, idx: number) => `${e.id}-bind-${idx}-${this.bindRev}`)
@@ -840,6 +850,7 @@ export struct MinePage {
         .fontColor(this.t().inkStrong)
         .width('100%')
       Text('① 今日写一句鼓励，或一件难过的事\n② 抽签时它会回来，陪你一会儿\n③ 归档后进回忆区，成为第二本日记')
+        .fontFamily(FONT_SANS)
         .fontSize(12)
         .lineHeight(23)
         .fontColor(this.t().inkSoft)
@@ -873,6 +884,7 @@ export struct MinePage {
           .fontFamily(FONT_SERIF)
           .fontColor(this.t().inkStrong)
         Text(`${this.totalCount(kind)} ${kind === 'encourage' ? '句' : '件'}`)
+          .fontFamily(FONT_SANS)
           .fontSize(10)
           .fontColor(this.t().inkSoft)
           .backgroundColor(this.t().card)
@@ -884,6 +896,7 @@ export struct MinePage {
         Text(kind === 'encourage'
           ? (this.showEnc ? '−' : '＋')
           : (this.showWnd ? '−' : '＋'))
+          .fontFamily(FONT_SANS)
           .fontSize(16)
           .fontColor(this.t().seal)
       }
@@ -905,6 +918,7 @@ export struct MinePage {
               .fontFamily(FONT_SERIF)
               .fontColor(this.t().inkStrong)
             Text(this.q.length > 0 ? '换个词试试。' : empty)
+              .fontFamily(FONT_SANS)
               .fontSize(12)
               .lineHeight(22)
               .fontColor(this.t().inkSoft)
@@ -936,6 +950,7 @@ export struct MinePage {
           .fontFamily(FONT_SERIF)
           .fontColor(this.t().inkStrong)
         Text(`${this.refs.length} 条`)
+          .fontFamily(FONT_SANS)
           .fontSize(10)
           .fontColor(this.t().inkSoft)
           .backgroundColor(this.t().card)
@@ -945,6 +960,7 @@ export struct MinePage {
           .margin({ left: 8 })
         Blank()
         Text(this.refSectionOpen ? '−' : '＋')
+          .fontFamily(FONT_SANS)
           .fontSize(16)
           .fontColor(this.t().seal)
       }
@@ -977,6 +993,7 @@ export struct MinePage {
         .margin({ top: 4, bottom: 8 })
         if (this.filteredReflects().length === 0) {
           Text(this.refQ.length > 0 ? '没有找到。换个词，或清空搜索。' : '省身不是任务。想写的时候再写。')
+            .fontFamily(FONT_SANS)
             .fontSize(12.5)
             .lineHeight(23)
             .fontColor(this.t().inkSoft)
@@ -992,11 +1009,13 @@ export struct MinePage {
                   .fontFamily(FONT_SERIF)
                   .fontColor(this.t().inkStrong)
                 Text(`${y.total} 条`)
+                  .fontFamily(FONT_SANS)
                   .fontSize(9.5)
                   .fontColor(this.t().inkSoft)
                   .margin({ left: 6 })
                 Blank()
                 Text(this.isYearOpen(y.key) ? '−' : '＋')
+                  .fontFamily(FONT_SANS)
                   .fontSize(13)
                   .fontColor(this.t().seal)
               }
@@ -1010,15 +1029,18 @@ export struct MinePage {
                   Column({ space: 0 }) {
                     Row() {
                       Text(g.label)
+                        .fontFamily(FONT_SANS)
                         .fontSize(11)
                         .letterSpacing(1.5)
                         .fontColor(this.t().inkSoft)
                       Text(`${g.items.length} 条`)
+                        .fontFamily(FONT_SANS)
                         .fontSize(9.5)
                         .fontColor(this.t().inkSoft)
                         .margin({ left: 6 })
                       Blank()
                       Text(this.isMonthOpen(g.key) ? '−' : '＋')
+                        .fontFamily(FONT_SANS)
                         .fontSize(13)
                         .fontColor(this.t().seal)
                     }
@@ -1041,6 +1063,7 @@ export struct MinePage {
           }, (y: ReflectYear) => y.key)
           if (this.filteredReflects().length > this.refShown().length) {
             Text(`加载更多（还有 ${this.filteredReflects().length - this.refShown().length} 条）`)
+              .fontFamily(FONT_SANS)
               .fontSize(12)
               .fontColor(this.t().seal)
               .width('100%')
@@ -1066,15 +1089,18 @@ export struct MinePage {
     Column({ space: 0 }) {
       Row({ space: 6 }) {
         Text(fmtDate(e.createdAt))
+          .fontFamily(FONT_SANS)
           .fontSize(11)
           .fontColor(this.t().inkSoft)
         Blank()
         if (e.notes.length > 0) {
           Text(`备注 ${e.notes.length}`)
+            .fontFamily(FONT_SANS)
             .fontSize(10)
             .fontColor(this.t().inkSoft)
         }
         Text(this.refOpenId === e.id ? '−' : '＋')
+          .fontFamily(FONT_SANS)
           .fontSize(14)
           .fontColor(this.t().seal)
       }
@@ -1099,9 +1125,11 @@ export struct MinePage {
             ForEach(e.notes.slice(0, this.refNotesAll ? e.notes.length : 3), (n: NoteItem) => {
               Column({ space: 2 }) {
                 Text(fmtDate(n.at))
+                  .fontFamily(FONT_SANS)
                   .fontSize(10)
                   .fontColor(this.t().inkSoft)
                 Text(n.text)
+                  .fontFamily(FONT_SANS)
                   .fontSize(12)
                   .lineHeight(21)
                   .fontColor(this.t().ink)
@@ -1115,6 +1143,7 @@ export struct MinePage {
             }, (n: NoteItem) => `${n.at}-${n.text}`)
             if (e.notes.length > 3) {
               Text(this.refNotesAll ? '收起备注' : `查看全部 ${e.notes.length} 条备注`)
+                .fontFamily(FONT_SANS)
                 .fontSize(11.5)
                 .fontColor(this.t().seal)
                 .padding({ top: 6, bottom: 2 })
@@ -1190,6 +1219,7 @@ export struct MinePage {
         .fontColor(this.t().inkStrong)
         .width('100%')
       Text(this.currentEntry().text)
+        .fontFamily(FONT_SANS)
         .fontSize(12)
         .lineHeight(21)
         .fontColor(this.t().inkSoft)
@@ -1337,6 +1367,7 @@ export struct MinePage {
         Blank()
 
         Text('鼓励与旧事可以互相关联；旧事归档时会自动给鼓励留下注脚')
+          .fontFamily(FONT_SANS)
           .fontSize(11.5)
           .lineHeight(22)
           .fontColor(this.t().inkSoft)

@@ -1,4 +1,4 @@
-﻿// 句栖 · 主题令牌（经典 / 朴素 × 日间 / 夜间）
+// 句栖 · 主题令牌（经典 / 朴素 × 日间 / 夜间）
 export class Tokens {
   bg: string = '#ede6d3';
   ink: string = '#4f4f4c';
@@ -17,7 +17,7 @@ export class Tokens {
   radiusCard: number = 18;
   radiusBtn: number = 999;
   radiusInput: number = 14;
-  serif: string = 'JuxiaSerif';
+  serif: string = 'JuxiaYozai';
   sans: string = 'HarmonyOS Sans SC';
   plain: boolean = false;
   blurCard: number = 10;
@@ -29,8 +29,8 @@ export function getTokens(skin: string, dark: boolean): Tokens {
   const t = new Tokens();
   t.plain = skin === 'plain';
   if (t.plain) {
-    t.serif = 'JuxiaSerif';
-    t.sans = 'JuxiaSerif';
+    t.serif = 'JuxiaYozai';
+    t.sans = 'JuxiaYozai';
     t.radiusCard = 10;
     t.radiusBtn = 8;
     t.radiusInput = 8;
@@ -107,7 +107,7 @@ export function getTokens(skin: string, dark: boolean): Tokens {
   return t;
 }
 
-export const FONT_SERIF: string = 'JuxiaSerif';
+export const FONT_SERIF: string = 'JuxiaYozai';
 export const FONT_SANS: string = 'HarmonyOS Sans SC';
 
 

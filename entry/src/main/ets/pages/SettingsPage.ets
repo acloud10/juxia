@@ -9,7 +9,7 @@ import { AppData, MaterialEntry, uid } from '../model/Types';
 import { BackupService } from '../services/BackupService';
 import { ReminderService } from '../services/ReminderService';
 import { MaterialIndexer } from '../services/MaterialIndexer';
-import { Tokens, getTokens, FONT_SERIF } from '../theme/Theme';
+import { Tokens, getTokens, FONT_SERIF, FONT_SANS } from '../theme/Theme';
 import { UiState } from '../state/UiState';
 import { AppError } from '../services/AppError';
 
@@ -1039,6 +1039,7 @@ export struct SettingsPage {
   @Builder
   Btn(label: string, primary: boolean, action: () => void) {
     Text(label)
+      .fontFamily(FONT_SANS)
       .fontSize(12.5)
       .fontColor(primary ? this.t().bg : this.t().ink)
       .backgroundColor(primary ? this.t().ink : this.t().card)
@@ -1068,6 +1069,7 @@ export struct SettingsPage {
   @Builder
   Chip(label: string, active: boolean, action: () => void) {
     Text(label)
+      .fontFamily(FONT_SANS)
       .fontSize(11.5)
       .letterSpacing(1.5)
       .fontColor(active ? this.t().sealInk : this.t().inkSoft)
@@ -1082,6 +1084,7 @@ export struct SettingsPage {
   @Builder
   SkinChip(v: string, label: string) {
     Text(label)
+      .fontFamily(FONT_SANS)
       .fontSize(11.5)
       .letterSpacing(1.5)
       .fontColor(this.skin === v ? this.t().sealInk : this.t().inkSoft)
@@ -1098,6 +1101,7 @@ export struct SettingsPage {
   @Builder
   ThemeChip(v: string, label: string) {
     Text(label)
+      .fontFamily(FONT_SANS)
       .fontSize(11.5)
       .letterSpacing(1.5)
       .fontColor(this.theme === v ? this.t().sealInk : this.t().inkSoft)
@@ -1114,6 +1118,7 @@ export struct SettingsPage {
   @Builder
   FollowFontChip() {
     Text('跟随系统')
+      .fontFamily(FONT_SANS)
       .fontSize(11.5)
       .letterSpacing(1.5)
       .fontColor(this.fontScaleFollow ? this.t().sealInk : this.t().inkSoft)
@@ -1130,6 +1135,7 @@ export struct SettingsPage {
   @Builder
   ScaleChip(v: number, label: string) {
     Text(label)
+      .fontFamily(FONT_SANS)
       .fontSize(11.5)
       .letterSpacing(1.5)
       .fontColor(!this.fontScaleFollow && Math.abs(this.fontScale - v) < 0.001 ? this.t().sealInk : this.t().inkSoft)
@@ -1149,6 +1155,7 @@ export struct SettingsPage {
   @Builder
   RitualChip(v: string, label: string) {
     Text(label)
+      .fontFamily(FONT_SANS)
       .fontSize(11.5)
       .letterSpacing(1.5)
       .fontColor(this.ritualMode === v ? this.t().sealInk : this.t().inkSoft)
@@ -1172,6 +1179,7 @@ export struct SettingsPage {
         .fontColor(this.t().inkStrong)
       Blank()
       Text(this.openSection === key ? '收起' : '展开')
+        .fontFamily(FONT_SANS)
         .fontSize(11.5)
         .fontColor(this.t().inkSoft)
     }
@@ -1190,6 +1198,7 @@ export struct SettingsPage {
         this.GroupTitle('界面')
         Column() {
           Text('经典：帘后日光，折纸取信。朴素：素纸一页，只留字。两套界面功能完全相同，随时可换。')
+            .fontFamily(FONT_SANS)
             .fontSize(12.5)
             .lineHeight(22)
             .fontColor(this.t().inkSoft)
@@ -1202,10 +1211,12 @@ export struct SettingsPage {
           Divider().color(this.t().lineSoft).margin({ top: 8, bottom: 12 })
           Row() {
             Text('显示「相伴第 N 天」')
+              .fontFamily(FONT_SANS)
               .fontSize(13.5)
               .fontColor(this.t().ink)
             Blank()
             Text(this.showDays ? '显示中' : '已隐藏')
+              .fontFamily(FONT_SANS)
               .fontSize(11.5)
               .fontColor(this.showDays ? this.t().sealInk : this.t().ink)
               .backgroundColor(this.showDays ? this.t().seal : this.t().card)
@@ -1238,6 +1249,7 @@ export struct SettingsPage {
             this.ThemeChip('dark', '夜间')
           }
           Text('字号（全局，随系统一起缩放）')
+            .fontFamily(FONT_SANS)
             .fontSize(11.5)
             .fontColor(this.t().inkSoft)
             .width('100%')
@@ -1260,6 +1272,7 @@ export struct SettingsPage {
         this.GroupTitle('仪式感')
         Column() {
           Text('抽签前的折纸仪式帮助开始，不必每次完整执行——觉得成了负担就调短或关掉。')
+            .fontFamily(FONT_SANS)
             .fontSize(12.5)
             .lineHeight(22)
             .fontColor(this.t().inkSoft)
@@ -1280,6 +1293,7 @@ export struct SettingsPage {
         this.GroupTitle('回访')
         Column() {
           Text('「已解决 / 已放下」的事，可选在若干天后轻轻问一次。如果回访时发现还没准备好，可以回到台前。')
+            .fontFamily(FONT_SANS)
             .fontSize(12.5)
             .lineHeight(22)
             .fontColor(this.t().inkSoft)
@@ -1287,6 +1301,7 @@ export struct SettingsPage {
           Flex({ wrap: FlexWrap.Wrap }) {
             ForEach([7, 30, 90, 180, 365], (d: number) => {
               Text(`${d} 天`)
+                .fontFamily(FONT_SANS)
                 .fontSize(12.5)
                 .fontColor(this.revisitDays === d ? this.t().bg : this.t().ink)
                 .backgroundColor(this.revisitDays === d ? this.t().seal : this.t().card)
@@ -1315,6 +1330,7 @@ export struct SettingsPage {
                 this.daysInput = v;
               })
             Text('保存天数')
+              .fontFamily(FONT_SANS)
               .fontSize(12.5)
               .fontColor(this.t().ink)
               .backgroundColor(this.t().card)
@@ -1329,6 +1345,7 @@ export struct SettingsPage {
           .margin({ top: 10 })
           Row({ space: 10 }) {
             Text('回访时间')
+              .fontFamily(FONT_SANS)
               .fontSize(13)
               .fontColor(this.t().ink)
             Blank()
@@ -1337,6 +1354,7 @@ export struct SettingsPage {
               .fontFamily(FONT_SERIF)
               .fontColor(this.t().inkStrong)
             Text(this.clockOpen ? '收起' : '调整')
+              .fontFamily(FONT_SANS)
               .fontSize(12)
               .fontColor(this.t().seal)
               .padding({ left: 12, right: 12, top: 6, bottom: 6 })
@@ -1373,6 +1391,7 @@ export struct SettingsPage {
               })
               Text(this.draftHour === this.revisitHour && this.draftMinute === this.revisitMinute
                 ? '与当前一致' : '未确定，滚动不会保存')
+                .fontFamily(FONT_SANS)
                 .fontSize(11)
                 .fontColor(this.t().inkSoft)
             }
@@ -1381,6 +1400,7 @@ export struct SettingsPage {
           }
 
           Text(`当前：${this.revisitDays} 天（默认 90 天），回访时间 ${this.revisitHour.toString().padStart(2, '0')}:${this.revisitMinute.toString().padStart(2, '0')}。所有约定都收在「回忆 · 回访一览」里，可提前或取消。`)
+            .fontFamily(FONT_SANS)
             .fontSize(11.5)
             .lineHeight(20)
             .fontColor(this.t().inkSoft)
@@ -1396,6 +1416,7 @@ export struct SettingsPage {
         this.GroupTitle('抽签来源')
         Column({ space: 0 }) {
           Text('决定「抽一句」从哪里取。至少开一个；关掉的内容仍会保留在列表里。')
+            .fontFamily(FONT_SANS)
             .fontSize(12)
             .lineHeight(21)
             .fontColor(this.t().inkSoft)
@@ -1403,10 +1424,12 @@ export struct SettingsPage {
             .margin({ bottom: 6 })
           Row() {
             Text('自己的话')
+              .fontFamily(FONT_SANS)
               .fontSize(13)
               .fontColor(this.t().ink)
             Blank()
             Text(this.drawOwn ? '参与' : '不参与')
+              .fontFamily(FONT_SANS)
               .fontSize(12.5)
               .fontColor(this.drawOwn ? this.t().sealInk : this.t().inkSoft)
               .backgroundColor(this.drawOwn ? this.t().seal : this.t().card)
@@ -1421,10 +1444,12 @@ export struct SettingsPage {
           .padding({ top: 8, bottom: 8 })
           Row() {
             Text('句库收藏')
+              .fontFamily(FONT_SANS)
               .fontSize(13)
               .fontColor(this.t().ink)
             Blank()
             Text(this.drawLib ? '参与' : '不参与')
+              .fontFamily(FONT_SANS)
               .fontSize(12.5)
               .fontColor(this.drawLib ? this.t().sealInk : this.t().inkSoft)
               .backgroundColor(this.drawLib ? this.t().seal : this.t().card)
@@ -1439,6 +1464,7 @@ export struct SettingsPage {
           .padding({ top: 8, bottom: 4 })
           .border({ width: { top: 1 }, color: this.t().lineSoft })
           Text('句库收藏包括从材料收入的内容；材料原文本身不直接进抽签。')
+            .fontFamily(FONT_SANS)
             .fontSize(11.5)
             .lineHeight(20)
             .fontColor(this.t().inkSoft)
@@ -1457,6 +1483,7 @@ export struct SettingsPage {
         this.GroupTitle('应用名')
         Column() {
           Text('默认「句栖」。改名后，应用内的标题、印章、页脚与文案一起换，最多 6 个字。桌面图标名由系统在安装时确定，不会随应用内改名同步。')
+            .fontFamily(FONT_SANS)
             .fontSize(12.5)
             .lineHeight(22)
             .fontColor(this.t().inkSoft)
@@ -1475,6 +1502,7 @@ export struct SettingsPage {
             })
           Row({ space: 8 }) {
             Text('保存名字')
+              .fontFamily(FONT_SANS)
               .fontSize(13)
               .fontColor(this.t().ink)
               .backgroundColor(this.t().card)
@@ -1485,6 +1513,7 @@ export struct SettingsPage {
                 this.saveName();
               })
             Text('恢复默认')
+              .fontFamily(FONT_SANS)
               .fontSize(12.5)
               .fontColor(this.t().inkSoft)
               .padding({ left: 10, right: 10, top: 10, bottom: 10 })
@@ -1504,6 +1533,7 @@ export struct SettingsPage {
         this.GroupTitle('称呼')
         Column() {
           Text('只影响应用内。今日页会显示「你好，XXX」；可以随时关掉称呼。')
+            .fontFamily(FONT_SANS)
             .fontSize(12.5)
             .lineHeight(21)
             .fontColor(this.t().inkSoft)
@@ -1525,6 +1555,7 @@ export struct SettingsPage {
               this.saveNickname();
             })
             Text(this.showGreeting ? '称呼已开启' : '称呼已关闭')
+              .fontFamily(FONT_SANS)
               .fontSize(12)
               .fontColor(this.showGreeting ? this.t().seal : this.t().inkSoft)
               .border({ width: 1, color: this.showGreeting ? this.t().seal : this.t().line })
@@ -1546,6 +1577,7 @@ export struct SettingsPage {
         this.GroupTitle('省身')
         Column() {
           Text('在「我的」里显示省身区。关闭后数据保留，只是不再显示入口。')
+            .fontFamily(FONT_SANS)
             .fontSize(12.5)
             .lineHeight(21)
             .fontColor(this.t().inkSoft)
@@ -1553,10 +1585,12 @@ export struct SettingsPage {
             .margin({ bottom: 10 })
           Row() {
             Text('显示省身区')
+              .fontFamily(FONT_SANS)
               .fontSize(13.5)
               .fontColor(this.t().ink)
             Blank()
             Text(this.showReflect ? '已开启' : '已关闭')
+              .fontFamily(FONT_SANS)
               .fontSize(12)
               .fontColor(this.showReflect ? this.t().seal : this.t().inkSoft)
               .border({ width: 1, color: this.showReflect ? this.t().seal : this.t().line })
@@ -1577,6 +1611,7 @@ export struct SettingsPage {
         this.GroupTitle('启动')
         Column() {
           Text('默认启动很快淡出。开启后停留更久，显示你写的一句话；不写就不停留。')
+            .fontFamily(FONT_SANS)
             .fontSize(12.5)
             .lineHeight(22)
             .fontColor(this.t().inkSoft)
@@ -1584,10 +1619,12 @@ export struct SettingsPage {
             .margin({ bottom: 10 })
           Row() {
             Text('长时启动')
+              .fontFamily(FONT_SANS)
               .fontSize(13.5)
               .fontColor(this.t().ink)
             Blank()
             Text(this.bootLong ? '已开启' : '开启')
+              .fontFamily(FONT_SANS)
               .fontSize(11.5)
               .fontColor(this.bootLong ? this.t().sealInk : this.t().ink)
               .backgroundColor(this.bootLong ? this.t().seal : this.t().card)
@@ -1604,10 +1641,12 @@ export struct SettingsPage {
           .width('100%')
           Row() {
             Text('停留与字号')
+              .fontFamily(FONT_SANS)
               .fontSize(12.5)
               .fontColor(this.t().inkSoft)
             Blank()
             Text(this.bootTuning ? '完成' : '调整')
+              .fontFamily(FONT_SANS)
               .fontSize(12.5)
               .fontColor(this.t().sealInk)
               .backgroundColor(this.t().seal)
@@ -1629,13 +1668,16 @@ export struct SettingsPage {
             Column({ space: 6 }) {
             Row() {
               Text('停留时长')
+                .fontFamily(FONT_SANS)
                 .fontSize(12.5)
                 .fontColor(this.t().inkSoft)
               Blank()
               Text('短')
+                .fontFamily(FONT_SANS)
                 .fontSize(11)
                 .fontColor(this.t().inkSoft)
               Text('长')
+                .fontFamily(FONT_SANS)
                 .fontSize(11)
                 .fontColor(this.t().inkSoft)
                 .margin({ left: 10 })
@@ -1658,13 +1700,16 @@ export struct SettingsPage {
           Column({ space: 6 }) {
             Row() {
               Text('文字大小')
+                .fontFamily(FONT_SANS)
                 .fontSize(12.5)
                 .fontColor(this.t().inkSoft)
               Blank()
               Text('小')
+                .fontFamily(FONT_SANS)
                 .fontSize(11)
                 .fontColor(this.t().inkSoft)
               Text('大')
+                .fontFamily(FONT_SANS)
                 .fontSize(11)
                 .fontColor(this.t().inkSoft)
                 .margin({ left: 10 })
@@ -1700,6 +1745,7 @@ export struct SettingsPage {
             })
           Row({ space: 8 }) {
             Text('保存文案')
+              .fontFamily(FONT_SANS)
               .fontSize(13)
               .fontColor(this.t().ink)
               .backgroundColor(this.t().card)
@@ -1710,6 +1756,7 @@ export struct SettingsPage {
                 this.saveBootText();
               })
             Text('清空')
+              .fontFamily(FONT_SANS)
               .fontSize(12.5)
               .fontColor(this.t().inkSoft)
               .padding({ left: 10, right: 10, top: 10, bottom: 10 })
@@ -1721,6 +1768,7 @@ export struct SettingsPage {
           .width('100%')
           .margin({ top: 10 })
           Text('下次启动生效。')
+            .fontFamily(FONT_SANS)
             .fontSize(11.5)
             .fontColor(this.t().inkSoft)
             .width('100%')
@@ -1738,16 +1786,19 @@ export struct SettingsPage {
         this.GroupTitle('完整加密备份')
         Column({ space: 8 }) {
           Text('数据、句子关系、省身与备注、材料一起打包，再用备份密码（密语）加密成 .sj4。')
+            .fontFamily(FONT_SANS)
             .fontSize(13)
             .lineHeight(22)
             .fontColor(this.t().inkStrong)
             .width('100%')
           Row() {
             Text('同时备份材料包')
+              .fontFamily(FONT_SANS)
               .fontSize(13)
               .fontColor(this.t().ink)
             Blank()
             Text(this.fullIncludeMaterials ? '✓ 包含' : '不包含')
+              .fontFamily(FONT_SANS)
               .fontSize(12)
               .fontColor(this.fullIncludeMaterials ? this.t().sealInk : this.t().inkSoft)
               .backgroundColor(this.fullIncludeMaterials ? this.t().seal : this.t().card)
@@ -1832,6 +1883,7 @@ export struct SettingsPage {
             }
             .width('100%')
             Text('恢复会覆盖当前全部数据；若包内不含材料，材料库会为空。建议先导出当前备份。')
+              .fontFamily(FONT_SANS)
               .fontSize(11.5)
               .lineHeight(20)
               .fontColor(this.t().inkSoft)
@@ -1847,16 +1899,19 @@ export struct SettingsPage {
         this.GroupTitle('完整不加密备份')
         Column({ space: 8 }) {
           Text('数据、句子关系、省身与备注、材料一起打包成 .zip，不加密；拿到文件的人可以直接查看。')
+            .fontFamily(FONT_SANS)
             .fontSize(13)
             .lineHeight(22)
             .fontColor(this.t().inkStrong)
             .width('100%')
           Row() {
             Text('同时备份材料包')
+              .fontFamily(FONT_SANS)
               .fontSize(13)
               .fontColor(this.t().ink)
             Blank()
             Text(this.plainIncludeMaterials ? '✓ 包含' : '不包含')
+              .fontFamily(FONT_SANS)
               .fontSize(12)
               .fontColor(this.plainIncludeMaterials ? this.t().sealInk : this.t().inkSoft)
               .backgroundColor(this.plainIncludeMaterials ? this.t().seal : this.t().card)
@@ -1888,6 +1943,7 @@ export struct SettingsPage {
             }
             .width('100%')
             Text('不加密备份不需要密语，请自行保管。')
+              .fontFamily(FONT_SANS)
               .fontSize(11.5)
               .fontColor(this.t().inkSoft)
               .width('100%')
@@ -1903,6 +1959,7 @@ export struct SettingsPage {
             }
             .width('100%')
             Text('恢复将覆盖当前全部数据；若包内不含材料，材料库会为空。')
+              .fontFamily(FONT_SANS)
               .fontSize(11.5)
               .fontColor(this.t().inkSoft)
               .width('100%')
@@ -1917,11 +1974,13 @@ export struct SettingsPage {
         this.GroupTitle('材料包 · 单独搬材料')
         Column({ space: 8 }) {
           Text('只包含材料原文，不含句子、省身、设置和关系；不加密。')
+            .fontFamily(FONT_SANS)
             .fontSize(13)
             .lineHeight(22)
             .fontColor(this.t().inkStrong)
             .width('100%')
           Text('适合只迁移材料，不动现有数据。拿到文件的人可以直接查看材料原文。')
+            .fontFamily(FONT_SANS)
             .fontSize(11.5)
             .lineHeight(20)
             .fontColor(this.t().inkSoft)
@@ -1948,15 +2007,18 @@ export struct SettingsPage {
           Row() {
             Column({ space: 4 }) {
               Text(this.backupRemindOff ? '提醒已关闭' : '提醒已开启')
+                .fontFamily(FONT_SANS)
                 .fontSize(13.5)
                 .fontColor(this.t().ink)
               Text(this.backupDaysText())
+                .fontFamily(FONT_SANS)
                 .fontSize(11.5)
                 .fontColor(this.t().inkSoft)
             }
             .alignItems(HorizontalAlign.Start)
             Blank()
             Text(this.backupRemindOff ? '重新开启' : '彻底关闭')
+              .fontFamily(FONT_SANS)
               .fontSize(12.5)
               .fontColor(this.backupRemindOff ? this.t().sealInk : this.t().ink)
               .backgroundColor(this.backupRemindOff ? this.t().seal : this.t().card)
@@ -1972,6 +2034,7 @@ export struct SettingsPage {
           }
           .width('100%')
           Text('关闭后不再提醒；数据只在这台设备上（自己导出的数据除外，取决于自己存放的位置），误删、卸载或换机都可能无法恢复。')
+            .fontFamily(FONT_SANS)
             .fontSize(11.5)
             .lineHeight(20)
             .fontColor(this.t().inkSoft)
@@ -1986,11 +2049,13 @@ export struct SettingsPage {
         this.GroupTitle('清空数据')
         Column({ space: 8 }) {
           Text('清空后所有句子、省身、备注、材料和设置都会消失，无法恢复。')
+            .fontFamily(FONT_SANS)
             .fontSize(12)
             .lineHeight(21)
             .fontColor(this.t().inkSoft)
             .width('100%')
           Text('清空全部数据')
+            .fontFamily(FONT_SANS)
             .fontSize(12.5)
             .fontColor(this.t().seal)
             .padding({ top: 8, bottom: 4 })
@@ -2011,12 +2076,14 @@ export struct SettingsPage {
         this.GroupTitle('关于')
         Column({ space: 6 }) {
           Text('句栖')
+            .fontFamily(FONT_SANS)
             .fontSize(13)
             .fontColor(this.t().ink)
             .gesture(LongPressGesture().onAction(() => {
               this.selfTest();
             }))
           Text(`存储：${Store.get().storageMode()} · 备份由你导出`)
+            .fontFamily(FONT_SANS)
             .fontSize(12)
             .lineHeight(22)
             .fontColor(this.t().inkSoft)
@@ -2024,16 +2091,19 @@ export struct SettingsPage {
               this.testReminder();
             }))
           Text('今日 / 我的 / 句库 / 回忆 / 设置 五页已接通。')
+            .fontFamily(FONT_SANS)
             .fontSize(12)
             .lineHeight(22)
             .fontColor(this.t().inkSoft)
           Text('句栖是记录与回看的工具，不是心理治疗、诊断或危机干预服务，也不能替代专业帮助。\n如果你持续感到痛苦、影响到日常生活，或出现伤害自己的念头，请联系专业心理/精神科医生，或拨打当地紧急服务。\n中国大陆心理援助热线：12356；紧急情况：110 / 120。')
+            .fontFamily(FONT_SANS)
             .fontSize(12)
             .lineHeight(23)
             .fontColor(this.t().inkSoft)
             .width('100%')
             .margin({ top: 6, bottom: 4 })
           Text('隐私政策')
+            .fontFamily(FONT_SANS)
             .fontSize(12.5)
             .fontColor(this.t().seal)
             .onClick(() => {
@@ -2041,6 +2111,7 @@ export struct SettingsPage {
             })
           if (this.selfTestMsg.length > 0) {
             Text(this.selfTestMsg)
+              .fontFamily(FONT_SANS)
               .fontSize(11.5)
               .lineHeight(22)
               .fontColor(this.t().seal)
