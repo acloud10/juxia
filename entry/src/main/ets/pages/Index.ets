@@ -159,8 +159,8 @@ struct Index {
     }
     try {
       this.getUIContext().getFont().registerFont({
-        familyName: 'JuxiaYozai',
-        familySrc: $rawfile('fonts/Yozai-Regular.ttf')
+        familyName: 'JuxiaMaoken',
+        familySrc: $rawfile('fonts/MaokenYingBiKaiShuJ.ttf')
       });
     } catch (e) {
       // 字体注册失败时回退到系统字体

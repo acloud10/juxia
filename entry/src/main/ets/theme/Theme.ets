@@ -17,7 +17,7 @@ export class Tokens {
   radiusCard: number = 18;
   radiusBtn: number = 999;
   radiusInput: number = 14;
-  serif: string = 'JuxiaYozai';
+  serif: string = 'JuxiaMaoken';
   sans: string = 'HarmonyOS Sans SC';
   plain: boolean = false;
   blurCard: number = 10;
@@ -29,8 +29,8 @@ export function getTokens(skin: string, dark: boolean): Tokens {
   const t = new Tokens();
   t.plain = skin === 'plain';
   if (t.plain) {
-    t.serif = 'JuxiaYozai';
-    t.sans = 'JuxiaYozai';
+    t.serif = 'JuxiaMaoken';
+    t.sans = 'HarmonyOS Sans SC';
     t.radiusCard = 10;
     t.radiusBtn = 8;
     t.radiusInput = 8;
@@ -107,7 +107,7 @@ export function getTokens(skin: string, dark: boolean): Tokens {
   return t;
 }
 
-export const FONT_SERIF: string = 'JuxiaYozai';
+export const FONT_SERIF: string = 'JuxiaMaoken';
 export const FONT_SANS: string = 'HarmonyOS Sans SC';
 
 

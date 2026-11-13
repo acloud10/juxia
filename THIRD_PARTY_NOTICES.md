@@ -1,18 +1,18 @@
 # Third-party notices
 
-## Yozai / 悠哉字体
+## Maoken YingBiKaiShuJ / 猫啃硬笔楷书
 
-`entry/src/main/resources/rawfile/fonts/Yozai-Regular.ttf` is the Yozai
-handwriting font, used in the app under the family name `JuxiaYozai`.
+`entry/src/main/resources/rawfile/fonts/MaokenYingBiKaiShuJ.ttf` is the simplified
+Chinese hard-pen Kai font, used in the app under the family name `JuxiaMaoken`.
 
-Yozai is derived from Y.OzFont and is distributed under the
-SIL Open Font License, Version 1.1.
+It is based on "隨峰體" by 阿坤, with characters from "隨峰體Plus" and
+"曉聲通秋茄體", and optimized for the simplified Chinese environment.
+It covers the GB/T 2312-80 set (6,763 Han characters).
 
-Source: https://github.com/lxgw/yozai-font
+Source: https://github.com/maoken-fonts/MaokenYingBiKaiShuJ
 
-The font is redistributed under the same license; the application code is
-licensed separately under MIT. Reserved font names "Yozai" and "悠哉" are
-retained by the original project.
+The font is distributed under the SIL Open Font License, Version 1.1.
+The application code is licensed separately under MIT.
 
 ---
 
