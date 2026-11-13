@@ -56,7 +56,6 @@ export default class EntryAbility extends UIAbility {
       UiState.get().safeTop = Math.round(top.topRect.height / density);
       UiState.get().safeBottom = Math.round(bottom.bottomRect.height / density);
       const dark: boolean = this.context.config.colorMode === ConfigurationConstant.ColorMode.COLOR_MODE_DARK;
-      win.setWindowBackgroundColor(dark ? '#14110b' : '#F6F0E3');
       await win.setWindowSystemBarProperties({
         statusBarColor: '#00000000',
         navigationBarColor: '#00000000',

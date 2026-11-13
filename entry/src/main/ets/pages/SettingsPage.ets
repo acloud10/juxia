@@ -373,15 +373,19 @@ export struct SettingsPage {
 
   private writeFullManifest(dir: string, dataPath: string, materialCount: number,
     includeMaterials: boolean, createdAt: number): void {
-    const st = fs.statSync(dataPath);
-    const m: FullManifest = new FullManifest();
-    m.createdAt = createdAt;
-    m.dataBytes = st.size;
-    m.materialCount = materialCount;
-    m.includeMaterials = includeMaterials;
-    const f = fs.openSync(dir + '/manifest.json', fs.OpenMode.CREATE | fs.OpenMode.READ_WRITE | fs.OpenMode.TRUNC);
-    fs.writeSync(f.fd, JSON.stringify(m));
-    fs.closeSync(f);
+    try {
+      const st = fs.statSync(dataPath);
+      const m: FullManifest = new FullManifest();
+      m.createdAt = createdAt;
+      m.dataBytes = st.size;
+      m.materialCount = materialCount;
+      m.includeMaterials = includeMaterials;
+      const f = fs.openSync(dir + '/manifest.json', fs.OpenMode.CREATE | fs.OpenMode.READ_WRITE | fs.OpenMode.TRUNC);
+      fs.writeSync(f.fd, JSON.stringify(m));
+      fs.closeSync(f);
+    } catch (e) {
+      throw new Error('写入备份清单失败');
+    }
   }
 
   private verifyFullManifest(baseDir: string, dataPath: string, d: AppData): void {
@@ -397,8 +401,13 @@ export struct SettingsPage {
     if (m.format !== 'juxia-full' || m.version !== 1) {
       throw new Error('备份清单版本不兼容');
     }
-    const st = fs.statSync(dataPath);
-    if (st.size !== m.dataBytes) {
+    let size: number = 0;
+    try {
+      size = fs.statSync(dataPath).size;
+    } catch (e) {
+      throw new Error('备份校验失败：无法读取数据');
+    }
+    if (size !== m.dataBytes) {
       throw new Error('备份校验失败：数据大小不一致');
     }
     if (d.materials.length !== m.materialCount) {

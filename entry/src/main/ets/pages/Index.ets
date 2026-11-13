@@ -2,7 +2,6 @@
 import { common } from '@kit.AbilityKit';
 import { curves } from '@kit.ArkUI';
 import { display } from '@kit.ArkUI';
-import { window } from '@kit.ArkUI';
 import { Store } from '../data/Store';
 import { ReminderService } from '../services/ReminderService';
 import { RitualCtx, OwnEntry, LibEntry } from '../model/Types';
@@ -209,14 +208,6 @@ struct Index {
     const sys: boolean = UiState.get().systemDark;
     const d: boolean = theme === 'dark' || (theme === 'system' && sys);
     UiState.get().dark = d;
-    try {
-      const ctx = this.getUIContext().getHostContext() as common.UIAbilityContext;
-      window.getLastWindow(ctx).then((w: window.Window) => {
-        w.setWindowBackgroundColor(d ? '#14110b' : '#F6F0E3');
-      });
-    } catch (e) {
-      console.error('juxia window background fail', String(e));
-    }
   }
 
   private bootDark(): boolean {
