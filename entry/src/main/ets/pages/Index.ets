@@ -8,6 +8,7 @@ import { RitualCtx, OwnEntry, LibEntry } from '../model/Types';
 import { Tokens, getTokens, FONT_SERIF, FONT_SANS } from '../theme/Theme';
 import { TopBar, TabIcon } from '../components/Chrome';
 import { RitualOverlay } from '../components/RitualOverlay';
+import { WelcomeGuide } from '../components/WelcomeGuide';
 import { TodayPage } from './TodayPage';
 import { MinePage } from './MinePage';
 import { LibraryPage } from './LibraryPage';
@@ -24,6 +25,7 @@ struct Index {
   @Local pageOpacity: number = 1;
   @Local ready: boolean = false;
   @Local privacyOpen: boolean = false;
+  @Local guideOpen: boolean = false;
   @Local bootOpacity: number = 1;
   @Local bootDone: boolean = false;
   @Local bootTextOpacity: number = 0;
@@ -173,6 +175,7 @@ struct Index {
     this.bootHoldMs = st.data.settings.bootHoldMs;
     this.bootFontScale = st.data.settings.bootFontScale;
     this.privacyOpen = !st.data.settings.privacyAccepted;
+    this.guideOpen = st.data.settings.privacyAccepted && !st.data.meta.seen;
     const sysScale: number = ctx.config.fontSizeScale !== undefined ? ctx.config.fontSizeScale : 1.0;
     UiState.get().systemFontScale = sysScale;
     this.applyFontScale(st.data.settings.fontScaleFollow ? sysScale : st.data.settings.fontScale);
@@ -444,6 +447,9 @@ struct Index {
               st.data.settings.privacyAccepted = true;
               st.saveKv();
               this.privacyOpen = false;
+              if (!st.data.meta.seen) {
+                this.guideOpen = true;
+              }
             })
         }
         .width('100%')
@@ -689,6 +695,16 @@ struct Index {
       }
       if (this.ready && this.bootDone && this.privacyOpen) {
         this.PrivacyGate()
+      }
+      if (this.ready && this.bootDone && this.guideOpen) {
+        WelcomeGuide({
+          onDone: () => {
+            const st = Store.get();
+            st.data.meta.seen = true;
+            st.saveSettings();
+            this.guideOpen = false;
+          }
+        })
       }
     }
     .width('100%')
