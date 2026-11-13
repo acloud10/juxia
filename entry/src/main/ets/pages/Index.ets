@@ -175,7 +175,7 @@ struct Index {
     this.bootHoldMs = st.data.settings.bootHoldMs;
     this.bootFontScale = st.data.settings.bootFontScale;
     this.privacyOpen = !st.data.settings.privacyAccepted;
-    this.guideOpen = st.data.settings.privacyAccepted && !st.data.meta.seen;
+    this.guideOpen = st.data.settings.privacyAccepted && !st.data.meta.seen && !st.guideDone();
     const sysScale: number = ctx.config.fontSizeScale !== undefined ? ctx.config.fontSizeScale : 1.0;
     UiState.get().systemFontScale = sysScale;
     this.applyFontScale(st.data.settings.fontScaleFollow ? sysScale : st.data.settings.fontScale);
@@ -447,7 +447,7 @@ struct Index {
               st.data.settings.privacyAccepted = true;
               st.saveKv();
               this.privacyOpen = false;
-              if (!st.data.meta.seen) {
+              if (!st.data.meta.seen && !st.guideDone()) {
                 this.guideOpen = true;
               }
             })
@@ -700,8 +700,7 @@ struct Index {
         WelcomeGuide({
           onDone: () => {
             const st = Store.get();
-            st.data.meta.seen = true;
-            st.saveSettings();
+            st.markGuideDone();
             this.guideOpen = false;
           }
         })

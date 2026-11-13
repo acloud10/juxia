@@ -751,6 +751,27 @@ export class Store {
     this.bump();
   }
 
+  guideDone(): boolean {
+    const p = this.prefs;
+    if (p === null) return false;
+    try {
+      return (p.getSync('guide_done', '0') as string) === '1';
+    } catch (e) {
+      return false;
+    }
+  }
+
+  markGuideDone(): void {
+    const p = this.prefs;
+    if (p === null) return;
+    try {
+      p.putSync('guide_done', '1');
+      p.flushSync();
+    } catch (e) {
+      console.error('juxia guide flag fail', String(e));
+    }
+  }
+
   // ---------- 草稿（只写 Preferences，不进主数据，避免全量重写） ----------
   saveDraft(kind: string, text: string): void {
     const p = this.prefs;
