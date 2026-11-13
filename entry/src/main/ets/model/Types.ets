@@ -9,6 +9,7 @@ export class Settings {
   theme: string = 'system'; // 可选：system、light、dark
   skin: string = 'classic'; // 可选：classic、plain
   showDays: boolean = true;
+  showSeal: boolean = true;
   appName: string = '句栖';
   bootLong: boolean = false;
   bootText: string = '';

@@ -60,6 +60,7 @@ revisitMinute
 theme
 skin
 showDays
+showSeal
 appName
 bootLong
 bootText

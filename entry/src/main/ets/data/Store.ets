@@ -107,6 +107,7 @@ export class Store {
     if (d.settings.nickname === undefined) d.settings.nickname = '';
     if (d.settings.showGreeting === undefined) d.settings.showGreeting = false;
     if (d.settings.showReflect === undefined) d.settings.showReflect = true;
+    if (d.settings.showSeal === undefined) d.settings.showSeal = true;
     if (!d.meta.openDays) d.meta.openDays = [];
     if (!d.meta.revisitReminderIds) d.meta.revisitReminderIds = {};
     // 旧数据字段兜底：缺字段的条目会在筛选/搜索时崩，先补齐

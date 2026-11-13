@@ -60,7 +60,7 @@ export struct TopBar {
 
   build() {
     Row({ space: 12 }) {
-      if (this.skin !== 'plain') {
+      if (this.skin !== 'plain' && this.ui.showSeal) {
         this.SealBadge()
       }
       Column({ space: 3 }) {

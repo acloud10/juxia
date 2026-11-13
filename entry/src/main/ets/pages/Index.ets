@@ -183,6 +183,7 @@ struct Index {
     UiState.get().skin = st.data.settings.skin;
     UiState.get().appName = st.data.settings.appName;
     UiState.get().showDays = st.data.settings.showDays;
+    UiState.get().showSeal = st.data.settings.showSeal;
     UiState.get().dayCount = st.dayCount();
     UiState.get().themeMode = st.data.settings.theme;
     st.postponeMissedRevisits();

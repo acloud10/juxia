@@ -42,6 +42,7 @@ export struct SettingsPage {
   @Local fontScaleFollow: boolean = true;
   @Local ritualMode: string = 'full';
   @Local showDays: boolean = true;
+  @Local showSeal: boolean = true;
   @Local backupRemindOff: boolean = false;
   @Local bootLong: boolean = false;
   @Local bootTextInput: string = '';
@@ -95,6 +96,7 @@ export struct SettingsPage {
     this.fontScaleFollow = s.fontScaleFollow;
     this.ritualMode = s.ritualMode;
     this.showDays = s.showDays;
+    this.showSeal = s.showSeal;
     this.backupRemindOff = s.backupRemindOff;
     this.bootLong = s.bootLong;
     this.bootTextInput = s.bootText;
@@ -1239,6 +1241,32 @@ export struct SettingsPage {
                 Store.get().data.settings.showDays = this.showDays;
                 Store.get().saveKv();
                 UiState.get().showDays = this.showDays;
+              })
+          }
+          .width('100%')
+          Divider().color(this.t().lineSoft).margin({ top: 10, bottom: 8 })
+          Row() {
+            Text('显示左上角印章')
+              .fontFamily(FONT_SANS)
+              .fontSize(13.5)
+              .fontColor(this.t().ink)
+            Blank()
+            Text(this.showSeal ? '显示中' : '已隐藏')
+              .fontFamily(FONT_SANS)
+              .fontSize(11.5)
+              .fontColor(this.showSeal ? this.t().sealInk : this.t().ink)
+              .backgroundColor(this.showSeal ? this.t().seal : this.t().card)
+              .border({
+                width: 1,
+                color: this.showSeal ? Color.Transparent : this.t().line
+              })
+              .borderRadius(999)
+              .padding({ left: 14, right: 14, top: 8, bottom: 8 })
+              .onClick(() => {
+                this.showSeal = !this.showSeal;
+                Store.get().data.settings.showSeal = this.showSeal;
+                Store.get().saveKv();
+                UiState.get().showSeal = this.showSeal;
               })
           }
           .width('100%')

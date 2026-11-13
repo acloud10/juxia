@@ -15,6 +15,7 @@ export class UiState {
   @Trace appName: string = '句栖';
   @Trace dayCount: number = 1;
   @Trace showDays: boolean = true;
+  @Trace showSeal: boolean = true;
   @Trace safeTop: number = 0;
   @Trace safeBottom: number = 0;
   @Trace dataVersion: number = 0;
