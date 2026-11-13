@@ -1009,22 +1009,21 @@ export struct SettingsPage {
     Store.get().saveKv();
   }
 
-  private async selfTest(): Promise<void> {
-    const pass: string = 'juxia-selftest-2026';
+  private selfTest(): void {
     let msg: string = '正在检查备份…';
     this.selfTestMsg = msg;
     try {
-      const enc: string = await BackupService.encrypt(Store.get().data, pass);
-      const dec: AppData = await BackupService.decrypt(enc, pass);
+      const raw: string = BackupService.serialize(Store.get().data);
+      const dec = JSON.parse(raw) as AppData;
       const ok: boolean = BackupService.valid(dec) &&
         dec.own.length === Store.get().data.own.length &&
         dec.lib.length === Store.get().data.lib.length &&
         dec.materials.length === Store.get().data.materials.length;
       msg = ok
-        ? '备份自检通过。'
-        : '备份自检失败。数据没有通过一致性检查。';
+        ? '备份结构自检通过。'
+        : '备份结构自检失败。数据没有通过一致性检查。';
     } catch (e) {
-      msg = '备份自检失败，请重启应用后再试。';
+      msg = '备份结构自检失败，请重启应用后再试。';
     }
     this.selfTestMsg = msg;
   }

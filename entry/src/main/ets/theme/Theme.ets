@@ -17,8 +17,6 @@ export class Tokens {
   radiusCard: number = 18;
   radiusBtn: number = 999;
   radiusInput: number = 14;
-  serif: string = 'JuxiaMaoken';
-  sans: string = 'HarmonyOS Sans SC';
   plain: boolean = false;
   blurCard: number = 10;
   tabBg: string = '#c7fbf7ec';
@@ -29,8 +27,6 @@ export function getTokens(skin: string, dark: boolean): Tokens {
   const t = new Tokens();
   t.plain = skin === 'plain';
   if (t.plain) {
-    t.serif = 'JuxiaMaoken';
-    t.sans = 'HarmonyOS Sans SC';
     t.radiusCard = 10;
     t.radiusBtn = 8;
     t.radiusInput = 8;
