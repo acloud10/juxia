@@ -819,7 +819,7 @@ export struct ArchivePage {
     .width('100%')
     .height('100%')
     .align(Alignment.Top)
-    .bindContentCover($$this.sheetOpen, this.SheetContent(), { modalTransition: ModalTransition.NONE, onAppear: () => {
+    .bindContentCover($$this.sheetOpen, this.SheetContent(), { modalTransition: ModalTransition.DEFAULT, onAppear: () => {
       this.coverOpacity = 0;
       setTimeout(() => {
         this.getUIContext().animateTo({ duration: 220, curve: curves.springCurve(0.6, 1, 1, 1) }, () => {

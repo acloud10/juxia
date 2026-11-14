@@ -151,6 +151,7 @@ export struct WelcomeGuide {
     .opacity(this.entered ? 1 : 0)
     .scale({ x: this.entered ? 1 : 0.88, y: this.entered ? 1 : 0.88 })
     .animation({ duration: 500, curve: Curve.EaseOut })
+    .transition(TransitionEffect.OPACITY.animation({ duration: 220, curve: Curve.EaseOut }))
   }
 
   @Builder
@@ -210,6 +211,7 @@ export struct WelcomeGuide {
       bottom: this.ui.safeBottom + 10
     })
     .backgroundColor(this.t().bg)
+    .transition(TransitionEffect.OPACITY.animation({ duration: 220, curve: Curve.EaseOut }))
   }
 
   build() {

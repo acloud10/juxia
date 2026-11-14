@@ -697,6 +697,7 @@ export struct RitualOverlay {
     .height('100%')
     .backgroundColor(this.t().bg)
     .alignContent(Alignment.Center)
+    .transition(TransitionEffect.OPACITY.animation({ duration: 220, curve: Curve.EaseOut }))
   }
 }
 

@@ -43,9 +43,9 @@ struct Index {
   private switchTab(next: number): void {
     if (next === this.tab) return;
     this.tab = next;
-    this.pageOpacity = 0.985;
+    this.pageOpacity = 0.92;
     this.getUIContext().animateTo({
-      duration: 140,
+      duration: 220,
       curve: curves.springCurve(0.55, 1, 0.7, 1)
     }, () => {
       this.pageOpacity = 1;
@@ -465,6 +465,7 @@ struct Index {
     }
     .width('100%')
     .height('100%')
+    .transition(TransitionEffect.OPACITY.animation({ duration: 220, curve: Curve.EaseOut }))
   }
 
   build() {
@@ -631,7 +632,7 @@ struct Index {
             }
             .barHeight(0)
             .scrollable(false)
-            .animationDuration(0)
+            .animationDuration(220)
             .width('100%')
             .height('100%')
             .opacity(this.pageOpacity)

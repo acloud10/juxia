@@ -1478,7 +1478,12 @@ export struct LibraryPage {
     .height('100%')
     .align(Alignment.Top)
       if (this.matPreviewOpen) {
-        this.MatPreview()
+        Stack() {
+          this.MatPreview()
+        }
+        .width('100%')
+        .height('100%')
+        .transition(TransitionEffect.OPACITY.animation({ duration: 220, curve: Curve.EaseOut }))
       }
     }
     .width('100%')
