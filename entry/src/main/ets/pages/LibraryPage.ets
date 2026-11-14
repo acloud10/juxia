@@ -1439,9 +1439,18 @@ export struct LibraryPage {
               .width('100%')
               .padding({ top: 28, bottom: 28 })
             } else {
-              LazyForEach(this.libDs, (e: LibEntry) => {
-                this.LibRow(e)
-              }, (e: LibEntry) => e.id)
+              Scroll() {
+                Column({ space: 0 }) {
+                  LazyForEach(this.libDs, (e: LibEntry) => {
+                    this.LibRow(e)
+                  }, (e: LibEntry) => e.id)
+                }
+                .width('100%')
+              }
+              .height(360)
+              .scrollBar(BarState.Off)
+              .edgeEffect(EdgeEffect.Spring)
+              .width('100%')
             }
           }
           .width('100%')
@@ -1475,17 +1484,26 @@ export struct LibraryPage {
                   .width('100%')
                   .padding({ top: 8, bottom: 8 })
               } else {
-                ForEach(this.pagedReplies(), (e: OwnEntry) => {
-                  this.ReplyRow(e)
-                }, (e: OwnEntry) => e.id)
-                if (this.filteredReplies().length > this.replyLimit) {
-                  Text(`加载更多（还有 ${this.filteredReplies().length - this.replyLimit} 条）`)
-                    .fontFamily(FONT_SANS)
-                    .fontSize(12)
-                    .fontColor(this.t().seal)
-                    .padding({ top: 10, bottom: 10 })
-                    .onClick(() => { this.replyLimit += 20; })
+                Scroll() {
+                  Column({ space: 0 }) {
+                    ForEach(this.pagedReplies(), (e: OwnEntry) => {
+                      this.ReplyRow(e)
+                    }, (e: OwnEntry) => e.id)
+                    if (this.filteredReplies().length > this.replyLimit) {
+                      Text(`加载更多（还有 ${this.filteredReplies().length - this.replyLimit} 条）`)
+                        .fontFamily(FONT_SANS)
+                        .fontSize(12)
+                        .fontColor(this.t().seal)
+                        .padding({ top: 10, bottom: 10 })
+                        .onClick(() => { this.replyLimit += 20; })
+                    }
+                  }
+                  .width('100%')
                 }
+                .height(360)
+                .scrollBar(BarState.Off)
+                .edgeEffect(EdgeEffect.Spring)
+                .width('100%')
               }
             }
           }
@@ -1517,41 +1535,50 @@ export struct LibraryPage {
                 this.qDis = v;
               this.disLimit = 20;
               })
-              ForEach(this.pagedDislikes(), (d: DislikeEntry) => {
+              Scroll() {
                 Column({ space: 0 }) {
-                  Text(d.text)
-                    .fontSize(14.5)
-                    .lineHeight(28)
-                    .fontFamily(FONT_SERIF)
-                    .fontColor(this.t().ink)
+                  ForEach(this.pagedDislikes(), (d: DislikeEntry) => {
+                    Column({ space: 0 }) {
+                      Text(d.text)
+                        .fontSize(14.5)
+                        .lineHeight(28)
+                        .fontFamily(FONT_SERIF)
+                        .fontColor(this.t().ink)
+                        .width('100%')
+                      Row({ space: 6 }) {
+                        Text(this.originName(d.origin))
+                          .fontFamily(FONT_SANS)
+                          .fontSize(10)
+                          .fontColor(this.t().inkSoft)
+                          .backgroundColor(this.t().card)
+                          .border({ width: 1, color: this.t().line })
+                          .borderRadius(999)
+                          .padding({ left: 8, right: 8, top: 2, bottom: 2 })
+                        this.QuietButton('撤销排除', () => {
+                          this.undoDislike(d);
+                        })
+                      }
+                      .width('100%')
+                    }
                     .width('100%')
-                  Row({ space: 6 }) {
-                    Text(this.originName(d.origin))
+                    .padding({ top: 10, bottom: 4 })
+                    .border({ width: { top: 1 }, color: this.t().lineSoft })
+                  }, (d: DislikeEntry) => d.text)
+                  if (this.filteredDislikes().length > this.disLimit) {
+                    Text(`加载更多（还有 ${this.filteredDislikes().length - this.disLimit} 条）`)
                       .fontFamily(FONT_SANS)
-                      .fontSize(10)
-                      .fontColor(this.t().inkSoft)
-                      .backgroundColor(this.t().card)
-                      .border({ width: 1, color: this.t().line })
-                      .borderRadius(999)
-                      .padding({ left: 8, right: 8, top: 2, bottom: 2 })
-                    this.QuietButton('撤销排除', () => {
-                      this.undoDislike(d);
-                    })
+                      .fontSize(12)
+                      .fontColor(this.t().seal)
+                      .padding({ top: 10, bottom: 10 })
+                      .onClick(() => { this.disLimit += 20; })
                   }
-                  .width('100%')
                 }
                 .width('100%')
-                .padding({ top: 10, bottom: 4 })
-                .border({ width: { top: 1 }, color: this.t().lineSoft })
-              }, (d: DislikeEntry) => d.text)
-              if (this.filteredDislikes().length > this.disLimit) {
-                Text(`加载更多（还有 ${this.filteredDislikes().length - this.disLimit} 条）`)
-                  .fontFamily(FONT_SANS)
-                  .fontSize(12)
-                  .fontColor(this.t().seal)
-                  .padding({ top: 10, bottom: 10 })
-                  .onClick(() => { this.disLimit += 20; })
               }
+              .height(320)
+              .scrollBar(BarState.Off)
+              .edgeEffect(EdgeEffect.Spring)
+              .width('100%')
             }
           }
           .width('100%')
