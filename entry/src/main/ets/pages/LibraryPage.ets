@@ -9,7 +9,6 @@ import { Tokens, getTokens, FONT_SERIF, FONT_SANS } from '../theme/Theme';
 import { ArrayDataSource } from '../utils/DataSource';
 import { splitSentences } from '../utils/TextSplit';
 import { UiState } from '../state/UiState';
-import { BackToTop } from '../components/BackToTop';
 import { InnerScrollNav } from '../components/InnerScrollNav';
 
 @ComponentV2
@@ -1646,11 +1645,6 @@ export struct LibraryPage {
         .height('100%')
         .transition(TransitionEffect.OPACITY.animation({ duration: 200, curve: Curve.EaseOut }))
       }
-      BackToTop({
-          onJump: () => {
-            this.scroller.scrollTo({ xOffset: 0, yOffset: 0, animation: { duration: 300, curve: Curve.EaseOut } });
-          }
-        })
     }
     .width('100%')
     .height('100%')
