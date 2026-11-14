@@ -108,7 +108,9 @@ export class Repo {
         'revisitAt': e.revisitAt,
         'snoozeUntil': e.snoozeUntil,
         'foot': JSON.stringify(e.foot),
-        'notes': JSON.stringify(e.notes)
+        'notes': JSON.stringify(e.notes),
+        'replyToId': e.replyToId,
+        'replyFrom': e.replyFrom
       };
       snap.own.push(b);
     });
