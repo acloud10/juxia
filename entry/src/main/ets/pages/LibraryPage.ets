@@ -597,6 +597,25 @@ export struct LibraryPage {
     return '回信';
   }
 
+  private deleteReply(e: OwnEntry): void {
+    this.getUIContext().showAlertDialog({
+      title: '删除这条回信？',
+      message: '只会删除这条回信，不会删除它回的原句。删除后无法恢复。',
+      primaryButton: {
+        value: '取消',
+        action: () => {}
+      },
+      secondaryButton: {
+        value: '删除',
+        action: () => {
+          Store.get().removeOwn(e.id);
+          this.reload();
+          this.toast('回信已删除');
+        }
+      }
+    });
+  }
+
   private replySourceLabel(e: OwnEntry): string {
     const p: OwnEntry | undefined = Store.get().data.own.find((x: OwnEntry) => x.id === e.replyToId);
     if (p === undefined) return '回的是';
@@ -643,6 +662,15 @@ export struct LibraryPage {
             .textOverflow({ overflow: TextOverflow.Ellipsis })
             .layoutWeight(1)
         }
+        Blank()
+        Text('删除')
+          .fontFamily(FONT_SANS)
+          .fontSize(11)
+          .fontColor(this.t().seal)
+          .padding({ left: 8, top: 4, bottom: 4 })
+          .onClick(() => {
+            this.deleteReply(e);
+          })
       }
       .width('100%')
       .margin({ top: 4 })
@@ -1554,7 +1582,7 @@ export struct LibraryPage {
     .height('100%')
     .align(Alignment.Top)
     .onScroll((xOffset: number, yOffset: number) => {
-      this.showTop = this.scroller.currentOffset().yOffset > 600;
+      this.showTop = this.scroller.currentOffset().yOffset > 80;
     })
       if (this.matPreviewOpen) {
         Stack() {
@@ -1564,13 +1592,11 @@ export struct LibraryPage {
         .height('100%')
         .transition(TransitionEffect.OPACITY.animation({ duration: 200, curve: Curve.EaseOut }))
       }
-      if (this.showTop) {
-        BackToTop({
+      BackToTop({
           onJump: () => {
             this.scroller.scrollTo({ xOffset: 0, yOffset: 0, animation: { duration: 300, curve: Curve.EaseOut } });
           }
         })
-      }
     }
     .width('100%')
     .height('100%')

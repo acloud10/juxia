@@ -25,14 +25,14 @@ export struct BackToTop {
         .fontSize(9)
         .fontColor(this.t().inkSoft)
     }
-    .width(48)
-    .height(48)
+    .width(50)
+    .height(50)
     .justifyContent(FlexAlign.Center)
     .backgroundColor(this.t().cardSolid)
     .borderRadius(24)
     .border({ width: 1, color: this.t().line })
     .shadow({ radius: 12, color: this.t().shadowLift, offsetY: 4 })
-    .position({ right: 16, bottom: 112 })
+    .position({ right: 16, bottom: 260 })
     .zIndex(20)
     .accessibilityText('长按回到顶部')
     .gesture(LongPressGesture({ repeat: false, duration: 500 }).onAction(() => {
