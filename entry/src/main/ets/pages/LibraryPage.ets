@@ -10,6 +10,7 @@ import { ArrayDataSource } from '../utils/DataSource';
 import { splitSentences } from '../utils/TextSplit';
 import { UiState } from '../state/UiState';
 import { BackToTop } from '../components/BackToTop';
+import { InnerScrollNav } from '../components/InnerScrollNav';
 
 @ComponentV2
 export struct LibraryPage {
@@ -56,6 +57,10 @@ export struct LibraryPage {
   @Local relRev: number = 0;
   private lastFind: string = '';
   private scroller: Scroller = new Scroller();
+  private libScroll: Scroller = new Scroller();
+  private replyScroll: Scroller = new Scroller();
+  private disScroll: Scroller = new Scroller();
+  private matScroll: Scroller = new Scroller();
   @Local showTop: boolean = false;
 
   private toast(message: string): void {
@@ -1353,7 +1358,17 @@ export struct LibraryPage {
   @Builder
   MaterialsSection() {
     Column({ space: 0 }) {
-      this.MaterialList()
+      Scroll(this.matScroll) {
+        this.MaterialList()
+      }
+      .height(420)
+      .scrollBar(BarState.Off)
+      .edgeEffect(EdgeEffect.Spring)
+      .width('100%')
+      InnerScrollNav({
+        onTop: () => { this.matScroll.scrollTo({ xOffset: 0, yOffset: 0, animation: { duration: 300, curve: Curve.EaseOut } }); },
+        onBottom: () => { this.matScroll.scrollEdge(Edge.Bottom); }
+      })
       Divider().color(this.t().line).margin({ top: 8, bottom: 8 })
       this.MaterialForm()
       Divider().color(this.t().line).margin({ top: 12, bottom: 4 })
@@ -1439,7 +1454,7 @@ export struct LibraryPage {
               .width('100%')
               .padding({ top: 28, bottom: 28 })
             } else {
-              Scroll() {
+              Scroll(this.libScroll) {
                 Column({ space: 0 }) {
                   LazyForEach(this.libDs, (e: LibEntry) => {
                     this.LibRow(e)
@@ -1451,6 +1466,10 @@ export struct LibraryPage {
               .scrollBar(BarState.Off)
               .edgeEffect(EdgeEffect.Spring)
               .width('100%')
+              InnerScrollNav({
+                onTop: () => { this.libScroll.scrollTo({ xOffset: 0, yOffset: 0, animation: { duration: 300, curve: Curve.EaseOut } }); },
+                onBottom: () => { this.libScroll.scrollEdge(Edge.Bottom); }
+              })
             }
           }
           .width('100%')
@@ -1484,7 +1503,7 @@ export struct LibraryPage {
                   .width('100%')
                   .padding({ top: 8, bottom: 8 })
               } else {
-                Scroll() {
+                Scroll(this.replyScroll) {
                   Column({ space: 0 }) {
                     ForEach(this.pagedReplies(), (e: OwnEntry) => {
                       this.ReplyRow(e)
@@ -1504,6 +1523,10 @@ export struct LibraryPage {
                 .scrollBar(BarState.Off)
                 .edgeEffect(EdgeEffect.Spring)
                 .width('100%')
+                InnerScrollNav({
+                  onTop: () => { this.replyScroll.scrollTo({ xOffset: 0, yOffset: 0, animation: { duration: 300, curve: Curve.EaseOut } }); },
+                  onBottom: () => { this.replyScroll.scrollEdge(Edge.Bottom); }
+                })
               }
             }
           }
@@ -1535,7 +1558,7 @@ export struct LibraryPage {
                 this.qDis = v;
               this.disLimit = 20;
               })
-              Scroll() {
+              Scroll(this.disScroll) {
                 Column({ space: 0 }) {
                   ForEach(this.pagedDislikes(), (d: DislikeEntry) => {
                     Column({ space: 0 }) {
@@ -1579,6 +1602,10 @@ export struct LibraryPage {
               .scrollBar(BarState.Off)
               .edgeEffect(EdgeEffect.Spring)
               .width('100%')
+              InnerScrollNav({
+                onTop: () => { this.disScroll.scrollTo({ xOffset: 0, yOffset: 0, animation: { duration: 300, curve: Curve.EaseOut } }); },
+                onBottom: () => { this.disScroll.scrollEdge(Edge.Bottom); }
+              })
             }
           }
           .width('100%')
