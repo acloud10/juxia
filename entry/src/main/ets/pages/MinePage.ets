@@ -132,6 +132,18 @@ export struct MinePage {
     this.sheetOpen = true;
   }
 
+  private listScroll(kind: string): Scroller {
+    return kind === 'encourage' ? this.encScroll : this.wndScroll;
+  }
+
+  private scrollTop(kind: string): void {
+    this.listScroll(kind).scrollTo({ xOffset: 0, yOffset: 0, animation: { duration: 300, curve: Curve.EaseOut } });
+  }
+
+  private scrollBottom(kind: string): void {
+    this.listScroll(kind).scrollEdge(Edge.Bottom);
+  }
+
   private t(): Tokens {
     return getTokens(this.skin, this.dark);
   }
@@ -931,9 +943,22 @@ export struct MinePage {
           .width('100%')
           .padding({ top: 22, bottom: 26 })
         } else {
-          LazyForEach(kind === 'encourage' ? this.encDs : this.wndDs, (e: OwnEntry) => {
-            this.EntryRow(e)
-          }, (e: OwnEntry) => e.id)
+          Scroll(this.listScroll(kind)) {
+            Column({ space: 0 }) {
+              LazyForEach(kind === 'encourage' ? this.encDs : this.wndDs, (e: OwnEntry) => {
+                this.EntryRow(e)
+              }, (e: OwnEntry) => e.id)
+            }
+            .width('100%')
+          }
+          .height(360)
+          .scrollBar(BarState.Off)
+          .edgeEffect(EdgeEffect.Spring)
+          .width('100%')
+          InnerScrollNav({
+            onTop: () => { this.scrollTop(kind); },
+            onBottom: () => { this.scrollBottom(kind); }
+          })
         }
       }
     }
@@ -1354,58 +1379,14 @@ export struct MinePage {
           })
           .margin({ bottom: 12 })
 
-        if (this.showEnc) {
-          Scroll(this.encScroll) {
-            this.ListSection('encourage', '鼓励池',
-              '还一句都没有。下一个心情不错的日子，写一句留给低谷时的自己。')
-          }
-          .height(420)
-          .scrollBar(BarState.Off)
-          .edgeEffect(EdgeEffect.Spring)
-          .width('100%')
-          InnerScrollNav({
-            onTop: () => { this.encScroll.scrollTo({ xOffset: 0, yOffset: 0, animation: { duration: 300, curve: Curve.EaseOut } }); },
-            onBottom: () => { this.encScroll.scrollEdge(Edge.Bottom); }
-          })
-        } else {
-          this.ListSection('encourage', '鼓励池',
-            '还一句都没有。下一个心情不错的日子，写一句留给低谷时的自己。')
-        }
+        this.ListSection('encourage', '鼓励池',
+          '还一句都没有。下一个心情不错的日子，写一句留给低谷时的自己。')
 
-        if (this.showWnd) {
-          Scroll(this.wndScroll) {
-            this.ListSection('wound', '旧事簿',
-              '树洞是空的。难过的事写下来，就已经轻了一点。')
-          }
-          .height(420)
-          .scrollBar(BarState.Off)
-          .edgeEffect(EdgeEffect.Spring)
-          .width('100%')
-          InnerScrollNav({
-            onTop: () => { this.wndScroll.scrollTo({ xOffset: 0, yOffset: 0, animation: { duration: 300, curve: Curve.EaseOut } }); },
-            onBottom: () => { this.wndScroll.scrollEdge(Edge.Bottom); }
-          })
-        } else {
-          this.ListSection('wound', '旧事簿',
-            '树洞是空的。难过的事写下来，就已经轻了一点。')
-        }
+        this.ListSection('wound', '旧事簿',
+          '树洞是空的。难过的事写下来，就已经轻了一点。')
 
         if (this.showRef) {
-          if (this.refSectionOpen) {
-            Scroll(this.refScroll) {
-              this.ReflectSection()
-            }
-            .height(460)
-            .scrollBar(BarState.Off)
-            .edgeEffect(EdgeEffect.Spring)
-            .width('100%')
-            InnerScrollNav({
-              onTop: () => { this.refScroll.scrollTo({ xOffset: 0, yOffset: 0, animation: { duration: 300, curve: Curve.EaseOut } }); },
-              onBottom: () => { this.refScroll.scrollEdge(Edge.Bottom); }
-            })
-          } else {
-            this.ReflectSection()
-          }
+          this.ReflectSection()
         }
 
         if (this.enc.length === 0 && this.wnd.length === 0 && this.refs.length === 0 && this.q.length === 0) {
