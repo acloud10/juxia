@@ -9,6 +9,7 @@ import { Tokens, getTokens, FONT_SERIF, FONT_SANS } from '../theme/Theme';
 import { ArrayDataSource } from '../utils/DataSource';
 import { splitSentences } from '../utils/TextSplit';
 import { UiState } from '../state/UiState';
+import { BackToTop } from '../components/BackToTop';
 
 @ComponentV2
 export struct LibraryPage {
@@ -24,6 +25,8 @@ export struct LibraryPage {
   @Local qLib: string = '';
   @Local qDis: string = '';
   @Local qReply: string = '';
+  @Local replyLimit: number = 20;
+  @Local disLimit: number = 20;
   @Local showLib: boolean = true;
   @Local showMaterials: boolean = false;
   @Local showMatRules: boolean = false;
@@ -52,6 +55,8 @@ export struct LibraryPage {
   @Local relLibId: string = '';
   @Local relRev: number = 0;
   private lastFind: string = '';
+  private scroller: Scroller = new Scroller();
+  @Local showTop: boolean = false;
 
   private toast(message: string): void {
     try {
@@ -99,6 +104,10 @@ export struct LibraryPage {
     if (kw.length === 0) return this.libs;
     return this.libs.filter((e: LibEntry) =>
       e.text.toLowerCase().includes(kw) || e.source.toLowerCase().includes(kw) || e.tag.toLowerCase().includes(kw));
+  }
+
+  private pagedDislikes(): DislikeEntry[] {
+    return this.filteredDislikes().slice(0, this.disLimit);
   }
 
   private filteredDislikes(): DislikeEntry[] {
@@ -594,6 +603,10 @@ export struct LibraryPage {
     if (p.kind === 'encourage') return '回的是鼓励';
     if (p.kind === 'wound') return '回的是旧事';
     return '回的是';
+  }
+
+  private pagedReplies(): OwnEntry[] {
+    return this.filteredReplies().slice(0, this.replyLimit);
   }
 
   private filteredReplies(): OwnEntry[] {
@@ -1346,7 +1359,7 @@ export struct LibraryPage {
 
   build() {
     Stack() {
-      Scroll() {
+      Scroll(this.scroller) {
       Column() {
         this.Label('取一句')
         Column({ space: 0 }) {
@@ -1423,6 +1436,7 @@ export struct LibraryPage {
             } else {
               this.SearchBox('搜索回信或原句', this.qReply, (v: string) => {
                 this.qReply = v;
+              this.replyLimit = 20;
               })
               if (this.filteredReplies().length === 0) {
                 Text('没有找到。换个词，或清空搜索。')
@@ -1433,9 +1447,17 @@ export struct LibraryPage {
                   .width('100%')
                   .padding({ top: 8, bottom: 8 })
               } else {
-                ForEach(this.filteredReplies(), (e: OwnEntry) => {
+                ForEach(this.pagedReplies(), (e: OwnEntry) => {
                   this.ReplyRow(e)
                 }, (e: OwnEntry) => e.id)
+                if (this.filteredReplies().length > this.replyLimit) {
+                  Text(`加载更多（还有 ${this.filteredReplies().length - this.replyLimit} 条）`)
+                    .fontFamily(FONT_SANS)
+                    .fontSize(12)
+                    .fontColor(this.t().seal)
+                    .padding({ top: 10, bottom: 10 })
+                    .onClick(() => { this.replyLimit += 20; })
+                }
               }
             }
           }
@@ -1465,8 +1487,9 @@ export struct LibraryPage {
             } else {
               this.SearchBox('搜索排除名单', this.qDis, (v: string) => {
                 this.qDis = v;
+              this.disLimit = 20;
               })
-              ForEach(this.filteredDislikes(), (d: DislikeEntry) => {
+              ForEach(this.pagedDislikes(), (d: DislikeEntry) => {
                 Column({ space: 0 }) {
                   Text(d.text)
                     .fontSize(14.5)
@@ -1493,6 +1516,14 @@ export struct LibraryPage {
                 .padding({ top: 10, bottom: 4 })
                 .border({ width: { top: 1 }, color: this.t().lineSoft })
               }, (d: DislikeEntry) => d.text)
+              if (this.filteredDislikes().length > this.disLimit) {
+                Text(`加载更多（还有 ${this.filteredDislikes().length - this.disLimit} 条）`)
+                  .fontFamily(FONT_SANS)
+                  .fontSize(12)
+                  .fontColor(this.t().seal)
+                  .padding({ top: 10, bottom: 10 })
+                  .onClick(() => { this.disLimit += 20; })
+              }
             }
           }
           .width('100%')
@@ -1522,6 +1553,9 @@ export struct LibraryPage {
     .width('100%')
     .height('100%')
     .align(Alignment.Top)
+    .onScroll((xOffset: number, yOffset: number) => {
+      this.showTop = this.scroller.currentOffset().yOffset > 600;
+    })
       if (this.matPreviewOpen) {
         Stack() {
           this.MatPreview()
@@ -1529,6 +1563,13 @@ export struct LibraryPage {
         .width('100%')
         .height('100%')
         .transition(TransitionEffect.OPACITY.animation({ duration: 200, curve: Curve.EaseOut }))
+      }
+      if (this.showTop) {
+        BackToTop({
+          onJump: () => {
+            this.scroller.scrollTo({ xOffset: 0, yOffset: 0, animation: { duration: 300, curve: Curve.EaseOut } });
+          }
+        })
       }
     }
     .width('100%')
