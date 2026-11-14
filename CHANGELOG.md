@@ -11,6 +11,7 @@
 - `.sj4` / `.zip` 改为流式处理，按剩余空间预检，不再整包读内存
 - manifest v2 增加 data.json 与每个材料文件的 SHA-256
 - 正常保存会保留 restore token，不会被全量快照覆盖
+- 删除整包 encryptBytes / decryptBytes 旧入口，只保留流式文件入口
 - release 混淆保留备份、manifest 和 journal 的 JSON 字段名
 
 ## 1.0.4
