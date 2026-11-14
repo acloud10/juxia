@@ -1,4 +1,4 @@
-// 句栖 · 我的（鼓励池 / 旧事簿）
+﻿// 句栖 · 我的（鼓励池 / 旧事簿）
 import { curves } from '@kit.ArkUI';
 import { window, display } from '@kit.ArkUI';
 import { common } from '@kit.AbilityKit';
@@ -8,6 +8,7 @@ import { ReminderService } from '../services/ReminderService';
 import { Tokens, getTokens, FONT_SERIF, FONT_SANS } from '../theme/Theme';
 import { ArrayDataSource } from '../utils/DataSource';
 import { UiState } from '../state/UiState';
+import { InnerScrollNav } from '../components/InnerScrollNav';
 
 class ReflectGroup {
   key: string = '';
@@ -25,6 +26,9 @@ class ReflectYear {
 @ComponentV2
 export struct MinePage {
   @Local ui: UiState = UiState.get();
+  private encScroll: Scroller = new Scroller();
+  private wndScroll: Scroller = new Scroller();
+  private refScroll: Scroller = new Scroller();
   private get skin(): string { return this.ui.skin; }
   private get dark(): boolean { return this.ui.dark; }
   @Event goToday: () => void = () => {};
@@ -1350,14 +1354,58 @@ export struct MinePage {
           })
           .margin({ bottom: 12 })
 
-        this.ListSection('encourage', '鼓励池',
-          '还一句都没有。下一个心情不错的日子，写一句留给低谷时的自己。')
+        if (this.showEnc) {
+          Scroll(this.encScroll) {
+            this.ListSection('encourage', '鼓励池',
+              '还一句都没有。下一个心情不错的日子，写一句留给低谷时的自己。')
+          }
+          .height(420)
+          .scrollBar(BarState.Off)
+          .edgeEffect(EdgeEffect.Spring)
+          .width('100%')
+          InnerScrollNav({
+            onTop: () => { this.encScroll.scrollTo({ xOffset: 0, yOffset: 0, animation: { duration: 300, curve: Curve.EaseOut } }); },
+            onBottom: () => { this.encScroll.scrollEdge(Edge.Bottom); }
+          })
+        } else {
+          this.ListSection('encourage', '鼓励池',
+            '还一句都没有。下一个心情不错的日子，写一句留给低谷时的自己。')
+        }
 
-        this.ListSection('wound', '旧事簿',
-          '树洞是空的。难过的事写下来，就已经轻了一点。')
+        if (this.showWnd) {
+          Scroll(this.wndScroll) {
+            this.ListSection('wound', '旧事簿',
+              '树洞是空的。难过的事写下来，就已经轻了一点。')
+          }
+          .height(420)
+          .scrollBar(BarState.Off)
+          .edgeEffect(EdgeEffect.Spring)
+          .width('100%')
+          InnerScrollNav({
+            onTop: () => { this.wndScroll.scrollTo({ xOffset: 0, yOffset: 0, animation: { duration: 300, curve: Curve.EaseOut } }); },
+            onBottom: () => { this.wndScroll.scrollEdge(Edge.Bottom); }
+          })
+        } else {
+          this.ListSection('wound', '旧事簿',
+            '树洞是空的。难过的事写下来，就已经轻了一点。')
+        }
 
         if (this.showRef) {
-          this.ReflectSection()
+          if (this.refSectionOpen) {
+            Scroll(this.refScroll) {
+              this.ReflectSection()
+            }
+            .height(460)
+            .scrollBar(BarState.Off)
+            .edgeEffect(EdgeEffect.Spring)
+            .width('100%')
+            InnerScrollNav({
+              onTop: () => { this.refScroll.scrollTo({ xOffset: 0, yOffset: 0, animation: { duration: 300, curve: Curve.EaseOut } }); },
+              onBottom: () => { this.refScroll.scrollEdge(Edge.Bottom); }
+            })
+          } else {
+            this.ReflectSection()
+          }
         }
 
         if (this.enc.length === 0 && this.wnd.length === 0 && this.refs.length === 0 && this.q.length === 0) {

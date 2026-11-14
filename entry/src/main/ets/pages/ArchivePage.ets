@@ -7,6 +7,7 @@ import { ReminderService } from '../services/ReminderService';
 import { Tokens, getTokens, FONT_SERIF, FONT_SANS } from '../theme/Theme';
 import { ArrayDataSource } from '../utils/DataSource';
 import { UiState } from '../state/UiState';
+import { InnerScrollNav } from '../components/InnerScrollNav';
 
 class TlNote {
   id: string = '';
@@ -34,6 +35,9 @@ export struct ArchivePage {
   @Local tab: string = 'timeline';
   @Local q: string = '';
   @Local showRevisit: boolean = false;
+  private revisitScroll: Scroller = new Scroller();
+  private timelineScroll: Scroller = new Scroller();
+  private archScroll: Scroller = new Scroller();
   @Local replyOpenId: string = '';
   @Local replyText: string = '';
   @Local panel: string = '';
@@ -767,6 +771,7 @@ export struct ArchivePage {
         })
 
         if (this.showRevisit) {
+          Scroll(this.revisitScroll) {
           Column({ space: 0 }) {
             if (this.revisitList().length === 0) {
               Text('还没有约定回访。把一件旧事标记为「已解决 / 已放下」时，可以约一个时间。')
@@ -787,6 +792,15 @@ export struct ArchivePage {
           .borderRadius(this.t().radiusCard)
           .border({ width: 1, color: this.t().line })
           .margin({ top: 10 })
+          }
+          .height(380)
+          .scrollBar(BarState.Off)
+          .edgeEffect(EdgeEffect.Spring)
+          .width('100%')
+          InnerScrollNav({
+            onTop: () => { this.revisitScroll.scrollTo({ xOffset: 0, yOffset: 0, animation: { duration: 300, curve: Curve.EaseOut } }); },
+            onBottom: () => { this.revisitScroll.scrollEdge(Edge.Bottom); }
+          })
         }
 
         Flex({ wrap: FlexWrap.Wrap }) {
@@ -823,7 +837,17 @@ export struct ArchivePage {
           .margin({ bottom: 12 })
 
         if (this.tab === 'timeline') {
-          this.Timeline()
+          Scroll(this.timelineScroll) {
+            this.Timeline()
+          }
+          .height(520)
+          .scrollBar(BarState.Off)
+          .edgeEffect(EdgeEffect.Spring)
+          .width('100%')
+          InnerScrollNav({
+            onTop: () => { this.timelineScroll.scrollTo({ xOffset: 0, yOffset: 0, animation: { duration: 300, curve: Curve.EaseOut } }); },
+            onBottom: () => { this.timelineScroll.scrollEdge(Edge.Bottom); }
+          })
         } else {
           if (this.categoryList().length === 0) {
             Column({ space: 6 }) {
@@ -844,9 +868,22 @@ export struct ArchivePage {
               .borderRadius(this.t().radiusCard)
               .border({ width: 1, color: this.t().line })
           } else {
-            ForEach(this.categoryList(), (e: OwnEntry) => {
-              this.ArchiveCard(e)
-            }, (e: OwnEntry) => `${e.id}-${e.archAt}-${e.notes.length}-${e.revisitAt}`)
+            Scroll(this.archScroll) {
+              Column({ space: 0 }) {
+                ForEach(this.categoryList(), (e: OwnEntry) => {
+                  this.ArchiveCard(e)
+                }, (e: OwnEntry) => `${e.id}-${e.archAt}-${e.notes.length}-${e.revisitAt}`)
+              }
+              .width('100%')
+            }
+            .height(420)
+            .scrollBar(BarState.Off)
+            .edgeEffect(EdgeEffect.Spring)
+            .width('100%')
+            InnerScrollNav({
+              onTop: () => { this.archScroll.scrollTo({ xOffset: 0, yOffset: 0, animation: { duration: 300, curve: Curve.EaseOut } }); },
+              onBottom: () => { this.archScroll.scrollEdge(Edge.Bottom); }
+            })
           }
         }
 
