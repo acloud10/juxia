@@ -1364,7 +1364,10 @@ export struct LibraryPage {
   MaterialsSection() {
     Column({ space: 0 }) {
       Scroll(this.matScroll) {
-        this.MaterialList()
+        Column({ space: 0 }) {
+          this.MaterialList()
+        }
+        .width('100%')
       }
       .height(420)
       .scrollBar(BarState.Off)
