@@ -16,6 +16,8 @@ export class Settings {
   bootHoldMs: number = 1200;
   bootFontScale: number = 1.25;
   backupRemindOff: boolean = false;
+  fullIncludeMaterials: boolean = true;
+  plainIncludeMaterials: boolean = true;
   drawCount: number = 0;
   drawOwn: boolean = true;
   drawLib: boolean = true;

@@ -65,6 +65,8 @@ export class Store {
       this.data = await this.repo.init(context, legacy);
       this.useDb = true;
     } catch (e) {
+      AppError.report('本地数据读取失败。', '数据没有被覆盖；重启应用后再试，先不要清空数据。', true);
+      console.error('juxia store init fallback', String(e));
       this.data = legacy !== null ? legacy : new AppData();
       this.useDb = false;
     }
@@ -100,6 +102,8 @@ export class Store {
     if (d.settings.bootFontScale === undefined || isNaN(d.settings.bootFontScale)) d.settings.bootFontScale = 1.25;
     d.settings.bootFontScale = Math.max(0.8, Math.min(2.5, d.settings.bootFontScale));
     if (d.settings.backupRemindOff === undefined) d.settings.backupRemindOff = false;
+    if (d.settings.fullIncludeMaterials === undefined) d.settings.fullIncludeMaterials = true;
+    if (d.settings.plainIncludeMaterials === undefined) d.settings.plainIncludeMaterials = true;
     if (d.settings.drawOwn === undefined) d.settings.drawOwn = true;
     if (d.settings.drawLib === undefined) d.settings.drawLib = true;
     if (d.settings.revisitHour === undefined) d.settings.revisitHour = 9;

@@ -20,6 +20,13 @@ class MatPackItem {
   size: number = 0;
 }
 
+class MatPackManifest {
+  format: string = 'juxia-materials';
+  version: number = 1;
+  createdAt: number = 0;
+  items: MatPackItem[] = [];
+}
+
 class FullManifest {
   format: string = 'juxia-full';
   version: number = 1;
@@ -84,6 +91,12 @@ export struct SettingsPage {
     this.load();
   }
 
+  aboutToDisappear(): void {
+    if (this.bootSaveTimer >= 0) {
+      clearTimeout(this.bootSaveTimer);
+    }
+  }
+
   @Monitor('ui.settingsSection')
   onSectionReq(monitor: IMonitor): void {
     this.openSection = this.ui.settingsSection;
@@ -98,6 +111,8 @@ export struct SettingsPage {
     this.showDays = s.showDays;
     this.showSeal = s.showSeal;
     this.backupRemindOff = s.backupRemindOff;
+    this.fullIncludeMaterials = s.fullIncludeMaterials;
+    this.plainIncludeMaterials = s.plainIncludeMaterials;
     this.bootLong = s.bootLong;
     this.bootTextInput = s.bootText;
     this.bootHold = s.bootHoldMs;
@@ -443,6 +458,41 @@ export struct SettingsPage {
     }
   }
 
+  private removeFlatDir(dir: string): void {
+    try {
+      const names: string[] = fs.listFileSync(dir);
+      names.forEach((name: string) => {
+        try {
+          fs.unlinkSync(dir + '/' + name);
+        } catch (e) {
+        }
+      });
+      fs.rmdirSync(dir);
+    } catch (e) {
+    }
+  }
+
+  private stageImportMaterials(ctx: common.UIAbilityContext, baseDir: string,
+    d: AppData, stamp: number): string {
+    const matDir: string = ctx.filesDir + '/materials';
+    const stageDir: string = ctx.filesDir + '/materials_stage_' + stamp;
+    fs.mkdirSync(stageDir);
+    for (const m of d.materials) {
+      const src: string = baseDir + '/materials/' + m.id + '.txt';
+      const dst: string = stageDir + '/' + m.id + '.txt';
+      try {
+        fs.copyFileSync(src, dst);
+        const st = fs.statSync(dst);
+        m.path = matDir + '/' + m.id + '.txt';
+        m.size = st.size;
+      } catch (e) {
+        this.removeFlatDir(stageDir);
+        throw new Error('材料复制失败：' + m.name);
+      }
+    }
+    return stageDir;
+  }
+
   private readAllBytes(path: string): Uint8Array {
     try {
     const f = fs.openSync(path, fs.OpenMode.READ_ONLY);
@@ -593,42 +643,47 @@ export struct SettingsPage {
       if (!BackupService.valid(d)) throw new Error('shape');
       this.verifyFullManifest(baseDir, dataPath, d);
       const matDir: string = ctx.filesDir + '/materials';
-      // 覆盖前先清掉旧材料文件，否则每恢复一次就留下一批孤儿
+      const stageDir: string = this.stageImportMaterials(ctx, baseDir, d, stamp);
+      const oldDir: string = ctx.filesDir + '/materials_old_' + stamp;
+      let movedOld: boolean = false;
       try {
-        const olds: string[] = fs.listFileSync(matDir);
-        olds.forEach((name: string) => {
-          try {
-            fs.unlinkSync(matDir + '/' + name);
-          } catch (e) {
-            console.error('juxia old material unlink fail', name, String(e));
+        try {
+          fs.renameSync(matDir, oldDir);
+          movedOld = true;
+        } catch (e) {
+        }
+        try {
+          fs.renameSync(stageDir, matDir);
+        } catch (e) {
+          if (movedOld) {
+            try { fs.renameSync(oldDir, matDir); } catch (e2) {}
           }
-        });
+          this.removeFlatDir(stageDir);
+          throw new Error(String((e as Error).message ?? '恢复失败'));
+        }
+        await Store.get().replaceAll(d);
       } catch (e) {
-        console.error('juxia old material list fail', String(e));
+        if (movedOld) {
+          this.removeFlatDir(matDir);
+          try { fs.renameSync(oldDir, matDir); } catch (e2) {}
+        } else {
+          this.removeFlatDir(stageDir);
+        }
+        throw new Error(String((e as Error).message ?? '恢复失败'));
       }
-      await Store.get().replaceAll(d);
-      try {
-        fs.mkdirSync(matDir);
-      } catch (e) {
-        console.error('juxia material dir ensure fail', String(e));
-      }
-      if (Store.get().data.materials.length > 0) {
+      if (movedOld) {
+        this.removeFlatDir(oldDir);
       }
       let failedMaterials: number = 0;
       for (const m of Store.get().data.materials) {
-        const src: string = baseDir + '/materials/' + m.id + '.txt';
-        const target: string = matDir + '/' + m.id + '.txt';
         try {
-          fs.copyFileSync(src, target);
-          const st = fs.statSync(target);
-          Store.get().attachMaterialFile(m.id, m.name, target, st.size);
           Store.get().clearMaterialIndex(m.id);
-          await MaterialIndexer.indexFile(m.id, target);
+          await MaterialIndexer.indexFile(m.id, m.path);
         } catch (e) {
           failedMaterials++;
         }
       }
-      const lost: number = this.pruneMissingMaterials();
+      const lost: number = 0;
       this.applyLoadedSettings();
       this.load();
       try { fs.unlinkSync(local); } catch (e) {}
@@ -735,39 +790,47 @@ export struct SettingsPage {
       if (!BackupService.valid(d)) throw new Error('shape');
       this.verifyFullManifest(baseDir, dataPath, d);
       const matDir: string = ctx.filesDir + '/materials';
+      const stageDir: string = this.stageImportMaterials(ctx, baseDir, d, stamp);
+      const oldDir: string = ctx.filesDir + '/materials_old_' + stamp;
+      let movedOld: boolean = false;
       try {
-        const olds: string[] = fs.listFileSync(matDir);
-        olds.forEach((name: string) => {
-          try {
-            fs.unlinkSync(matDir + '/' + name);
-          } catch (e) {
-            console.error('juxia old material unlink fail', name, String(e));
+        try {
+          fs.renameSync(matDir, oldDir);
+          movedOld = true;
+        } catch (e) {
+        }
+        try {
+          fs.renameSync(stageDir, matDir);
+        } catch (e) {
+          if (movedOld) {
+            try { fs.renameSync(oldDir, matDir); } catch (e2) {}
           }
-        });
+          this.removeFlatDir(stageDir);
+          throw new Error(String((e as Error).message ?? '恢复失败'));
+        }
+        await Store.get().replaceAll(d);
       } catch (e) {
-        console.error('juxia old material list fail', String(e));
+        if (movedOld) {
+          this.removeFlatDir(matDir);
+          try { fs.renameSync(oldDir, matDir); } catch (e2) {}
+        } else {
+          this.removeFlatDir(stageDir);
+        }
+        throw new Error(String((e as Error).message ?? '恢复失败'));
       }
-      await Store.get().replaceAll(d);
-      try {
-        fs.mkdirSync(matDir);
-      } catch (e) {
-        console.error('juxia material dir ensure fail', String(e));
+      if (movedOld) {
+        this.removeFlatDir(oldDir);
       }
       let failedMaterials: number = 0;
       for (const m of Store.get().data.materials) {
-        const src: string = baseDir + '/materials/' + m.id + '.txt';
-        const target: string = matDir + '/' + m.id + '.txt';
         try {
-          fs.copyFileSync(src, target);
-          const st = fs.statSync(target);
-          Store.get().attachMaterialFile(m.id, m.name, target, st.size);
           Store.get().clearMaterialIndex(m.id);
-          await MaterialIndexer.indexFile(m.id, target);
+          await MaterialIndexer.indexFile(m.id, m.path);
         } catch (e) {
           failedMaterials++;
         }
       }
-      const lost: number = this.pruneMissingMaterials();
+      const lost: number = 0;
       this.applyLoadedSettings();
       this.load();
       try { fs.unlinkSync(local); } catch (e) {}
@@ -842,8 +905,11 @@ export struct SettingsPage {
           failedMaterials++;
         }
       });
+      const pack = new MatPackManifest();
+      pack.createdAt = stamp;
+      pack.items = items;
       const mf = fs.openSync(dir + '/manifest.json', fs.OpenMode.CREATE | fs.OpenMode.READ_WRITE | fs.OpenMode.TRUNC);
-      fs.writeSync(mf.fd, JSON.stringify(items));
+      fs.writeSync(mf.fd, JSON.stringify(pack));
       fs.closeSync(mf);
       const zip: string = ctx.cacheDir + '/matpack_' + stamp + '.zip';
       await zlib.compressFile(dir, zip, { level: zlib.CompressLevel.COMPRESS_LEVEL_DEFAULT_COMPRESSION });
@@ -902,7 +968,17 @@ export struct SettingsPage {
       fs.readSync(mf.fd, mbuf);
       fs.closeSync(mf);
       const text: string = util.TextDecoder.create('utf-8').decodeToString(new Uint8Array(mbuf));
-      const items = JSON.parse(text) as MatPackItem[];
+      const parsed = JSON.parse(text) as Object;
+      let items: MatPackItem[] = [];
+      if (Array.isArray(parsed)) {
+        items = parsed as MatPackItem[];
+      } else {
+        const pack = parsed as MatPackManifest;
+        if (pack.format !== 'juxia-materials' || pack.version !== 1) {
+          throw new Error('材料包版本不兼容');
+        }
+        items = pack.items;
+      }
       const matDir: string = ctx.filesDir + '/materials';
       try {
         fs.mkdirSync(matDir);
@@ -912,8 +988,6 @@ export struct SettingsPage {
       let count: number = 0;
       let skipped: number = 0;
       let failed: number = 0;
-      if (items.length > 0) {
-      }
       for (const it of items) {
         const src: string = packDir + '/' + it.id + '.txt';
         try {
@@ -1843,6 +1917,8 @@ export struct SettingsPage {
               .padding({ left: 12, right: 12, top: 7, bottom: 7 })
               .onClick(() => {
                 this.fullIncludeMaterials = !this.fullIncludeMaterials;
+                Store.get().data.settings.fullIncludeMaterials = this.fullIncludeMaterials;
+                Store.get().saveKv();
               })
           }
           .width('100%')
@@ -1956,6 +2032,8 @@ export struct SettingsPage {
               .padding({ left: 12, right: 12, top: 7, bottom: 7 })
               .onClick(() => {
                 this.plainIncludeMaterials = !this.plainIncludeMaterials;
+                Store.get().data.settings.plainIncludeMaterials = this.plainIncludeMaterials;
+                Store.get().saveKv();
               })
           }
           .width('100%')
@@ -2126,11 +2204,6 @@ export struct SettingsPage {
             .gesture(LongPressGesture().onAction(() => {
               this.testReminder();
             }))
-          Text('今日 / 我的 / 句库 / 回忆 / 设置 五页已接通。')
-            .fontFamily(FONT_SANS)
-            .fontSize(12)
-            .lineHeight(22)
-            .fontColor(this.t().inkSoft)
           Text('句栖是记录与回看的工具，不是心理治疗、诊断或危机干预服务，也不能替代专业帮助。\n如果你持续感到痛苦、影响到日常生活，或出现伤害自己的念头，请联系专业心理/精神科医生，或拨打当地紧急服务。\n中国大陆心理援助热线：12356；紧急情况：110 / 120。')
             .fontFamily(FONT_SANS)
             .fontSize(12)

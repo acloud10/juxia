@@ -68,6 +68,8 @@ bootText
 bootHoldMs
 bootFontScale
 backupRemindOff
+plainIncludeMaterials
+fullIncludeMaterials
 drawCount
 drawOwn
 drawLib
@@ -90,4 +92,5 @@ revisitReminderIds
 format
 dataBytes
 materialCount
+items
 includeMaterials

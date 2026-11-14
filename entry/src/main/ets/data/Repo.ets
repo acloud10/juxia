@@ -34,7 +34,10 @@ export class Repo {
     try {
       this.store = await relationalStore.getRdbStore(context, CONFIG);
       await this.createTables();
-      const schema: string = await this.getKv('schema');
+      const schema: string | null = await this.getKv('schema');
+      if (schema === null) {
+        throw new Error('KV_READ_FAILED');
+      }
       if (schema === '1') {
         return await this.loadAll();
       }
@@ -43,6 +46,10 @@ export class Repo {
       await this.writeSnapshot(this.makeSnapshot(d));
       return d;
     } catch (e) {
+      const msg: string = String((e as Error).message ?? '');
+      if (msg.includes('KV_READ_FAILED') || msg.includes('DATA_READ_FAILED')) {
+        throw new Error(String((e as Error).message ?? '恢复失败'));
+      }
       AppError.report('本地数据打开失败。', '重启应用后再试。若仍失败，不要清空数据；如能进入设置，先尝试导出备份。', true);
       console.error('juxia repo init fail', String(e));
       return legacy !== null ? legacy : new AppData();
@@ -427,9 +434,9 @@ export class Repo {
     }
   }
 
-  private async getKv(key: string): Promise<string> {
+  private async getKv(key: string): Promise<string | null> {
     const s = this.store;
-    if (s === null) return '';
+    if (s === null) return null;
     try {
       const rs = await s.querySql('SELECT v FROM kv WHERE k = ?', [key]);
       let v: string = '';
@@ -440,7 +447,7 @@ export class Repo {
       return v;
     } catch (e) {
       console.error('juxia kv read fail', String(e));
-      return '';
+      return null;
     }
   }
 
@@ -545,6 +552,7 @@ export class Repo {
     } catch (e) {
       AppError.report('读取本地数据失败。', '重启应用后再试；不要清空数据。', true);
       console.error('juxia load all fail', String(e));
+      throw new Error('DATA_READ_FAILED');
     }
     return d;
   }
