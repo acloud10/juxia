@@ -1483,7 +1483,7 @@ export struct LibraryPage {
         }
         .width('100%')
         .height('100%')
-        .transition(TransitionEffect.OPACITY.animation({ duration: 220, curve: Curve.EaseOut }))
+        .transition(TransitionEffect.OPACITY.animation({ duration: 200, curve: Curve.EaseOut }))
       }
     }
     .width('100%')

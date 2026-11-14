@@ -45,7 +45,7 @@ struct Index {
     this.tab = next;
     this.pageOpacity = 0.92;
     this.getUIContext().animateTo({
-      duration: 220,
+      duration: 200,
       curve: curves.springCurve(0.55, 1, 0.7, 1)
     }, () => {
       this.pageOpacity = 1;
@@ -465,7 +465,7 @@ struct Index {
     }
     .width('100%')
     .height('100%')
-    .transition(TransitionEffect.OPACITY.animation({ duration: 220, curve: Curve.EaseOut }))
+    .transition(TransitionEffect.OPACITY.animation({ duration: 200, curve: Curve.EaseOut }))
   }
 
   build() {
@@ -632,7 +632,7 @@ struct Index {
             }
             .barHeight(0)
             .scrollable(false)
-            .animationDuration(220)
+            .animationDuration(200)
             .width('100%')
             .height('100%')
             .opacity(this.pageOpacity)

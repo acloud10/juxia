@@ -1099,7 +1099,7 @@ export struct TodayPage {
     .bindContentCover($$this.sheetOpen, this.TodaySheet(), { modalTransition: ModalTransition.DEFAULT, onAppear: () => {
       this.coverOpacity = 0;
       setTimeout(() => {
-        this.getUIContext().animateTo({ duration: 220, curve: curves.springCurve(0.6, 1, 1, 1) }, () => {
+        this.getUIContext().animateTo({ duration: 200, curve: curves.springCurve(0.6, 1, 1, 1) }, () => {
           this.coverOpacity = 1;
         });
       }, 16);
