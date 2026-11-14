@@ -23,6 +23,7 @@ export struct LibraryPage {
   @Local dislikes: DislikeEntry[] = [];
   @Local qLib: string = '';
   @Local qDis: string = '';
+  @Local qReply: string = '';
   @Local showLib: boolean = true;
   @Local showMaterials: boolean = false;
   @Local showMatRules: boolean = false;
@@ -579,6 +580,13 @@ export struct LibraryPage {
   private replySource(e: OwnEntry): string {
     const p: OwnEntry | undefined = Store.get().data.own.find((x: OwnEntry) => x.id === e.replyToId);
     return p === undefined ? '' : p.text;
+  }
+
+  private filteredReplies(): OwnEntry[] {
+    const kw: string = this.qReply.trim().toLowerCase();
+    if (kw.length === 0) return this.replies;
+    return this.replies.filter((e: OwnEntry) =>
+      e.text.toLowerCase().includes(kw) || this.replySource(e).toLowerCase().includes(kw));
   }
 
   @Builder
@@ -1389,9 +1397,22 @@ export struct LibraryPage {
                 .fontColor(this.t().inkSoft)
                 .width('100%')
             } else {
-              ForEach(this.replies, (e: OwnEntry) => {
-                this.ReplyRow(e)
-              }, (e: OwnEntry) => e.id)
+              this.SearchBox('搜索回信或原句', this.qReply, (v: string) => {
+                this.qReply = v;
+              })
+              if (this.filteredReplies().length === 0) {
+                Text('没有找到。换个词，或清空搜索。')
+                  .fontFamily(FONT_SANS)
+                  .fontSize(12.5)
+                  .lineHeight(24)
+                  .fontColor(this.t().inkSoft)
+                  .width('100%')
+                  .padding({ top: 8, bottom: 8 })
+              } else {
+                ForEach(this.filteredReplies(), (e: OwnEntry) => {
+                  this.ReplyRow(e)
+                }, (e: OwnEntry) => e.id)
+              }
             }
           }
           .width('100%')
