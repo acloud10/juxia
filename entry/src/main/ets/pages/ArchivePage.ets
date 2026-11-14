@@ -788,15 +788,15 @@ export struct ArchivePage {
           }
           .width('100%')
           .padding({ left: 18, right: 18, top: 6, bottom: 8 })
-          .backgroundColor(this.t().card).backdropBlur(this.dark ? 0 : 10)
-          .borderRadius(this.t().radiusCard)
-          .border({ width: 1, color: this.t().line })
-          .margin({ top: 10 })
           }
           .height(380)
           .scrollBar(BarState.Off)
           .edgeEffect(EdgeEffect.Spring)
           .width('100%')
+          .backgroundColor(this.t().card).backdropBlur(this.dark ? 0 : 10)
+          .borderRadius(this.t().radiusCard)
+          .border({ width: 1, color: this.t().line })
+          .margin({ top: 10 })
           InnerScrollNav({
             onTop: () => { this.revisitScroll.scrollTo({ xOffset: 0, yOffset: 0, animation: { duration: 300, curve: Curve.EaseOut } }); },
             onBottom: () => { this.revisitScroll.scrollEdge(Edge.Bottom); }

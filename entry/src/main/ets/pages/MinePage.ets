@@ -1020,6 +1020,7 @@ export struct MinePage {
         }
         .width('100%')
         .margin({ top: 4, bottom: 8 })
+
         if (this.filteredReflects().length === 0) {
           Text(this.refQ.length > 0 ? '没有找到。换个词，或清空搜索。' : '省身不是任务。想写的时候再写。')
             .fontFamily(FONT_SANS)
@@ -1029,79 +1030,93 @@ export struct MinePage {
             .width('100%')
             .padding({ top: 12, bottom: 16 })
         } else {
-          ForEach(this.refYearGroups(), (y: ReflectYear) => {
+          Scroll(this.refScroll) {
             Column({ space: 0 }) {
-              Row() {
-                Text(y.label)
-                  .fontSize(12)
-                  .letterSpacing(1.5)
-                  .fontFamily(FONT_SERIF)
-                  .fontColor(this.t().inkStrong)
-                Text(`${y.total} 条`)
-                  .fontFamily(FONT_SANS)
-                  .fontSize(9.5)
-                  .fontColor(this.t().inkSoft)
-                  .margin({ left: 6 })
-                Blank()
-                Text(this.isYearOpen(y.key) ? '−' : '＋')
-                  .fontFamily(FONT_SANS)
-                  .fontSize(13)
-                  .fontColor(this.t().seal)
-              }
-              .width('100%')
-              .padding({ top: 12, bottom: 2 })
-              .onClick(() => {
-                this.toggleYear(y.key);
-              })
-              if (this.isYearOpen(y.key)) {
-                ForEach(y.months, (g: ReflectGroup) => {
-                  Column({ space: 0 }) {
-                    Row() {
-                      Text(g.label)
-                        .fontFamily(FONT_SANS)
-                        .fontSize(11)
-                        .letterSpacing(1.5)
-                        .fontColor(this.t().inkSoft)
-                      Text(`${g.items.length} 条`)
-                        .fontFamily(FONT_SANS)
-                        .fontSize(9.5)
-                        .fontColor(this.t().inkSoft)
-                        .margin({ left: 6 })
-                      Blank()
-                      Text(this.isMonthOpen(g.key) ? '−' : '＋')
-                        .fontFamily(FONT_SANS)
-                        .fontSize(13)
-                        .fontColor(this.t().seal)
-                    }
-                    .width('100%')
-                    .padding({ top: 8, bottom: 4, left: 8 })
-                    .onClick(() => {
-                      this.toggleMonth(g.key);
-                    })
-                    if (this.isMonthOpen(g.key)) {
-                      ForEach(g.items, (e: OwnEntry) => {
-                        this.ReflectRow(e)
-                      }, (e: OwnEntry) => `${e.id}-${e.notes.length}`)
-                    }
+              ForEach(this.refYearGroups(), (y: ReflectYear) => {
+                Column({ space: 0 }) {
+                  Row() {
+                    Text(y.label)
+                      .fontSize(12)
+                      .letterSpacing(1.5)
+                      .fontFamily(FONT_SERIF)
+                      .fontColor(this.t().inkStrong)
+                    Text(`${y.total} 条`)
+                      .fontFamily(FONT_SANS)
+                      .fontSize(9.5)
+                      .fontColor(this.t().inkSoft)
+                      .margin({ left: 6 })
+                    Blank()
+                    Text(this.isYearOpen(y.key) ? '−' : '＋')
+                      .fontFamily(FONT_SANS)
+                      .fontSize(13)
+                      .fontColor(this.t().seal)
                   }
                   .width('100%')
-                }, (g: ReflectGroup) => g.key)
+                  .padding({ top: 12, bottom: 2 })
+                  .onClick(() => {
+                    this.toggleYear(y.key);
+                  })
+                  if (this.isYearOpen(y.key)) {
+                    ForEach(y.months, (g: ReflectGroup) => {
+                      Column({ space: 0 }) {
+                        Row() {
+                          Text(g.label)
+                            .fontFamily(FONT_SANS)
+                            .fontSize(11)
+                            .letterSpacing(1.5)
+                            .fontColor(this.t().inkSoft)
+                          Text(`${g.items.length} 条`)
+                            .fontFamily(FONT_SANS)
+                            .fontSize(9.5)
+                            .fontColor(this.t().inkSoft)
+                            .margin({ left: 6 })
+                          Blank()
+                          Text(this.isMonthOpen(g.key) ? '−' : '＋')
+                            .fontFamily(FONT_SANS)
+                            .fontSize(13)
+                            .fontColor(this.t().seal)
+                        }
+                        .width('100%')
+                        .padding({ top: 8, bottom: 4, left: 8 })
+                        .onClick(() => {
+                          this.toggleMonth(g.key);
+                        })
+                        if (this.isMonthOpen(g.key)) {
+                          ForEach(g.items, (e: OwnEntry) => {
+                            this.ReflectRow(e)
+                          }, (e: OwnEntry) => `${e.id}-${e.notes.length}`)
+                        }
+                      }
+                      .width('100%')
+                    }, (g: ReflectGroup) => g.key)
+                  }
+                }
+                .width('100%')
+              }, (y: ReflectYear) => y.key)
+
+              if (this.filteredReflects().length > this.refShown().length) {
+                Text(`加载更多（还有 ${this.filteredReflects().length - this.refShown().length} 条）`)
+                  .fontFamily(FONT_SANS)
+                  .fontSize(12)
+                  .fontColor(this.t().seal)
+                  .width('100%')
+                  .textAlign(TextAlign.Center)
+                  .padding({ top: 8, bottom: 10 })
+                  .onClick(() => {
+                    this.refLimit += 30;
+                  })
               }
             }
             .width('100%')
-          }, (y: ReflectYear) => y.key)
-          if (this.filteredReflects().length > this.refShown().length) {
-            Text(`加载更多（还有 ${this.filteredReflects().length - this.refShown().length} 条）`)
-              .fontFamily(FONT_SANS)
-              .fontSize(12)
-              .fontColor(this.t().seal)
-              .width('100%')
-              .textAlign(TextAlign.Center)
-              .padding({ top: 8, bottom: 10 })
-              .onClick(() => {
-                this.refLimit += 30;
-              })
           }
+          .height(420)
+          .scrollBar(BarState.Off)
+          .edgeEffect(EdgeEffect.Spring)
+          .width('100%')
+          InnerScrollNav({
+            onTop: () => { this.refScroll.scrollTo({ xOffset: 0, yOffset: 0, animation: { duration: 300, curve: Curve.EaseOut } }); },
+            onBottom: () => { this.refScroll.scrollEdge(Edge.Bottom); }
+          })
         }
       }
     }
