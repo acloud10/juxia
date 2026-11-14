@@ -5,6 +5,11 @@ import { Store } from '../data/Store';
 import { splitSentences, stripMarkdown } from '../utils/TextSplit';
 import { AppError } from './AppError';
 
+export interface MaterialIndexResult {
+  ok: boolean;
+  count: number;
+}
+
 export class MaterialIndexer {
   private static lastBreak(s: string): number {
     let last: number = -1;
@@ -66,7 +71,7 @@ export class MaterialIndexer {
     }
   }
 
-  static async indexFile(id: string, path: string, markdown: boolean = false): Promise<number> {
+  static async indexFile(id: string, path: string, markdown: boolean = false): Promise<MaterialIndexResult> {
     let file: fs.File | null = null;
     try {
       file = fs.openSync(path, fs.OpenMode.READ_ONLY);
@@ -105,10 +110,10 @@ export class MaterialIndexer {
         await Store.get().appendMaterialSentences(id, ord, batch);
         ord += batch.length;
       }
-      return ord;
+      return { ok: true, count: ord };
     } catch (e) {
       AppError.report('材料索引失败。', '回到材料库重新导入；原文件不会被删除。');
-      return 0;
+      return { ok: false, count: 0 };
     } finally {
       if (file !== null) {
         try {

@@ -91,6 +91,14 @@ openDays
 revisitReminderIds
 format
 dataBytes
+dataSha256
 materialCount
 items
 includeMaterials
+bytes
+sha256
+token
+phase
+newDir
+d
+t

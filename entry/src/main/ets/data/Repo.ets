@@ -27,13 +27,17 @@ export class Repo {
   private ftsReady: boolean = false;
   private busy: boolean = false;
   private queued: Snapshot | null = null;
+  private drainPromise: Promise<void> | null = null;
   private rowTasks: Array<() => Promise<void>> = [];
   private rowBusy: boolean = false;
+  private restoreTokenValue: string = '';
 
   async init(context: common.UIAbilityContext, legacy: AppData | null): Promise<AppData> {
     try {
       this.store = await relationalStore.getRdbStore(context, CONFIG);
       await this.createTables();
+      const savedToken: string | null = await this.getKv('restore_token');
+      this.restoreTokenValue = savedToken === null ? '' : savedToken;
       const schema: string | null = await this.getKv('schema');
       if (schema === null) {
         throw new Error('KV_READ_FAILED');
@@ -59,8 +63,39 @@ export class Repo {
   saveAll(d: AppData): void {
     this.queued = this.makeSnapshot(d);
     if (!this.busy) {
-      this.drain();
+      this.drainPromise = this.drain();
+      this.drainPromise.catch((e: Error) => {
+        console.error('juxia drain fail', String(e));
+      });
     }
+  }
+
+  // 全量替换：等当前写入结束，再在一个事务里清空并写入；失败向上抛。
+  async replaceAll(d: AppData, restoreToken: string): Promise<void> {
+    this.queued = null;
+    if (this.drainPromise !== null) {
+      try {
+        await this.drainPromise;
+      } catch (e) {
+        console.error('juxia replace wait fail', String(e));
+      }
+    }
+    const previousToken: string = this.restoreTokenValue;
+    this.restoreTokenValue = restoreToken;
+    try {
+      await this.writeSnapshot(this.makeSnapshot(d, restoreToken), true);
+    } catch (e) {
+      this.restoreTokenValue = previousToken;
+      throw new Error(String((e as Error).message ?? '替换失败'));
+    }
+  }
+
+  async restoreToken(): Promise<string> {
+    if (this.restoreTokenValue.length > 0) {
+      return this.restoreTokenValue;
+    }
+    const v: string | null = await this.getKv('restore_token');
+    return v === null ? '' : v;
   }
 
   saveKv(d: AppData): void {
@@ -85,14 +120,20 @@ export class Repo {
       while (this.queued !== null) {
         const snap: Snapshot = this.queued;
         this.queued = null;
-        await this.writeSnapshot(snap);
+        try {
+          await this.writeSnapshot(snap);
+        } catch (e) {
+          // writeSnapshot 已经上报过；这里只记录，避免未处理异常。
+          console.error('juxia drain snapshot fail', String(e));
+        }
       }
     } finally {
       this.busy = false;
+      this.drainPromise = null;
     }
   }
 
-  private makeSnapshot(d: AppData): Snapshot {
+  private makeSnapshot(d: AppData, restoreToken: string = ''): Snapshot {
     const snap = new Snapshot();
     d.own.forEach((e: OwnEntry) => {
       const b: relationalStore.ValuesBucket = {
@@ -147,6 +188,10 @@ export class Repo {
       snap.materials.push(b);
     });
     snap.kv = this.kvRows(d);
+    const token: string = restoreToken.length > 0 ? restoreToken : this.restoreTokenValue;
+    if (token.length > 0) {
+      snap.kv.push({ 'k': 'restore_token', 'v': token });
+    }
     return snap;
   }
 
@@ -314,9 +359,11 @@ export class Repo {
     }
   }
 
-  private async writeSnapshot(snap: Snapshot): Promise<void> {
+  private async writeSnapshot(snap: Snapshot, clearIndex: boolean = false): Promise<void> {
     const s = this.store;
-    if (s === null) return;
+    if (s === null) {
+      throw new Error('数据库未就绪');
+    }
     try {
       s.beginTransaction();
       if (snap.kvOnly) {
@@ -325,6 +372,16 @@ export class Repo {
           await s.insert('kv', b, relationalStore.ConflictResolution.ON_CONFLICT_REPLACE);
         }
       } else {
+        if (clearIndex) {
+          await s.executeSql('DELETE FROM material_sentences');
+          if (this.ftsReady) {
+            try {
+              await s.executeSql('DELETE FROM material_fts');
+            } catch (e) {
+              console.error('juxia fts clear in replace fail', String(e));
+            }
+          }
+        }
         await s.executeSql('DELETE FROM own');
         await s.executeSql('DELETE FROM lib');
         await s.executeSql('DELETE FROM dislikes');
@@ -355,6 +412,7 @@ export class Repo {
       }
       AppError.report('保存失败。', '检查手机存储空间后重试；如反复失败，先尝试导出备份，并避免继续修改。', true);
       console.error('juxia write snapshot fail', String(e));
+      throw new Error('WRITE_SNAPSHOT_FAILED');
     }
   }
 

@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+### 备份与恢复
+
+- 完整备份恢复改为 journal + 版本化材料目录 + restore token
+- 恢复失败会冒泡并回滚；启动时检测未完成恢复并回滚或续做
+- 恢复写入 RDB 失败不再被吞掉，避免“材料已换、数据库没换”
+- 材料索引失败会进入失败计数，不再误报“索引一并回来”
+- `.sj4` / `.zip` 改为流式处理，按剩余空间预检，不再整包读内存
+- manifest v2 增加 data.json 与每个材料文件的 SHA-256
+- 正常保存会保留 restore token，不会被全量快照覆盖
+- release 混淆保留备份、manifest 和 journal 的 JSON 字段名
+
 ## 1.0.4
 
 ### 适配

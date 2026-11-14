@@ -16,6 +16,7 @@ import { ArchivePage } from './ArchivePage';
 import { SettingsPage } from './SettingsPage';
 import { UiState } from '../state/UiState';
 import { AppError } from '../services/AppError';
+import { RestoreRecovery } from '../services/RestoreRecovery';
 
 @Entry
 @ComponentV2
@@ -168,6 +169,7 @@ struct Index {
     }
     const ctx = this.getUIContext().getHostContext() as common.UIAbilityContext;
     await Store.get().init(ctx);
+    await RestoreRecovery.recover(ctx);
     this.flushError();
     const st = Store.get();
     this.bootLong = st.data.settings.bootLong;

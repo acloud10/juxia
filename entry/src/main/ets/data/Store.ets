@@ -18,6 +18,11 @@ interface DraftPayload {
   t: string;
 }
 
+interface PrefsEnvelope {
+  d: string;
+  t: string;
+}
+
 export class Store {
   private static instance: Store | null = null;
   data: AppData = new AppData();
@@ -25,6 +30,7 @@ export class Store {
   private ready: boolean = false;
   private repo: Repo | null = null;
   private useDb: boolean = false;
+  private fallbackToken: string = '';
 
   static get(): Store {
     if (Store.instance === null) {
@@ -47,7 +53,14 @@ export class Store {
     let legacy: AppData | null = null;
     let raw: string = '';
     try {
-      raw = await this.prefs.get('appdata', '') as string;
+      const envRaw: string = await this.prefs.get('appdata_v2', '') as string;
+      if (envRaw.length > 0) {
+        const env = JSON.parse(envRaw) as PrefsEnvelope;
+        raw = env.d;
+        this.fallbackToken = env.t;
+      } else {
+        raw = await this.prefs.get('appdata', '') as string;
+      }
     } catch (e) {
       AppError.report('本地设置读取失败。', '重启应用后再试；不要清空数据。');
       console.error('juxia prefs read fail', String(e));
@@ -80,6 +93,10 @@ export class Store {
 
   storageMode(): string {
     return this.useDb ? '本地加密存储' : '本地存储';
+  }
+
+  usesDb(): boolean {
+    return this.useDb && this.repo !== null;
   }
 
   private normalize(): void {
@@ -172,12 +189,27 @@ export class Store {
     this.persistPrefs();
   }
 
+  private async persistPrefsNow(restoreToken: string = ''): Promise<void> {
+    const p = this.prefs;
+    if (p === null) {
+      throw new Error('PREFS_NOT_READY');
+    }
+    this.fallbackToken = restoreToken;
+    const env: PrefsEnvelope = { d: JSON.stringify(this.data), t: restoreToken };
+    try {
+      await p.put('appdata_v2', JSON.stringify(env));
+      await p.flush();
+    } catch (e) {
+      throw new Error('PREFS_WRITE_FAILED');
+    }
+  }
+
   private persistPrefs(): void {
     const p = this.prefs;
     if (p === null) return;
     try {
-      const s: string = JSON.stringify(this.data);
-      p.put('appdata', s).then(() => {
+      const env: PrefsEnvelope = { d: JSON.stringify(this.data), t: this.fallbackToken };
+      p.put('appdata_v2', JSON.stringify(env)).then(() => {
         try {
           p.flush();
         } catch (e) {
@@ -519,15 +551,31 @@ export class Store {
     this.bump();
   }
 
-  async replaceAll(d: AppData): Promise<void> {
+  async replaceAll(d: AppData, restoreToken: string): Promise<void> {
+    const previous: AppData = this.data;
+    const previousToken: string = this.fallbackToken;
     this.data = d;
     this.normalize();
-    if (this.repo !== null) {
-      await this.repo.clearAllSentences();
+    try {
+      if (this.useDb && this.repo !== null) {
+        await this.repo.replaceAll(this.data, restoreToken);
+      } else {
+        await this.persistPrefsNow(restoreToken);
+      }
+    } catch (e) {
+      this.data = previous;
+      this.fallbackToken = previousToken;
+      throw new Error('REPLACE_ALL_FAILED');
     }
     this.rollDay();
-    this.persist();
     this.bump();
+  }
+
+  async restoreToken(): Promise<string> {
+    if (this.repo !== null) {
+      return await this.repo.restoreToken();
+    }
+    return this.fallbackToken;
   }
 
   private catLabel(cat: string): string {

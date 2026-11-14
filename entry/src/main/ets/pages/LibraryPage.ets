@@ -373,7 +373,14 @@ export struct LibraryPage {
       }
       dstFile = null;
       this.matProgress = '正在建立句子索引…';
-      const count: number = await MaterialIndexer.indexFile(m.id, dst, isMarkdown);
+      const result = await MaterialIndexer.indexFile(m.id, dst, isMarkdown);
+      if (!result.ok) {
+        this.matProgress = '索引失败';
+        this.matIndexing = false;
+        this.toast(`《${fileName}》已导入，但索引失败；请重新导入或重启后重试`);
+        return;
+      }
+      const count: number = result.count;
       this.matProgress = `已索引 ${count} 句`;
       this.toast(`《${fileName}》已入库，可以检索了`);
       this.matIndexing = false;
@@ -1649,7 +1656,7 @@ export struct LibraryPage {
     .width('100%')
     .height('100%')
     .align(Alignment.Top)
-    .onScroll((xOffset: number, yOffset: number) => {
+    .onDidScroll((xOffset: number, yOffset: number, scrollState: ScrollState) => {
       this.showTop = this.scroller.currentOffset().yOffset > 80;
     })
       if (this.matPreviewOpen) {
