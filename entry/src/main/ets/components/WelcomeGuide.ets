@@ -203,7 +203,12 @@ export struct WelcomeGuide {
     }
     .width('100%')
     .height('100%')
-    .padding({ left: 18, right: 18 })
+    .padding({
+      left: 18,
+      right: 18,
+      top: this.ui.safeTop + 18,
+      bottom: this.ui.safeBottom + 10
+    })
     .backgroundColor(this.t().bg)
   }
 
@@ -218,5 +223,6 @@ export struct WelcomeGuide {
     .width('100%')
     .height('100%')
     .backgroundColor(this.t().bg)
+    .transition(TransitionEffect.OPACITY.animation({ duration: 220, curve: Curve.EaseOut }))
   }
 }
