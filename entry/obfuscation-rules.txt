@@ -46,6 +46,7 @@ snoozeUntil
 foot
 notes
 replyToId
+replyFrom
 source
 origin
 tag

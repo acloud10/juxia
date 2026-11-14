@@ -134,6 +134,7 @@ export class Store {
       if (!e.foot) e.foot = [];
       if (!e.notes) e.notes = [];
       if (e.replyToId === undefined) e.replyToId = '';
+      if (e.replyFrom === undefined) e.replyFrom = '';
       // 旧数据只有单条 note：迁进 notes，之后只认 notes
       if (e.note !== undefined && e.note.length > 0 && e.notes.length === 0) {
         e.notes.push(new NoteItem(e.createdAt > 0 ? e.createdAt : Date.now(), e.note));
@@ -302,7 +303,7 @@ export class Store {
     this.bump();
   }
 
-  addReply(sourceId: string, text: string): boolean {
+  addReply(sourceId: string, text: string, from: string = ''): boolean {
     const body: string = text.trim();
     if (body.length === 0) return false;
     const e = new OwnEntry();
@@ -310,6 +311,7 @@ export class Store {
     e.kind = 'reply';
     e.text = body;
     e.replyToId = sourceId;
+    e.replyFrom = from;
     e.createdAt = Date.now();
     this.data.own.unshift(e);
     this.writeOwn(e);

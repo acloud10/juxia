@@ -67,6 +67,7 @@ export class OwnEntry {
   foot: string[] = [];
   notes: NoteItem[] = [];
   replyToId: string = '';
+  replyFrom: string = ''; // 可选：draw、revisit
 
   isArchived(): boolean {
     return this.archAt > 0;

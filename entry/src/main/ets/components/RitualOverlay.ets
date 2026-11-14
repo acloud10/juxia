@@ -108,7 +108,7 @@ export struct RitualOverlay {
       this.toast('先写一句再回');
       return;
     }
-    const ok: boolean = Store.get().addReply(this.ctx.entry!.id, text);
+    const ok: boolean = Store.get().addReply(this.ctx.entry!.id, text, 'draw');
     if (!ok) return;
     this.replyCount = Store.get().repliesOf(this.ctx.entry!.id).length;
     this.replyText = '';

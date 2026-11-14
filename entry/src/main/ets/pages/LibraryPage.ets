@@ -582,6 +582,12 @@ export struct LibraryPage {
     return p === undefined ? '' : p.text;
   }
 
+  private replyFromLabel(e: OwnEntry): string {
+    if (e.replyFrom === 'revisit') return '回访回信';
+    if (e.replyFrom === 'draw') return '抽签回信';
+    return '回信';
+  }
+
   private replySourceLabel(e: OwnEntry): string {
     const p: OwnEntry | undefined = Store.get().data.own.find((x: OwnEntry) => x.id === e.replyToId);
     if (p === undefined) return '回的是';
@@ -606,17 +612,27 @@ export struct LibraryPage {
         .fontFamily(FONT_SERIF)
         .fontColor(this.t().ink)
         .width('100%')
-      if (this.replySource(e).length > 0) {
-        Text(`${this.replySourceLabel(e)}：${this.replySource(e)}`)
+      Row({ space: 6 }) {
+        Text(this.replyFromLabel(e))
           .fontFamily(FONT_SANS)
-          .fontSize(11.5)
-          .lineHeight(21)
-          .fontColor(this.t().inkSoft)
-          .maxLines(2)
-          .textOverflow({ overflow: TextOverflow.Ellipsis })
-          .width('100%')
-          .margin({ top: 4 })
+          .fontSize(9.5)
+          .fontColor(this.t().sealInk)
+          .backgroundColor(this.t().seal)
+          .borderRadius(999)
+          .padding({ left: 8, right: 8, top: 2, bottom: 2 })
+        if (this.replySource(e).length > 0) {
+          Text(`${this.replySourceLabel(e)}：${this.replySource(e)}`)
+            .fontFamily(FONT_SANS)
+            .fontSize(11.5)
+            .lineHeight(21)
+            .fontColor(this.t().inkSoft)
+            .maxLines(2)
+            .textOverflow({ overflow: TextOverflow.Ellipsis })
+            .layoutWeight(1)
+        }
       }
+      .width('100%')
+      .margin({ top: 4 })
       Text(fmtDate(e.createdAt))
         .fontFamily(FONT_SANS)
         .fontSize(10)

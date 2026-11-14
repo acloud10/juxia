@@ -294,7 +294,7 @@ export struct ArchivePage {
       this.toast('先写一句，再回一句话');
       return;
     }
-    if (!Store.get().addReply(id, text)) {
+    if (!Store.get().addReply(id, text, 'revisit')) {
       this.toast('这句话没有保存成功，再试一次');
       return;
     }

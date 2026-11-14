@@ -357,7 +357,7 @@ export class Repo {
         'CREATE TABLE IF NOT EXISTS own (' +
         'id TEXT PRIMARY KEY, kind TEXT, text TEXT, note TEXT, bindIds TEXT, ' +
         'createdAt INTEGER, archCat TEXT, archNote TEXT, archAt INTEGER, ' +
-        'revisitAt INTEGER, snoozeUntil INTEGER, foot TEXT, notes TEXT, replyToId TEXT)'
+        'revisitAt INTEGER, snoozeUntil INTEGER, foot TEXT, notes TEXT, replyToId TEXT, replyFrom TEXT)'
       );
       await s.executeSql(
         'CREATE TABLE IF NOT EXISTS lib (' +
@@ -370,6 +370,11 @@ export class Repo {
       }
       try {
         await s.executeSql('ALTER TABLE own ADD COLUMN replyToId TEXT');
+      } catch (e) {
+        // 列已存在：忽略
+      }
+      try {
+        await s.executeSql('ALTER TABLE own ADD COLUMN replyFrom TEXT');
       } catch (e) {
         // 列已存在：忽略
       }
@@ -479,6 +484,8 @@ export class Repo {
       e.foot = this.parseStrings(own.getString(own.getColumnIndex('foot')));
       e.notes = this.parseNotes(own.getString(own.getColumnIndex('notes')));
       e.replyToId = own.getString(own.getColumnIndex('replyToId'));
+      const rfi: number = own.getColumnIndex('replyFrom');
+      if (rfi >= 0) e.replyFrom = own.getString(rfi);
       d.own.push(e);
     }
     own.close();
@@ -558,7 +565,8 @@ export class Repo {
       'snoozeUntil': e.snoozeUntil,
       'foot': JSON.stringify(e.foot),
       'notes': JSON.stringify(e.notes),
-      'replyToId': e.replyToId
+      'replyToId': e.replyToId,
+      'replyFrom': e.replyFrom
     };
     return b;
   }
