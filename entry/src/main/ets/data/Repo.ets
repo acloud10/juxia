@@ -490,7 +490,8 @@ export class Repo {
       e.snoozeUntil = own.getLong(own.getColumnIndex('snoozeUntil'));
       e.foot = this.parseStrings(own.getString(own.getColumnIndex('foot')));
       e.notes = this.parseNotes(own.getString(own.getColumnIndex('notes')));
-      e.replyToId = own.getString(own.getColumnIndex('replyToId'));
+      const rti: number = own.getColumnIndex('replyToId');
+      if (rti >= 0) e.replyToId = own.getString(rti);
       const rfi: number = own.getColumnIndex('replyFrom');
       if (rfi >= 0) e.replyFrom = own.getString(rfi);
       d.own.push(e);
