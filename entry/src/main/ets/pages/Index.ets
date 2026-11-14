@@ -627,7 +627,13 @@ struct Index {
               }
 
               TabContent() {
-                SettingsPage({ skin: this.skin, dark: this.dark })
+                SettingsPage({
+                  skin: this.skin,
+                  dark: this.dark,
+                  onOpenGuide: () => {
+                    this.guideOpen = true;
+                  }
+                })
               }
             }
             .barHeight(0)

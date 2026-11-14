@@ -40,6 +40,7 @@ class FullManifest {
 export struct SettingsPage {
   @Param skin: string = 'classic';
   @Param dark: boolean = false;
+  @Event onOpenGuide: () => void = () => {};
   @Local ui: UiState = UiState.get();
   private get appName(): string { return this.ui.appName; }
   private get settingsSection(): string { return this.ui.settingsSection; }
@@ -2189,13 +2190,24 @@ export struct SettingsPage {
         if (this.openSection === 'about') {
         this.GroupTitle('关于')
         Column({ space: 6 }) {
-          Text('句栖')
-            .fontFamily(FONT_SANS)
-            .fontSize(13)
-            .fontColor(this.t().ink)
-            .gesture(LongPressGesture().onAction(() => {
-              this.selfTest();
-            }))
+          Row() {
+            Text('句栖')
+              .fontFamily(FONT_SANS)
+              .fontSize(13)
+              .fontColor(this.t().ink)
+              .gesture(LongPressGesture().onAction(() => {
+                this.selfTest();
+              }))
+            Blank()
+            Text('新手指引 ›')
+              .fontFamily(FONT_SANS)
+              .fontSize(12)
+              .fontColor(this.t().seal)
+              .onClick(() => {
+                this.onOpenGuide();
+              })
+          }
+          .width('100%')
           Text(`存储：${Store.get().storageMode()} · 备份由你导出`)
             .fontFamily(FONT_SANS)
             .fontSize(12)
