@@ -24,10 +24,12 @@ buildMode: release
 
 ```text
 packages/releases/1.0.4/句栖-1.0.4-release.app
-5,370,874 字节
+5,384,931 字节
+SHA-256: AC47AF4E9AACF39F83A9F26EA8594932CF3BB00D9AB7852B55DC282E9EF1C894
 
 packages/releases/1.0.4/句栖-1.0.4-release.hap
-7,960,151 字节
+7,988,989 字节
+SHA-256: 33F323FC55E086449890DD2A71A9876DCAC28C234D543AA4BECB73A15E097CB6
 ```
 
 AGC 上架使用 `.app`。
@@ -42,7 +44,9 @@ HarmonyOS 7 / API 26 适配
 回访回信 / 抽签回信 / 回信搜索 / 回信删除
 非对称三角关联
 内层限高滚动 + 长按到顶/到底
-完整备份恢复顺序加固
+完整备份恢复 journal + 版本化材料目录 + restore token
+流式 .sj4 加解密 + 剩余空间预检
+manifest v2 数据/材料 SHA-256
 备份字段 keep
 ```
 
