@@ -338,7 +338,7 @@ export struct RitualOverlay {
           this.accept();
         })
         Row({ space: 4 }) {
-          this.QuietAction('回它一句', () => {
+          this.QuietAction('回一句话', () => {
             this.openReply();
           })
           this.QuietAction('为它选一件旧事', () => {
@@ -361,7 +361,7 @@ export struct RitualOverlay {
         this.PrimaryAction('先放回去', () => {
           this.accept();
         })
-        this.QuietAction('回它一句', () => {
+        this.QuietAction('回一句话', () => {
           this.openReply();
         })
         this.QuietAction('标记已解决 / 已放下', () => {
@@ -610,7 +610,7 @@ export struct RitualOverlay {
           this.replyOpen = false;
         })
       Column({ space: 10 }) {
-        Text('回它一句')
+        Text('回一句话')
           .fontSize(17)
           .letterSpacing(2)
           .fontFamily(FONT_SERIF)
@@ -624,7 +624,7 @@ export struct RitualOverlay {
           .maxLines(2)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
           .width('100%')
-        TextArea({ text: this.replyText, placeholder: '不用写完整，回它一句就好' })
+        TextArea({ text: this.replyText, placeholder: '不用写完整，回一句话就好' })
           .height(110)
           .fontSize(14)
           .fontColor(this.t().ink)
@@ -639,7 +639,7 @@ export struct RitualOverlay {
           this.QuietAction('取消', () => {
             this.replyOpen = false;
           })
-          this.PrimaryAction('回它', () => {
+          this.PrimaryAction('回一句话', () => {
             this.saveReply();
           })
         }

@@ -34,6 +34,8 @@ export struct ArchivePage {
   @Local tab: string = 'timeline';
   @Local q: string = '';
   @Local showRevisit: boolean = false;
+  @Local replyOpenId: string = '';
+  @Local replyText: string = '';
   @Local panel: string = '';
   @Local targetId: string = '';
   @Local noteInput: string = '';
@@ -286,6 +288,22 @@ export struct ArchivePage {
     this.toast('已排进今天的回访');
   }
 
+  private saveRevisitReply(id: string): void {
+    const text: string = this.replyText.trim();
+    if (text.length === 0) {
+      this.toast('先写一句，再回一句话');
+      return;
+    }
+    if (!Store.get().addReply(id, text)) {
+      this.toast('这句话没有保存成功，再试一次');
+      return;
+    }
+    this.replyText = '';
+    this.replyOpenId = '';
+    this.reload();
+    this.toast('回好了，收进句库的「回信」里');
+  }
+
   private cancelRevisit(e: OwnEntry): void {
     Store.get().clearRevisit(e.id);
     const ctx = this.getUIContext().getHostContext() as common.UIAbilityContext;
@@ -435,9 +453,41 @@ export struct ArchivePage {
         this.QuietButton('取消回访', () => {
           this.cancelRevisit(e);
         })
+        this.QuietButton('回一句话', () => {
+          this.replyOpenId = e.id;
+          this.replyText = '';
+        })
       }
       .width('100%')
       .margin({ top: 6 })
+      if (this.replyOpenId === e.id) {
+        Column({ space: 8 }) {
+          TextArea({ text: this.replyText, placeholder: '不用写完整，回一句话就好' })
+            .height(84)
+            .fontSize(14)
+            .fontFamily(FONT_SERIF)
+            .fontColor(this.t().ink)
+            .placeholderColor(this.t().inkSoft)
+            .backgroundColor(this.t().inputBg)
+            .borderRadius(this.t().radiusInput)
+            .border({ width: 1, color: this.t().line })
+            .onChange((v: string) => {
+              this.replyText = v;
+            })
+          Row({ space: 8 }) {
+            this.QuietButton('取消', () => {
+              this.replyOpenId = '';
+              this.replyText = '';
+            })
+            this.SolidButton('保存回信', () => {
+              this.saveRevisitReply(e.id);
+            })
+          }
+          .width('100%')
+        }
+        .width('100%')
+        .margin({ top: 8 })
+      }
     }
     .width('100%')
     .padding({ top: 10, bottom: 8 })

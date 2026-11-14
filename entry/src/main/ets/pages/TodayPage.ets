@@ -37,6 +37,8 @@ export struct TodayPage {
   @Local encCount: number = 0;
   @Local woundCount: number = 0;
   @Local revisit: OwnEntry[] = [];
+  @Local replyOpenId: string = '';
+  @Local replyText: string = '';
   @Local dayCount: number = 1;
   @Local nickname: string = '';
   @Local showGreeting: boolean = false;
@@ -654,6 +656,22 @@ export struct TodayPage {
       { radius: 30, color: this.t().shadowColor, offsetY: 10 })
   }
 
+  private saveRevisitReply(id: string): void {
+    const text: string = this.replyText.trim();
+    if (text.length === 0) {
+      this.toast('先写一句，再回一句话');
+      return;
+    }
+    if (!Store.get().addReply(id, text)) {
+      this.toast('这句话没有保存成功，再试一次');
+      return;
+    }
+    this.replyText = '';
+    this.replyOpenId = '';
+    this.load();
+    this.toast('回好了，收进句库的「回信」里');
+  }
+
   @Builder
   RevisitCard(e: OwnEntry) {
     Column({ space: 0 }) {
@@ -686,8 +704,40 @@ export struct TodayPage {
         this.QuietButton('再等等', () => {
           this.wait(e.id);
         })
+        this.QuietButton('回一句话', () => {
+          this.replyOpenId = e.id;
+          this.replyText = '';
+        })
       }
       .width('100%')
+      if (this.replyOpenId === e.id) {
+        Column({ space: 8 }) {
+          TextArea({ text: this.replyText, placeholder: '不用写完整，回一句话就好' })
+            .height(84)
+            .fontSize(14)
+            .fontFamily(FONT_SERIF)
+            .fontColor(this.t().ink)
+            .placeholderColor(this.t().inkSoft)
+            .backgroundColor(this.t().inputBg)
+            .borderRadius(this.t().radiusInput)
+            .border({ width: 1, color: this.t().line })
+            .onChange((v: string) => {
+              this.replyText = v;
+            })
+          Row({ space: 8 }) {
+            this.GhostButton('取消', () => {
+              this.replyOpenId = '';
+              this.replyText = '';
+            })
+            this.PrimaryButton('保存回信', () => {
+              this.saveRevisitReply(e.id);
+            })
+          }
+          .width('100%')
+        }
+        .width('100%')
+        .margin({ top: 8 })
+      }
     }
     .width('100%')
     .padding(20)

@@ -582,6 +582,14 @@ export struct LibraryPage {
     return p === undefined ? '' : p.text;
   }
 
+  private replySourceLabel(e: OwnEntry): string {
+    const p: OwnEntry | undefined = Store.get().data.own.find((x: OwnEntry) => x.id === e.replyToId);
+    if (p === undefined) return '回的是';
+    if (p.kind === 'encourage') return '回的是鼓励';
+    if (p.kind === 'wound') return '回的是旧事';
+    return '回的是';
+  }
+
   private filteredReplies(): OwnEntry[] {
     const kw: string = this.qReply.trim().toLowerCase();
     if (kw.length === 0) return this.replies;
@@ -599,7 +607,7 @@ export struct LibraryPage {
         .fontColor(this.t().ink)
         .width('100%')
       if (this.replySource(e).length > 0) {
-        Text(`回的是：${this.replySource(e)}`)
+        Text(`${this.replySourceLabel(e)}：${this.replySource(e)}`)
           .fontFamily(FONT_SANS)
           .fontSize(11.5)
           .lineHeight(21)
@@ -1390,7 +1398,7 @@ export struct LibraryPage {
         if (this.showReplies) {
           Column({ space: 0 }) {
             if (this.replies.length === 0) {
-              Text('还没有回信。抽到自己的句子时，可以回它一句。')
+              Text('还没有回信。抽到自己的句子时，可以回一句话。')
                 .fontFamily(FONT_SANS)
                 .fontSize(12.5)
                 .lineHeight(24)
