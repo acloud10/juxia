@@ -665,6 +665,12 @@ export struct LibraryPage {
             .maxLines(2)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
             .layoutWeight(1)
+        } else {
+          Text('原句已删除')
+            .fontFamily(FONT_SANS)
+            .fontSize(11)
+            .fontColor(this.t().inkSoft)
+            .layoutWeight(1)
         }
         Blank()
         Text('删除')
