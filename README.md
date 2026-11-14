@@ -85,6 +85,8 @@ build-profile.json5       产品与 SDK 配置（不含签名）
 oh-package.json5          依赖声明
 docs/
   BACKUP_FORMAT.md        备份格式与兼容说明
+  DEBUG_SEED.md           Debug 演示种子记录
+RELEASES.md               版本与本地包说明
 CHANGELOG.md              版本记录
 ```
 
