@@ -256,7 +256,13 @@ export struct LibraryPage {
     this.matPreviewName = m.name;
     this.matPreviewItems = [];
     this.matPick = [];
-    const raw: string[] = await Store.get().materialSentences(m.id, 0);
+    let raw: string[] = await Store.get().materialSentences(m.id, 0);
+    if (raw.length === 0 && m.text.trim().length > 0) {
+      raw = m.text.split('\n\n').map((x: string) => x.trim()).filter((x: string) => x.length > 0);
+      if (raw.length === 0) {
+        raw = m.text.split('\n').map((x: string) => x.trim()).filter((x: string) => x.length > 0);
+      }
+    }
     const seen: Set<string> = new Set<string>();
     const items: string[] = [];
     raw.forEach((t: string) => {
