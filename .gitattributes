@@ -1,0 +1,22 @@
+# Normalize text files to LF in the repository
+* text=auto eol=lf
+
+# Binary resources
+*.ttf binary
+*.otf binary
+*.woff binary
+*.woff2 binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.gif binary
+*.zip binary
+*.app binary
+*.hap binary
+*.hsp binary
+*.p12 binary
+*.p7b binary
+*.cer binary
+*.jks binary
+*.keystore binary
