@@ -143,6 +143,14 @@ export class Store {
     });
     if (bg.glow !== 'off' && bg.glow !== 'weak' && bg.glow !== 'normal') bg.glow = 'normal';
     if (bg.grain !== 'off' && bg.grain !== 'weak' && bg.grain !== 'normal') bg.grain = 'normal';
+    if (bg.glowValue === undefined || isNaN(bg.glowValue)) {
+      bg.glowValue = bg.glow === 'off' ? 0 : (bg.glow === 'weak' ? 55 : 100);
+    }
+    if (bg.grainValue === undefined || isNaN(bg.grainValue)) {
+      bg.grainValue = bg.grain === 'off' ? 0 : (bg.grain === 'weak' ? 55 : 100);
+    }
+    bg.glowValue = Math.max(0, Math.min(100, bg.glowValue));
+    bg.grainValue = Math.max(0, Math.min(100, bg.grainValue));
     if (bg.dither === undefined) bg.dither = true;
     if (d.settings.privacyAccepted === undefined) d.settings.privacyAccepted = false;
     if (!d.day) d.day = new DayState();
@@ -692,8 +700,14 @@ export class Store {
     else if (key === 'darkClassic') bg.darkClassic.path = path;
     else if (key === 'darkPlain') bg.darkPlain.path = path;
     if (!hadImage && path.length > 0) {
-      if (bg.glow === 'normal') bg.glow = 'off';
-      if (bg.grain === 'normal') bg.grain = 'weak';
+      if (bg.glow === 'normal') {
+        bg.glow = 'off';
+        bg.glowValue = 0;
+      }
+      if (bg.grain === 'normal') {
+        bg.grain = 'weak';
+        bg.grainValue = 50;
+      }
     }
     this.saveSettings();
   }

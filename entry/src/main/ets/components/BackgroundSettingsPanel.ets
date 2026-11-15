@@ -5,6 +5,7 @@ import { Store } from '../data/Store';
 import { BackgroundService } from '../services/BackgroundService';
 import { BackgroundStyle, BgImageStyle } from '../model/BackgroundStyle';
 import { Tokens, getTokens, FONT_SANS, FONT_SERIF } from '../theme/Theme';
+import { UiState } from '../state/UiState';
 
 @ComponentV2
 export struct BackgroundSettingsPanel {
@@ -14,6 +15,7 @@ export struct BackgroundSettingsPanel {
   @Local advanced: boolean = false;
   @Local busy: boolean = false;
   @Local expanded: boolean = false;
+  @Local ui: UiState = UiState.get();
 
   private t(): Tokens {
     return getTokens(this.skin, this.dark);
@@ -81,7 +83,7 @@ export struct BackgroundSettingsPanel {
   BgRow(label: string, key: string) {
     Row({ space: 10 }) {
       if (this.styleOf(key).path.length > 0) {
-        Image(this.styleOf(key).path)
+        Image('file://' + this.styleOf(key).path)
           .width(64)
           .height(42)
           .objectFit(ImageFit.Cover)
@@ -120,6 +122,44 @@ export struct BackgroundSettingsPanel {
   }
 
   @Builder
+  BgCell(label: string, key: string) {
+    Column({ space: 4 }) {
+      if (this.styleOf(key).path.length > 0) {
+        Image('file://' + this.styleOf(key).path)
+          .width('100%')
+          .height(52)
+          .objectFit(ImageFit.Cover)
+          .borderRadius(8)
+      } else {
+        Column()
+          .width('100%')
+          .height(52)
+          .backgroundColor(this.t().card)
+          .border({ width: 1, color: this.t().line })
+          .borderRadius(8)
+      }
+      Text(label).fontSize(11).fontColor(this.t().ink).width('100%')
+      Row({ space: 4 }) {
+        Text('调整')
+          .fontSize(10)
+          .fontColor(this.editKey === key ? this.t().sealInk : this.t().inkSoft)
+          .onClick(() => { this.editKey = key; })
+        Blank()
+        Text(this.styleOf(key).path.length > 0 ? '换图' : '选图')
+          .fontSize(10)
+          .fontColor(this.t().sealInk)
+          .onClick(() => this.choose(key))
+      }
+      .width('100%')
+    }
+    .layoutWeight(1)
+    .padding(8)
+    .backgroundColor(this.editKey === key ? this.t().seal : this.t().card)
+    .borderRadius(10)
+    .border({ width: 1, color: this.t().line })
+  }
+
+  @Builder
   SliderRow(label: string, field: string, min: number, max: number, step: number) {
     Column({ space: 2 }) {
       Row() {
@@ -144,6 +184,34 @@ export struct BackgroundSettingsPanel {
         .selectedColor(this.t().seal)
         .onChange((v: number) => {
           this.updateNum(this.editKey, field, field === 'scrim' ? v / 100 : v);
+        })
+    }
+    .width('100%')
+    .padding({ top: 4, bottom: 4 })
+  }
+
+  @Builder
+  LevelSlider(label: string, field: string) {
+    Column({ space: 2 }) {
+      Row() {
+        Text(label).fontSize(12).fontColor(this.t().inkSoft)
+        Blank()
+        Text(`${Math.round(field === 'glow' ? this.bg().glowValue : this.bg().grainValue)}%`)
+          .fontSize(11).fontColor(this.t().inkSoft)
+      }
+      .width('100%')
+      Slider({
+        value: field === 'glow' ? this.bg().glowValue : this.bg().grainValue,
+        min: 0,
+        max: 100,
+        step: 1
+      })
+        .width('100%')
+        .selectedColor(this.t().seal)
+        .onChange((v: number) => {
+          if (field === 'glow') this.bg().glowValue = v;
+          else this.bg().grainValue = v;
+          Store.get().saveSettings();
         })
     }
     .width('100%')
@@ -180,6 +248,10 @@ export struct BackgroundSettingsPanel {
 
   build() {
     Column({ space: 8 }) {
+      Text(`${this.ui.dataVersion}`)
+        .width(0)
+        .height(0)
+        .opacity(0)
       Row() {
         Text('自定义背景')
           .fontFamily(FONT_SERIF)
@@ -217,21 +289,8 @@ export struct BackgroundSettingsPanel {
         this.SliderRow('模糊', 'blur', 0, 20, 1)
         this.SliderRow('遮罩', 'scrim', 0, 100, 2)
 
-        Row({ space: 8 }) {
-          Text('氛围光').fontSize(12).fontColor(this.t().inkSoft)
-          this.ModeChip('关', 'off', 'glow')
-          this.ModeChip('弱', 'weak', 'glow')
-          this.ModeChip('标准', 'normal', 'glow')
-        }
-        .width('100%')
-
-        Row({ space: 8 }) {
-          Text('纸纹').fontSize(12).fontColor(this.t().inkSoft)
-          this.ModeChip('关', 'off', 'grain')
-          this.ModeChip('弱', 'weak', 'grain')
-          this.ModeChip('标准', 'normal', 'grain')
-        }
-        .width('100%')
+        this.LevelSlider('氛围光', 'glow')
+        this.LevelSlider('纸纹', 'grain')
 
         if (this.dark) {
           Row() {
@@ -248,25 +307,21 @@ export struct BackgroundSettingsPanel {
         }
 
         if (this.advanced) {
-          Text('经典 / 朴素分别覆盖')
+          Text('2×2 覆盖：经典 / 朴素')
             .fontSize(11)
             .fontColor(this.t().inkSoft)
             .width('100%')
             .margin({ top: 4 })
-          Row({ space: 6 }) {
-            this.EditChip('浅色经典', 'lightClassic')
-            this.EditChip('浅色朴素', 'lightPlain')
+          Row({ space: 8 }) {
+            this.BgCell('浅色经典', 'lightClassic')
+            this.BgCell('浅色朴素', 'lightPlain')
           }
           .width('100%')
-          Row({ space: 6 }) {
-            this.EditChip('深色经典', 'darkClassic')
-            this.EditChip('深色朴素', 'darkPlain')
+          Row({ space: 8 }) {
+            this.BgCell('深色经典', 'darkClassic')
+            this.BgCell('深色朴素', 'darkPlain')
           }
           .width('100%')
-          this.BgRow('浅色 · 经典', 'lightClassic')
-          this.BgRow('浅色 · 朴素', 'lightPlain')
-          this.BgRow('深色 · 经典', 'darkClassic')
-          this.BgRow('深色 · 朴素', 'darkPlain')
         }
       }
     }

@@ -1,5 +1,6 @@
 // 句栖 · 背景图裁剪：全屏预览，可见区域就是最终背景
 import { common } from '@kit.AbilityKit';
+import { display } from '@kit.ArkUI';
 import { fileIo as fs } from '@kit.CoreFileKit';
 import { image } from '@kit.ImageKit';
 import { BackgroundService } from '../services/BackgroundService';
@@ -18,6 +19,10 @@ struct BackgroundCropPage {
   @Local dark: boolean = false;
   @Local skin: string = 'classic';
   @Local pixelMap: image.PixelMap | null = null;
+  @Local vw: number = 1080;
+  @Local vh: number = 2400;
+  @Local imgW: number = 0;
+  @Local imgH: number = 0;
 
   private t(): Tokens {
     return getTokens(this.skin, this.dark);
@@ -28,6 +33,12 @@ struct BackgroundCropPage {
     this.cropKey = AppStorage.get<string>('bgCropKey') ?? 'light';
     this.skin = AppStorage.get<string>('bgCropSkin') ?? 'classic';
     this.dark = AppStorage.get<boolean>('bgCropDark') ?? false;
+    try {
+      const d = display.getDefaultDisplaySync();
+      this.vw = d.width;
+      this.vh = d.height;
+    } catch (e) {
+    }
     if (this.src.length === 0) {
       try {
         this.getUIContext().getPromptAction().showToast({ message: '没有选到图片' });
@@ -39,11 +50,25 @@ struct BackgroundCropPage {
     }
   }
 
+  private clamp(): void {
+    if (this.imgW <= 0 || this.imgH <= 0) return;
+    const base: number = Math.max(this.vw / this.imgW, this.vh / this.imgH);
+    const sw: number = this.imgW * base * this.zoom;
+    const sh: number = this.imgH * base * this.zoom;
+    const mx: number = Math.max(0, (sw - this.vw) / 2);
+    const my: number = Math.max(0, (sh - this.vh) / 2);
+    this.tx = Math.max(-mx, Math.min(mx, this.tx));
+    this.ty = Math.max(-my, Math.min(my, this.ty));
+  }
+
   private async loadImage(): Promise<void> {
     let f: fs.File | null = null;
     try {
       f = fs.openSync(this.src, fs.OpenMode.READ_ONLY);
       const src = image.createImageSource(f.fd);
+      const info = await src.getImageInfo();
+      this.imgW = info.size.width;
+      this.imgH = info.size.height;
       this.pixelMap = await src.createPixelMap();
     } catch (e) {
       try { this.getUIContext().getPromptAction().showToast({ message: '无法读取图片' }); } catch (e2) {}
@@ -62,8 +87,25 @@ struct BackgroundCropPage {
       const ctx = this.getUIContext().getHostContext() as common.UIAbilityContext;
       let path: string = '';
       try {
-        const pm = await this.getUIContext().getComponentSnapshot().get('bgCropImage');
-        path = await BackgroundService.savePixelMap(ctx, pm, this.cropKey);
+        if (this.pixelMap === null || this.imgW <= 0 || this.imgH <= 0) {
+          throw new Error('NO_PIXEL');
+        }
+        const base: number = Math.max(this.vw / this.imgW, this.vh / this.imgH);
+        const scale: number = base * this.zoom;
+        const cw: number = Math.min(this.imgW, this.vw / scale);
+        const ch: number = Math.min(this.imgH, this.vh / scale);
+        const cx: number = this.imgW / 2 - this.tx / scale;
+        const cy: number = this.imgH / 2 - this.ty / scale;
+        const left: number = Math.max(0, Math.min(this.imgW - cw, cx - cw / 2));
+        const top: number = Math.max(0, Math.min(this.imgH - ch, cy - ch / 2));
+        const region: image.Region = {
+          x: Math.round(left),
+          y: Math.round(top),
+          size: { width: Math.round(cw), height: Math.round(ch) }
+        };
+        const out = await this.pixelMap.createCroppedAndScaledPixelMap(
+          region, this.vw / cw, this.vh / ch);
+        path = await BackgroundService.savePixelMap(ctx, out, this.cropKey);
       } catch (e) {
         if (this.pixelMap !== null) {
           path = await BackgroundService.savePixelMap(ctx, this.pixelMap, this.cropKey);
@@ -95,11 +137,13 @@ struct BackgroundCropPage {
             PinchGesture()
               .onActionUpdate((e: GestureEvent) => {
                 this.zoom = Math.max(1, Math.min(4, this.zoom * e.scale));
+                this.clamp();
               }),
             PanGesture()
               .onActionUpdate((e: GestureEvent) => {
                 this.tx += e.offsetX;
                 this.ty += e.offsetY;
+                this.clamp();
               })
           )
         )
@@ -119,6 +163,29 @@ struct BackgroundCropPage {
           .margin({ top: 6 })
       }
       .margin({ bottom: 120 })
+
+      Column()
+        .width('92%')
+        .height('82%')
+        .border({ width: 1, color: '#B3FFFFFF' })
+        .hitTestBehavior(HitTestMode.None)
+      Column() {
+        Row().height(1).width('92%').backgroundColor('#66FFFFFF')
+      }
+      .height('82%')
+      .justifyContent(FlexAlign.Center)
+      .hitTestBehavior(HitTestMode.None)
+
+      if (this.saving) {
+        Column({ space: 10 }) {
+          LoadingProgress().width(34).height(34).color(this.t().sealInk)
+          Text('正在应用…').fontSize(13).fontColor(this.t().ink)
+        }
+        .width('100%')
+        .height('100%')
+        .justifyContent(FlexAlign.Center)
+        .backgroundColor('#66000000')
+      }
 
       Row({ space: 12 }) {
         Text('取消')

@@ -13,7 +13,9 @@ export class BackgroundStyle {
   lightPlain: BgImageStyle = new BgImageStyle();
   darkClassic: BgImageStyle = new BgImageStyle();
   darkPlain: BgImageStyle = new BgImageStyle();
-  glow: string = 'normal'; // off / weak / normal
+  glow: string = 'normal'; // 旧字段，保留兼容
+  glowValue: number = 100; // 0–100
   dither: boolean = true;
-  grain: string = 'normal'; // off / weak / normal
+  grain: string = 'normal'; // 旧字段，保留兼容
+  grainValue: number = 100; // 0–100
 }

@@ -92,8 +92,10 @@ brightness
 blur
 scrim
 glow
+glowValue
 dither
 grain
+grainValue
 date
 mood
 wrote

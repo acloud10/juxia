@@ -1,6 +1,6 @@
 // 句栖 · 设置（皮肤 / 主题 / 仪式 / 应用名 / 密语备份）
 
-import { common } from '@kit.AbilityKit';
+import { common, ConfigurationConstant } from '@kit.AbilityKit';
 import { picker, fileIo as fs, hash, statfs } from '@kit.CoreFileKit';
 import { util } from '@kit.ArkTS';
 import { zlib } from '@kit.BasicServicesKit';
@@ -128,6 +128,13 @@ export struct SettingsPage {
     this.openSection = this.ui.settingsSection;
   }
 
+  @Monitor('ui.systemDark')
+  onSystemDark(monitor: IMonitor): void {
+    if (this.theme === 'system') {
+      this.applyDark('system');
+    }
+  }
+
   private load(): void {
     const s = Store.get().data.settings;
     this.theme = s.theme;
@@ -161,7 +168,13 @@ export struct SettingsPage {
   }
 
   private applyDark(theme: string): void {
-    const sys: boolean = this.ui.systemDark;
+    let sys: boolean = this.ui.systemDark;
+    try {
+      const ctx = this.getUIContext().getHostContext() as common.UIAbilityContext;
+      sys = ctx.config.colorMode === ConfigurationConstant.ColorMode.COLOR_MODE_DARK;
+      this.ui.systemDark = sys;
+    } catch (e) {
+    }
     const d: boolean = theme === 'dark' || (theme === 'system' && sys);
     this.ui.dark = d;
   }

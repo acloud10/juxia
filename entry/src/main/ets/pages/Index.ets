@@ -299,11 +299,13 @@ struct Index {
     return this.bgStyle().path.length > 0;
   }
 
+  private glowOpacity(): number {
+    return Store.get().data.settings.background.glowValue / 100;
+  }
+
   private grainOpacity(): number {
-    const g: string = Store.get().data.settings.background.grain;
-    if (g === 'off') return 0;
-    if (g === 'weak') return this.skin === 'plain' ? 0.1 : 0.24;
-    return this.skin === 'plain' ? 0.22 : 0.5;
+    const base: number = this.skin === 'plain' ? 0.22 : 0.5;
+    return base * Store.get().data.settings.background.grainValue / 100;
   }
 
   private startRitual(ctx: RitualCtx): void {
@@ -502,6 +504,10 @@ struct Index {
 
   build() {
     Stack({ alignContent: Alignment.Bottom }) {
+      Text(`${this.ui.dataVersion}`)
+        .width(0)
+        .height(0)
+        .opacity(0)
       // 最底层兜底：API 26 不再设置原生窗口底色，用页面底色覆盖系统默认色。
       Column()
         .width('100%')
@@ -524,6 +530,7 @@ struct Index {
               radius: '78%',
               colors: [[this.glow1(), 0.0], ['#00FFFFFF', 1.0]]
             })
+            .opacity(this.glowOpacity())
           Column()
             .width('100%')
             .height('100%')
@@ -532,6 +539,7 @@ struct Index {
               radius: '70%',
               colors: [[this.glow2(), 0.0], ['#00FFFFFF', 1.0]]
             })
+            .opacity(this.glowOpacity())
           Column()
             .width('100%')
             .height('100%')
@@ -540,6 +548,7 @@ struct Index {
               radius: '68%',
               colors: [[this.glow3(), 0.0], ['#00FFFFFF', 1.0]]
             })
+            .opacity(this.glowOpacity())
         } else {
           Column()
             .width('100%')
@@ -549,6 +558,7 @@ struct Index {
               radius: '78%',
               colors: [[this.glow1(), 0.0], ['#00FFFFFF', 1.0]]
             })
+            .opacity(this.glowOpacity())
           Column()
             .width('100%')
             .height('100%')
@@ -557,6 +567,7 @@ struct Index {
               radius: '70%',
               colors: [[this.glow2(), 0.0], ['#00FFFFFF', 1.0]]
             })
+            .opacity(this.glowOpacity())
           Column()
             .width('100%')
             .height('100%')
@@ -565,6 +576,7 @@ struct Index {
               radius: '68%',
               colors: [[this.glow3(), 0.0], ['#00FFFFFF', 1.0]]
             })
+            .opacity(this.glowOpacity())
         }
       } else {
         Column()
@@ -596,7 +608,7 @@ struct Index {
         }
       }
       if (this.hasBg()) {
-        Image(this.bgStyle().path)
+        Image('file://' + this.bgStyle().path)
           .width('100%')
           .height('100%')
           .objectFit(ImageFit.Cover)
@@ -618,7 +630,8 @@ struct Index {
               radius: '78%',
               colors: [[this.glow1(), 0.0], ['#00FFFFFF', 1.0]]
             })
-            .opacity(Store.get().data.settings.background.glow === 'weak' ? 0.55 : 1)
+            .opacity(this.glowOpacity())
+            .opacity(this.glowOpacity())
           Column()
             .width('100%')
             .height('100%')
@@ -627,7 +640,8 @@ struct Index {
               radius: '70%',
               colors: [[this.glow2(), 0.0], ['#00FFFFFF', 1.0]]
             })
-            .opacity(Store.get().data.settings.background.glow === 'weak' ? 0.55 : 1)
+            .opacity(this.glowOpacity())
+            .opacity(this.glowOpacity())
           Column()
             .width('100%')
             .height('100%')
@@ -636,7 +650,8 @@ struct Index {
               radius: '68%',
               colors: [[this.glow3(), 0.0], ['#00FFFFFF', 1.0]]
             })
-            .opacity(Store.get().data.settings.background.glow === 'weak' ? 0.55 : 1)
+            .opacity(this.glowOpacity())
+            .opacity(this.glowOpacity())
         } else if (this.dark) {
           Column()
             .width('100%')
@@ -646,7 +661,7 @@ struct Index {
               radius: '80%',
               colors: [['#22c98a5e', 0.0], ['#00FFFFFF', 1.0]]
             })
-            .opacity(Store.get().data.settings.background.glow === 'weak' ? 0.55 : 1)
+            .opacity(this.glowOpacity())
           Column()
             .width('100%')
             .height('100%')
@@ -655,7 +670,7 @@ struct Index {
               radius: '70%',
               colors: [['#107a9bb0', 0.0], ['#00FFFFFF', 1.0]]
             })
-            .opacity(Store.get().data.settings.background.glow === 'weak' ? 0.55 : 1)
+            .opacity(this.glowOpacity())
         }
       }
       if (this.dark && Store.get().data.settings.background.dither) {
