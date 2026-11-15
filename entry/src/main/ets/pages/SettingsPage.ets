@@ -5,7 +5,7 @@ import { picker, fileIo as fs, hash, statfs } from '@kit.CoreFileKit';
 import { util } from '@kit.ArkTS';
 import { zlib } from '@kit.BasicServicesKit';
 import { Store } from '../data/Store';
-import { AppData, MaterialEntry, uid } from '../model/Types';
+import { AppData, MaterialEntry } from '../model/Types';
 import { BackupService } from '../services/BackupService';
 import { ReminderService } from '../services/ReminderService';
 import { MaterialIndexer } from '../services/MaterialIndexer';
@@ -1002,11 +1002,7 @@ export struct SettingsPage {
   }
 
   private newMaterialId(): string {
-    let id: string = uid();
-    while (Store.get().data.materials.some((m: MaterialEntry) => m.id === id)) {
-      id = uid();
-    }
-    return id;
+    return Store.get().newId();
   }
 
   private pruneMissingMaterials(): number {

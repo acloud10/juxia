@@ -3,7 +3,7 @@ import { preferences } from '@kit.ArkData';
 import { common } from '@kit.AbilityKit';
 import {
   AppData, Settings, DayState, MetaState, OwnEntry, LibEntry,
-  DislikeEntry, MaterialEntry, NoteItem, todayStr, uid, DAY_MS, revisitAtFromDays
+  DislikeEntry, MaterialEntry, NoteItem, todayStr, DAY_MS, revisitAtFromDays
 } from '../model/Types';
 import { Repo } from './Repo';
 import { clearLegacyKey } from '../services/LegacyKeyCleanup';
@@ -32,12 +32,28 @@ export class Store {
   private repo: Repo | null = null;
   private useDb: boolean = false;
   private fallbackToken: string = '';
+  private idSeq: number = 0;
 
   static get(): Store {
     if (Store.instance === null) {
       Store.instance = new Store();
     }
     return Store.instance;
+  }
+
+  private idExists(id: string): boolean {
+    return this.data.own.some((e: OwnEntry) => e.id === id) ||
+      this.data.lib.some((e: LibEntry) => e.id === id) ||
+      this.data.materials.some((e: MaterialEntry) => e.id === id);
+  }
+
+  newId(): string {
+    let id: string = '';
+    do {
+      this.idSeq = (this.idSeq + 1) % 46656;
+      id = Date.now().toString(36) + this.idSeq.toString(36).padStart(3, '0');
+    } while (this.idExists(id));
+    return id;
   }
 
   async init(context: common.UIAbilityContext): Promise<void> {
@@ -378,7 +394,7 @@ export class Store {
   // ---------- 写入 ----------
   addOwn(kind: string, text: string): void {
     const e = new OwnEntry();
-    e.id = uid();
+    e.id = this.newId();
     e.kind = kind;
     e.text = text;
     e.createdAt = Date.now();
@@ -392,7 +408,7 @@ export class Store {
     const body: string = text.trim();
     if (body.length === 0) return false;
     const e = new OwnEntry();
-    e.id = uid();
+    e.id = this.newId();
     e.kind = 'reply';
     e.text = body;
     e.replyToId = sourceId;
@@ -412,7 +428,7 @@ export class Store {
     const body: string = text.trim();
     if (body.length === 0) return false;
     const e = new OwnEntry();
-    e.id = uid();
+    e.id = this.newId();
     e.kind = 'reflect';
     e.text = body;
     e.createdAt = Date.now();
@@ -443,7 +459,7 @@ export class Store {
     const exists: boolean = this.data.lib.some((e: LibEntry) => e.text === text);
     if (exists) return false;
     const e = new LibEntry();
-    e.id = uid();
+    e.id = this.newId();
     e.text = text;
     e.source = source;
     e.origin = origin;
@@ -483,7 +499,7 @@ export class Store {
 
   addMaterial(name: string, text: string): MaterialEntry {
     const m = new MaterialEntry();
-    m.id = uid();
+    m.id = this.newId();
     m.name = name;
     m.text = text;
     m.createdAt = Date.now();
@@ -501,7 +517,7 @@ export class Store {
 
   addMaterialFile(name: string, path: string, size: number): MaterialEntry {
     const m = new MaterialEntry();
-    m.id = uid();
+    m.id = this.newId();
     m.name = name;
     m.path = path;
     m.size = size;

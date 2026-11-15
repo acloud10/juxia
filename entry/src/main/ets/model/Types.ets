@@ -151,10 +151,6 @@ export function revisitAtFromDays(days: number, hour: number = 9, minute: number
   return d.getTime();
 }
 
-export function uid(): string {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-}
-
 export function weekdayCN(d: Date): string {
   const names: string[] = ['日', '一', '二', '三', '四', '五', '六'];
   return names[d.getDay()];
