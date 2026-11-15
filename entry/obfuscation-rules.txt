@@ -44,6 +44,7 @@ archAt
 revisitAt
 snoozeUntil
 foot
+footIds
 notes
 replyToId
 replyFrom

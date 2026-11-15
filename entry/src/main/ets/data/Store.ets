@@ -153,6 +153,9 @@ export class Store {
     d.own.forEach((e: OwnEntry) => {
       if (!e.bindIds) e.bindIds = [];
       if (!e.foot) e.foot = [];
+      if (!e.footIds) e.footIds = [];
+      while (e.footIds.length < e.foot.length) e.footIds.push('');
+      if (e.footIds.length > e.foot.length) e.footIds = e.footIds.slice(0, e.foot.length);
       if (!e.notes) e.notes = [];
       if (e.replyToId === undefined) e.replyToId = '';
       if (e.replyFrom === undefined) e.replyFrom = '';
@@ -606,11 +609,17 @@ export class Store {
           const short: string = e.text.length > 30 ? e.text.slice(0, 30) + '…' : e.text;
           const prefix: string = `它曾陪我度过「${short}」`;
           const line: string = `${prefix}，那件事于 ${md} 标记为「${this.catLabel(cat)}」。`;
-          const idx: number = x.foot.findIndex((f: string) => f.startsWith(prefix));
+          let idx: number = x.footIds.findIndex((fid: string) => fid === e.id);
+          if (idx < 0) {
+            idx = x.foot.findIndex((f: string, i: number) =>
+              x.footIds[i] === '' && f.startsWith(prefix));
+          }
           if (idx >= 0) {
             x.foot[idx] = line;
+            x.footIds[idx] = e.id;
           } else {
             x.foot.push(line);
+            x.footIds.push(e.id);
           }
         }
       });
@@ -730,8 +739,22 @@ export class Store {
     const touched: OwnEntry[] = [];
     this.data.own.forEach((x: OwnEntry) => {
       if (x.foot.length === 0) return;
-      if (x.foot.some((f: string) => f.startsWith(prefix))) {
-        x.foot = x.foot.filter((f: string) => !f.startsWith(prefix));
+      let changed: boolean = false;
+      const keptLines: string[] = [];
+      const keptIds: string[] = [];
+      for (let i = 0; i < x.foot.length; i++) {
+        const fid: string = x.footIds[i] === undefined ? '' : x.footIds[i];
+        const isThis: boolean = fid === e.id || (fid === '' && x.foot[i].startsWith(prefix));
+        if (isThis) {
+          changed = true;
+        } else {
+          keptLines.push(x.foot[i]);
+          keptIds.push(fid);
+        }
+      }
+      if (changed) {
+        x.foot = keptLines;
+        x.footIds = keptIds;
         touched.push(x);
       }
     });

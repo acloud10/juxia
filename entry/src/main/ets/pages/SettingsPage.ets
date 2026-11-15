@@ -884,10 +884,7 @@ export struct SettingsPage {
         this.purgeBackupDir(dir);
         return;
       }
-      const bytes: Uint8Array = this.readAllBytes(zip);
-      const wf = fs.openSync(uris[0], fs.OpenMode.READ_WRITE | fs.OpenMode.CREATE | fs.OpenMode.TRUNC);
-      fs.writeSync(wf.fd, bytes.buffer);
-      fs.closeSync(wf);
+      this.copyFileStream(zip, uris[0]);
       try { fs.unlinkSync(zip); } catch (e) {}
       this.purgeBackupDir(dir);
       this.markBackedUp();
@@ -2040,6 +2037,13 @@ export struct SettingsPage {
         }
         this.SectionHeader('data', '数据与备份')
         if (this.openSection === 'data') {
+        Text('卸载应用会删除本机数据；导出的备份文件请自己保管。')
+          .fontFamily(FONT_SANS)
+          .fontSize(12)
+          .lineHeight(20)
+          .fontColor(this.t().inkSoft)
+          .width('100%')
+          .margin({ bottom: 12 })
         this.GroupTitle('完整加密备份')
         Column({ space: 8 }) {
           Text('数据、句子关系、省身与备注、材料一起打包，再用备份密码（密语）加密成 .sj4。')

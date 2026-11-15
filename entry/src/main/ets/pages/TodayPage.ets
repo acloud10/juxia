@@ -489,7 +489,7 @@ export struct TodayPage {
   }
 
   @Builder
-  MoodCard(kind: string, title: string, sub: string) {
+  MoodCard(kind: string, title: string, sub1: string, sub2: string) {
     Row({ space: this.skin === 'plain' ? 8 : 10 }) {
       MoodIcon({
         kind: kind,
@@ -503,13 +503,22 @@ export struct TodayPage {
           .fontFamily(FONT_SERIF)
           .fontColor(this.t().inkStrong)
           .width('100%')
-        Text(sub)
+        Text(sub1)
           .fontFamily(FONT_SANS)
           .fontSize(10)
           .lineHeight(16)
           .letterSpacing(this.skin === 'plain' ? 0.2 : 1)
           .fontColor(this.t().inkSoft)
-          .maxLines(2)
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+          .width('100%')
+        Text(sub2)
+          .fontFamily(FONT_SANS)
+          .fontSize(10)
+          .lineHeight(16)
+          .letterSpacing(this.skin === 'plain' ? 0.2 : 1)
+          .fontColor(this.t().inkSoft)
+          .maxLines(1)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
           .width('100%')
       }
@@ -971,8 +980,8 @@ export struct TodayPage {
         this.Label('今天，心里是什么天气')
 
         Row({ space: 14 }) {
-          this.MoodCard('good', '今天还不错', '存一句鼓励 · 可处理一件旧事')
-          this.MoodCard('bad', '今天有点糟', '树洞写下来 · 抽一句陪着你')
+          this.MoodCard('good', '今天还不错', '存一句鼓励', '可处理一件旧事')
+          this.MoodCard('bad', '今天有点糟', '树洞写下来', '抽一句陪着你')
         }
         .width('100%')
 

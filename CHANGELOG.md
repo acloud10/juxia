@@ -12,6 +12,10 @@
 - manifest v2 增加 data.json 与每个材料文件的 SHA-256
 - 正常保存会保留 restore token，不会被全量快照覆盖
 - 删除整包 encryptBytes / decryptBytes 旧入口，只保留流式文件入口
+- 明文导出改为流式复制，不再整包读入内存
+- 注脚关联增加 footIds，按旧事 id 定位，正文前 30 字只作旧数据回退
+- 备份区补充“卸载会删除本机数据”
+- 心情卡副文案固定为两行，避免“可处理 / 一件旧事”和“一 / 件”断行
 - release 混淆保留备份、manifest 和 journal 的 JSON 字段名
 
 ## 1.0.4
