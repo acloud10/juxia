@@ -19,6 +19,13 @@ export class UiState {
   @Trace safeTop: number = 0;
   @Trace safeBottom: number = 0;
   @Trace dataVersion: number = 0;
+  @Trace bgBrightness: number = 1.0;
+  @Trace bgBlur: number = 0;
+  @Trace bgScrim: number = 0.38;
+  @Trace bgGlow: number = 100;
+  @Trace bgGrain: number = 100;
+  @Trace bgDither: number = 100;
+  @Trace bgSavedRev: number = 0;
   @Trace openRevisit: boolean = false;
   @Trace backRev: number = 0;
   @Trace mineOpenId: string = '';

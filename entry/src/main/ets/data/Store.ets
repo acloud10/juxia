@@ -124,34 +124,10 @@ export class Store {
     if (!d.dislikes) d.dislikes = [];
     if (!d.materials) d.materials = [];
     if (!d.settings) d.settings = new Settings();
-    if (!d.settings.background) d.settings.background = new BackgroundStyle();
-    const bg = d.settings.background;
-    if (!bg.light) bg.light = new BgImageStyle();
-    if (!bg.dark) bg.dark = new BgImageStyle();
-    if (!bg.lightClassic) bg.lightClassic = new BgImageStyle();
-    if (!bg.lightPlain) bg.lightPlain = new BgImageStyle();
-    if (!bg.darkClassic) bg.darkClassic = new BgImageStyle();
-    if (!bg.darkPlain) bg.darkPlain = new BgImageStyle();
-    [bg.light, bg.dark, bg.lightClassic, bg.lightPlain, bg.darkClassic, bg.darkPlain].forEach((s: BgImageStyle) => {
-      if (s.path === undefined) s.path = '';
-      if (s.brightness === undefined || isNaN(s.brightness)) s.brightness = 1.0;
-      s.brightness = Math.max(0.6, Math.min(1.4, s.brightness));
-      if (s.blur === undefined || isNaN(s.blur)) s.blur = 0;
-      s.blur = Math.max(0, Math.min(20, s.blur));
-      if (s.scrim === undefined || isNaN(s.scrim)) s.scrim = 0.38;
-      s.scrim = Math.max(0, Math.min(1, s.scrim));
-    });
-    if (bg.glow !== 'off' && bg.glow !== 'weak' && bg.glow !== 'normal') bg.glow = 'normal';
-    if (bg.grain !== 'off' && bg.grain !== 'weak' && bg.grain !== 'normal') bg.grain = 'normal';
-    if (bg.glowValue === undefined || isNaN(bg.glowValue)) {
-      bg.glowValue = bg.glow === 'off' ? 0 : (bg.glow === 'weak' ? 55 : 100);
-    }
-    if (bg.grainValue === undefined || isNaN(bg.grainValue)) {
-      bg.grainValue = bg.grain === 'off' ? 0 : (bg.grain === 'weak' ? 55 : 100);
-    }
-    bg.glowValue = Math.max(0, Math.min(100, bg.glowValue));
-    bg.grainValue = Math.max(0, Math.min(100, bg.grainValue));
-    if (bg.dither === undefined) bg.dither = true;
+    d.settings.background = BackgroundStyle.from(d.settings.background);
+    // 只保留实际使用的四张：经典浅/深、朴素浅/深。
+    d.settings.background.lightClassic.path = '';
+    d.settings.background.darkClassic.path = '';
     if (d.settings.privacyAccepted === undefined) d.settings.privacyAccepted = false;
     if (!d.day) d.day = new DayState();
     if (!d.meta) d.meta = new MetaState();
@@ -690,25 +666,12 @@ export class Store {
 
   setBackgroundPath(key: string, path: string): void {
     const bg = this.data.settings.background;
-    const hadImage: boolean = bg.light.path.length > 0 || bg.dark.path.length > 0 ||
-      bg.lightClassic.path.length > 0 || bg.lightPlain.path.length > 0 ||
-      bg.darkClassic.path.length > 0 || bg.darkPlain.path.length > 0;
     if (key === 'light') bg.light.path = path;
     else if (key === 'dark') bg.dark.path = path;
     else if (key === 'lightClassic') bg.lightClassic.path = path;
     else if (key === 'lightPlain') bg.lightPlain.path = path;
     else if (key === 'darkClassic') bg.darkClassic.path = path;
     else if (key === 'darkPlain') bg.darkPlain.path = path;
-    if (!hadImage && path.length > 0) {
-      if (bg.glow === 'normal') {
-        bg.glow = 'off';
-        bg.glowValue = 0;
-      }
-      if (bg.grain === 'normal') {
-        bg.grain = 'weak';
-        bg.grainValue = 50;
-      }
-    }
     this.saveSettings();
   }
 

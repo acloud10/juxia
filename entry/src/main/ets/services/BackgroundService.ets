@@ -69,13 +69,17 @@ export class BackgroundService {
       fs.mkdirSync(dir);
     } catch (e) {
     }
-    const dest: string = BackgroundService.imagePath(ctx, key);
+    const dest: string = dir + '/' + key + '_' + Date.now() + '.jpg';
+    const tmp: string = dest + '.tmp';
     let f: fs.File | null = null;
     try {
       const packer = image.createImagePacker();
-      f = fs.openSync(dest, fs.OpenMode.CREATE | fs.OpenMode.READ_WRITE | fs.OpenMode.TRUNC);
+      f = fs.openSync(tmp, fs.OpenMode.CREATE | fs.OpenMode.READ_WRITE | fs.OpenMode.TRUNC);
       await packer.packToFile(pm, f.fd, { format: 'image/jpeg', quality: 85 });
       fs.fsyncSync(f.fd);
+      fs.closeSync(f);
+      f = null;
+      fs.renameSync(tmp, dest);
       return dest;
     } catch (e) {
       console.error('juxia bg save fail', String(e));
@@ -84,6 +88,22 @@ export class BackgroundService {
       if (f !== null) {
         try { fs.closeSync(f); } catch (e) {}
       }
+      try { fs.unlinkSync(tmp); } catch (e) {}
+    }
+  }
+
+  static cleanup(ctx: common.UIAbilityContext, keep: string[]): void {
+    const dir: string = ctx.filesDir + '/backgrounds';
+    try {
+      const names: string[] = fs.listFileSync(dir);
+      names.forEach((name: string) => {
+        if (!name.endsWith('.jpg')) return;
+        const full: string = dir + '/' + name;
+        if (!keep.includes(full)) {
+          try { fs.unlinkSync(full); } catch (e) {}
+        }
+      });
+    } catch (e) {
     }
   }
 

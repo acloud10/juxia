@@ -69,7 +69,7 @@ export struct SettingsPage {
   @Local ui: UiState = UiState.get();
   private get appName(): string { return this.ui.appName; }
   private get settingsSection(): string { return this.ui.settingsSection; }
-  @Local openSection: string = 'ui';
+  @Local openSection: string = 'about';
   @Local theme: string = 'system';
   @Local fontScale: number = 1.0;
   @Local fontScaleFollow: boolean = true;
@@ -117,6 +117,10 @@ export struct SettingsPage {
     this.load();
   }
 
+  onPageShow(): void {
+    UiState.get().dataVersion = UiState.get().dataVersion + 1;
+  }
+
   aboutToDisappear(): void {
     if (this.bootSaveTimer >= 0) {
       clearTimeout(this.bootSaveTimer);
@@ -126,6 +130,11 @@ export struct SettingsPage {
   @Monitor('ui.settingsSection')
   onSectionReq(monitor: IMonitor): void {
     this.openSection = this.ui.settingsSection;
+  }
+
+  @Monitor('ui.themeMode')
+  onThemeMode(monitor: IMonitor): void {
+    this.theme = this.ui.themeMode;
   }
 
   @Monitor('ui.systemDark')

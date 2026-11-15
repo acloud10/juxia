@@ -94,6 +94,7 @@ scrim
 glow
 glowValue
 dither
+ditherValue
 grain
 grainValue
 date
@@ -107,6 +108,8 @@ lastBackupAt
 openDays
 revisitReminderIds
 format
+backgrounds
+key
 dataBytes
 dataSha256
 materialCount

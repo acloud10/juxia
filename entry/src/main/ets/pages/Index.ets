@@ -18,6 +18,7 @@ import { SettingsPage } from './SettingsPage';
 import { UiState } from '../state/UiState';
 import { AppError } from '../services/AppError';
 import { RestoreRecovery } from '../services/RestoreRecovery';
+import { BackgroundService } from '../services/BackgroundService';
 
 @Entry
 @ComponentV2
@@ -37,6 +38,8 @@ struct Index {
   @Local bootFontScale: number = 1.25;
   @Local ritualVisible: boolean = false;
   @Local ritualCtx: RitualCtx = new RitualCtx();
+  @Local bgRev: number = 0;
+  @Local bgReady: boolean = false;
   private get skin(): string { return this.ui.skin; }
   private get dark(): boolean { return this.ui.dark; }
   private get safeTop(): number { return this.ui.safeTop; }
@@ -62,6 +65,16 @@ struct Index {
   @Monitor('ui.errorRev')
   onErrorRev(monitor: IMonitor): void {
     this.flushError();
+  }
+
+  @Monitor('ui.dataVersion')
+  onBgData(monitor: IMonitor): void {
+    this.bgRev = this.bgRev + 1;
+  }
+
+  @Monitor('ui.bgSavedRev')
+  onBgFileSaved(monitor: IMonitor): void {
+    this.bgRev = this.bgRev + 1;
   }
 
   private flushError(): void {
@@ -171,6 +184,23 @@ struct Index {
     const ctx = this.getUIContext().getHostContext() as common.UIAbilityContext;
     await Store.get().init(ctx);
     await RestoreRecovery.recover(ctx);
+    const bs = this.bgStyle();
+    this.ui.bgBrightness = bs.brightness;
+    this.ui.bgBlur = bs.blur;
+    this.ui.bgScrim = bs.scrim;
+    this.ui.bgGlow = bs.glowValue;
+    this.ui.bgGrain = bs.grainValue;
+    this.ui.bgDither = bs.ditherValue;
+    this.bgReady = true;
+    this.bgRev = this.bgRev + 1;
+    const b = Store.get().data.settings.background;
+    const keepPaths: string[] = [b.light.path, b.dark.path, b.lightPlain.path, b.darkPlain.path]
+      .filter((p: string) => p.length > 0);
+    BackgroundService.cleanup(ctx, keepPaths);
+    console.info('juxia-bg init light=' + b.light.path + ' dark=' + b.dark.path +
+      ' bright L=' + b.light.brightness + ' LC=' + b.lightClassic.brightness +
+      ' LP=' + b.lightPlain.brightness + ' D=' + b.dark.brightness +
+      ' DC=' + b.darkClassic.brightness + ' DP=' + b.darkPlain.brightness);
     this.flushError();
     const st = Store.get();
     this.bootLong = st.data.settings.bootLong;
@@ -287,11 +317,9 @@ struct Index {
     const b = Store.get().data.settings.background;
     if (this.dark) {
       if (this.skin === 'plain' && b.darkPlain.path.length > 0) return b.darkPlain;
-      if (this.skin !== 'plain' && b.darkClassic.path.length > 0) return b.darkClassic;
       return b.dark;
     }
     if (this.skin === 'plain' && b.lightPlain.path.length > 0) return b.lightPlain;
-    if (this.skin !== 'plain' && b.lightClassic.path.length > 0) return b.lightClassic;
     return b.light;
   }
 
@@ -300,12 +328,13 @@ struct Index {
   }
 
   private glowOpacity(): number {
-    return Store.get().data.settings.background.glowValue / 100;
+    return this.ui.bgGlow / 100;
   }
 
   private grainOpacity(): number {
     const base: number = this.skin === 'plain' ? 0.22 : 0.5;
-    return base * Store.get().data.settings.background.grainValue / 100;
+    const v: number = this.ui.bgGrain;
+    return v <= 100 ? base * v / 100 : base * v / 400;
   }
 
   private startRitual(ctx: RitualCtx): void {
@@ -521,63 +550,7 @@ struct Index {
             angle: 180,
             colors: [[this.bgTop(), 0.0], [this.t().bg, 0.42], [this.bgBottom(), 1.0]]
           })
-        if (this.dark) {
-          Column()
-            .width('100%')
-            .height('100%')
-            .radialGradient({
-              center: ['74%', '4%'],
-              radius: '78%',
-              colors: [[this.glow1(), 0.0], ['#00FFFFFF', 1.0]]
-            })
-            .opacity(this.glowOpacity())
-          Column()
-            .width('100%')
-            .height('100%')
-            .radialGradient({
-              center: ['8%', '92%'],
-              radius: '70%',
-              colors: [[this.glow2(), 0.0], ['#00FFFFFF', 1.0]]
-            })
-            .opacity(this.glowOpacity())
-          Column()
-            .width('100%')
-            .height('100%')
-            .radialGradient({
-              center: ['92%', '84%'],
-              radius: '68%',
-              colors: [[this.glow3(), 0.0], ['#00FFFFFF', 1.0]]
-            })
-            .opacity(this.glowOpacity())
-        } else {
-          Column()
-            .width('100%')
-            .height('100%')
-            .radialGradient({
-              center: ['74%', '4%'],
-              radius: '78%',
-              colors: [[this.glow1(), 0.0], ['#00FFFFFF', 1.0]]
-            })
-            .opacity(this.glowOpacity())
-          Column()
-            .width('100%')
-            .height('100%')
-            .radialGradient({
-              center: ['8%', '92%'],
-              radius: '70%',
-              colors: [[this.glow2(), 0.0], ['#00FFFFFF', 1.0]]
-            })
-            .opacity(this.glowOpacity())
-          Column()
-            .width('100%')
-            .height('100%')
-            .radialGradient({
-              center: ['92%', '84%'],
-              radius: '68%',
-              colors: [[this.glow3(), 0.0], ['#00FFFFFF', 1.0]]
-            })
-            .opacity(this.glowOpacity())
-        }
+          .blur(!this.hasBg() ? this.ui.bgBlur * 0.5 : 0)
       } else {
         Column()
           .width('100%')
@@ -588,39 +561,36 @@ struct Index {
               ? [['#211e19', 0.0], ['#1b1a17', 0.55], ['#171614', 1.0]]
               : [[this.t().bg, 0.0], [this.t().bg, 1.0]]
           })
-        if (this.dark) {
-          Column()
-            .width('100%')
-            .height('100%')
-            .radialGradient({
-              center: ['82%', '0%'],
-              radius: '80%',
-              colors: [['#22c98a5e', 0.0], ['#00FFFFFF', 1.0]]
-            })
-          Column()
-            .width('100%')
-            .height('100%')
-            .radialGradient({
-              center: ['12%', '92%'],
-              radius: '70%',
-              colors: [['#107a9bb0', 0.0], ['#00FFFFFF', 1.0]]
-            })
-        }
+          .blur(!this.hasBg() ? this.ui.bgBlur * 0.5 : 0)
       }
-      if (this.hasBg()) {
+      if (this.bgReady && this.hasBg() && this.bgRev >= 0) {
         Image('file://' + this.bgStyle().path)
           .width('100%')
           .height('100%')
           .objectFit(ImageFit.Cover)
-          .brightness(this.bgStyle().brightness)
-          .blur(this.bgStyle().blur)
+          .brightness(Math.min(1, this.ui.bgBrightness))
+          .blur(this.ui.bgBlur * 0.5)
+      }
+      if (this.ui.bgBrightness > 1) {
         Column()
           .width('100%')
           .height('100%')
-          .backgroundColor(this.dark ? '#000000' : '#F6F0E3')
-          .opacity(this.bgStyle().scrim)
+          .backgroundColor('#FFFFFF')
+          .opacity((this.ui.bgBrightness - 1) * 0.55)
       }
-      if (this.hasBg() && Store.get().data.settings.background.glow !== 'off') {
+      if (this.ui.bgBrightness < 1) {
+        Column()
+          .width('100%')
+          .height('100%')
+          .backgroundColor('#000000')
+          .opacity((1 - this.ui.bgBrightness) * 0.85)
+      }
+      Column()
+        .width('100%')
+        .height('100%')
+        .backgroundColor(this.dark ? '#000000' : '#F6F0E3')
+        .opacity(this.ui.bgScrim)
+      if (this.bgRev >= 0 && this.ui.bgGlow > 0) {
         if (this.skin !== 'plain') {
           Column()
             .width('100%')
@@ -631,7 +601,6 @@ struct Index {
               colors: [[this.glow1(), 0.0], ['#00FFFFFF', 1.0]]
             })
             .opacity(this.glowOpacity())
-            .opacity(this.glowOpacity())
           Column()
             .width('100%')
             .height('100%')
@@ -641,7 +610,6 @@ struct Index {
               colors: [[this.glow2(), 0.0], ['#00FFFFFF', 1.0]]
             })
             .opacity(this.glowOpacity())
-            .opacity(this.glowOpacity())
           Column()
             .width('100%')
             .height('100%')
@@ -650,7 +618,6 @@ struct Index {
               radius: '68%',
               colors: [[this.glow3(), 0.0], ['#00FFFFFF', 1.0]]
             })
-            .opacity(this.glowOpacity())
             .opacity(this.glowOpacity())
         } else if (this.dark) {
           Column()
@@ -673,21 +640,23 @@ struct Index {
             .opacity(this.glowOpacity())
         }
       }
-      if (this.dark && Store.get().data.settings.background.dither) {
+      if (this.dark && this.bgRev >= 0 && this.ui.bgDither > 0) {
         Column()
           .width('100%')
           .height('100%')
           .backgroundImage($r('app.media.dither'), ImageRepeat.XY)
           .backgroundImageSize({ width: this.ditherVP, height: this.ditherVP })
+          .opacity(this.ui.bgDither / 100)
       }
       Column()
         .width('100%')
         .height('100%')
-        .backgroundImage(this.dark ? $r('app.media.grain_night') : $r('app.media.grain'),
+        .backgroundImage(this.ui.bgGrain > 100
+          ? (this.dark ? $r('app.media.grain_night_visible') : $r('app.media.grain_visible'))
+          : (this.dark ? $r('app.media.grain_night') : $r('app.media.grain')),
           this.dark ? ImageRepeat.NoRepeat : ImageRepeat.XY)
         .backgroundImageSize({ width: this.dark ? '100%' : 140, height: this.dark ? '100%' : 140 })
         .opacity(this.grainOpacity())
-
       Column() {
         TopBar()
 

@@ -152,10 +152,23 @@ export struct RitualOverlay {
 
   private flapFill(index: number): string {
     if (this.skin === 'plain') {
-      return this.dark ? '#3a3327' : this.t().cardSolid;
+      if (this.dark) {
+        const p: string[] = ['#332E26', '#2B261F', '#373229', '#302B23'];
+        return p[index];
+      }
+      return this.t().cardSolid;
+    }
+    if (this.dark) {
+      const c: string[] = ['#2E2E29', '#272722', '#31312B', '#2A2A25'];
+      return c[index];
     }
     const cols: string[] = ['#fdf9ee', '#f9f5ea', '#f7f2e6', '#fbf6ec'];
     return cols[index];
+  }
+
+  private packetFill(): string {
+    if (this.dark) return this.skin === 'plain' ? '#2F2A22' : '#2B2B26';
+    return this.skin === 'plain' ? this.t().cardSolid : '#fdf9ee';
   }
 
   @Builder
@@ -188,8 +201,8 @@ export struct RitualOverlay {
         .width(220)
         .height(220)
         .borderRadius(4)
-        .backgroundColor(this.skin === 'plain' ? (this.dark ? '#3a3327' : this.t().cardSolid) : '#fdf9ee')
-        .border({ width: 1, color: this.dark ? '#44e9e4d5' : '#1a5a5032' })
+        .backgroundColor(this.packetFill())
+        .border({ width: 1, color: this.dark ? (this.skin === 'plain' ? '#33e9e4d5' : '#3de9e4d5') : '#1a5a5032' })
         .shadow({ radius: 34, color: this.dark ? '#66000000' : '#3d5a5032', offsetY: 12 })
 
       this.Flap(0)
@@ -214,7 +227,7 @@ export struct RitualOverlay {
         .fontSize(14)
         .fontFamily(FONT_SERIF)
         .letterSpacing(8)
-        .fontColor(this.skin === 'plain' ? this.t().inkSoft : '#6b5a5032')
+        .fontColor(this.dark ? this.t().inkSoft : (this.skin === 'plain' ? this.t().inkSoft : '#6b5a5032'))
         .opacity(this.open ? 0 : 1)
         .animation({ duration: 300 })
     }
