@@ -25,9 +25,6 @@ class Snapshot {
 export class Repo {
   private store: relationalStore.RdbStore | null = null;
   private ftsReady: boolean = false;
-  private busy: boolean = false;
-  private queued: Snapshot | null = null;
-  private drainPromise: Promise<void> | null = null;
   private rowTasks: Array<() => Promise<void>> = [];
   private rowBusy: boolean = false;
   private restoreTokenValue: string = '';
@@ -69,14 +66,6 @@ export class Repo {
 
   // 全量替换：等当前写入结束，再在一个事务里清空并写入；失败向上抛。
   async replaceAll(d: AppData, restoreToken: string): Promise<void> {
-    this.queued = null;
-    if (this.drainPromise !== null) {
-      try {
-        await this.drainPromise;
-      } catch (e) {
-        console.error('juxia replace wait fail', String(e));
-      }
-    }
     await this.flushRows();
     const previousToken: string = this.restoreTokenValue;
     this.restoreTokenValue = restoreToken;
@@ -100,21 +89,6 @@ export class Repo {
     if (this.store === null) {
       return;
     }
-    if (this.drainPromise !== null) {
-      try {
-        await this.drainPromise;
-      } catch (e) {
-        console.error('juxia flush wait fail', String(e));
-      }
-    }
-    if (this.queued !== null && !this.busy) {
-      this.drainPromise = this.drain();
-      try {
-        await this.drainPromise;
-      } catch (e) {
-        console.error('juxia flush drain fail', String(e));
-      }
-    }
     await this.flushRows();
   }
 
@@ -136,25 +110,6 @@ export class Repo {
       snap.kv = rows;
       await this.writeSnapshot(snap);
     });
-  }
-
-  private async drain(): Promise<void> {
-    this.busy = true;
-    try {
-      while (this.queued !== null) {
-        const snap: Snapshot = this.queued;
-        this.queued = null;
-        try {
-          await this.writeSnapshot(snap);
-        } catch (e) {
-          // writeSnapshot 已经上报过；这里只记录，避免未处理异常。
-          console.error('juxia drain snapshot fail', String(e));
-        }
-      }
-    } finally {
-      this.busy = false;
-      this.drainPromise = null;
-    }
   }
 
   private makeSnapshot(d: AppData, restoreToken: string = ''): Snapshot {
