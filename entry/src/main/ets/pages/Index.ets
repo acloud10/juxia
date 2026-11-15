@@ -608,6 +608,56 @@ struct Index {
           .backgroundColor(this.dark ? '#000000' : '#F6F0E3')
           .opacity(this.bgStyle().scrim)
       }
+      if (this.hasBg() && Store.get().data.settings.background.glow !== 'off') {
+        if (this.skin !== 'plain') {
+          Column()
+            .width('100%')
+            .height('100%')
+            .radialGradient({
+              center: ['74%', '4%'],
+              radius: '78%',
+              colors: [[this.glow1(), 0.0], ['#00FFFFFF', 1.0]]
+            })
+            .opacity(Store.get().data.settings.background.glow === 'weak' ? 0.55 : 1)
+          Column()
+            .width('100%')
+            .height('100%')
+            .radialGradient({
+              center: ['8%', '92%'],
+              radius: '70%',
+              colors: [[this.glow2(), 0.0], ['#00FFFFFF', 1.0]]
+            })
+            .opacity(Store.get().data.settings.background.glow === 'weak' ? 0.55 : 1)
+          Column()
+            .width('100%')
+            .height('100%')
+            .radialGradient({
+              center: ['92%', '84%'],
+              radius: '68%',
+              colors: [[this.glow3(), 0.0], ['#00FFFFFF', 1.0]]
+            })
+            .opacity(Store.get().data.settings.background.glow === 'weak' ? 0.55 : 1)
+        } else if (this.dark) {
+          Column()
+            .width('100%')
+            .height('100%')
+            .radialGradient({
+              center: ['82%', '0%'],
+              radius: '80%',
+              colors: [['#22c98a5e', 0.0], ['#00FFFFFF', 1.0]]
+            })
+            .opacity(Store.get().data.settings.background.glow === 'weak' ? 0.55 : 1)
+          Column()
+            .width('100%')
+            .height('100%')
+            .radialGradient({
+              center: ['12%', '92%'],
+              radius: '70%',
+              colors: [['#107a9bb0', 0.0], ['#00FFFFFF', 1.0]]
+            })
+            .opacity(Store.get().data.settings.background.glow === 'weak' ? 0.55 : 1)
+        }
+      }
       if (this.dark && Store.get().data.settings.background.dither) {
         Column()
           .width('100%')

@@ -6,6 +6,7 @@ import { util } from '@kit.ArkTS';
 import { zlib } from '@kit.BasicServicesKit';
 import { Store } from '../data/Store';
 import { AppData, MaterialEntry } from '../model/Types';
+import { BackgroundStyle, BgImageStyle } from '../model/BackgroundStyle';
 import { BackupService } from '../services/BackupService';
 import { ReminderService } from '../services/ReminderService';
 import { MaterialIndexer } from '../services/MaterialIndexer';
@@ -17,6 +18,11 @@ import { BackgroundSettingsPanel } from '../components/BackgroundSettingsPanel';
 
 
 const MIN_FREE_RESERVE_BYTES: number = 64 * 1024 * 1024;
+
+class BgEntry {
+  key: string = '';
+  style: BgImageStyle = new BgImageStyle();
+}
 
 class MatPackItem {
   id: string = '';
@@ -37,14 +43,21 @@ class ManifestMaterial {
   sha256: string = '';
 }
 
+class ManifestBackground {
+  key: string = '';
+  bytes: number = 0;
+  sha256: string = '';
+}
+
 class FullManifest {
   format: string = 'juxia-full';
-  version: number = 2;
+  version: number = 3;
   createdAt: number = 0;
   dataBytes: number = 0;
   dataSha256: string = '';
   materialCount: number = 0;
   materials: ManifestMaterial[] = [];
+  backgrounds: ManifestBackground[] = [];
   includeMaterials: boolean = false;
 }
 
@@ -401,6 +414,72 @@ export struct SettingsPage {
     return '';
   }
 
+  private bgEntries(d: AppData): BgEntry[] {
+    if (!d.settings.background) d.settings.background = new BackgroundStyle();
+    const b: BackgroundStyle = d.settings.background;
+    const out: BgEntry[] = [];
+    const add = (key: string, style: BgImageStyle) => {
+      if (style !== undefined && style.path.length > 0) {
+        const e: BgEntry = new BgEntry();
+        e.key = key;
+        e.style = style;
+        out.push(e);
+      }
+    };
+    add('light', b.light);
+    add('dark', b.dark);
+    add('lightClassic', b.lightClassic);
+    add('lightPlain', b.lightPlain);
+    add('darkClassic', b.darkClassic);
+    add('darkPlain', b.darkPlain);
+    return out;
+  }
+
+  private copyBackgrounds(dir: string, d: AppData): void {
+    const list: BgEntry[] = this.bgEntries(d);
+    if (list.length === 0) return;
+    const bgDir: string = dir + '/backgrounds';
+    try {
+      fs.mkdirSync(bgDir);
+    } catch (e) {
+      throw new Error('创建背景目录失败');
+    }
+    list.forEach((e: BgEntry) => {
+      fs.copyFileSync(e.style.path, bgDir + '/' + e.key + '.jpg');
+    });
+  }
+
+  private stageBackgrounds(ctx: common.UIAbilityContext, baseDir: string, d: AppData,
+    stamp: number): string[] {
+    const list: BgEntry[] = this.bgEntries(d);
+    const copied: string[] = [];
+    if (!d.settings.background) d.settings.background = new BackgroundStyle();
+    const b: BackgroundStyle = d.settings.background;
+    b.light.path = '';
+    b.dark.path = '';
+    b.lightClassic.path = '';
+    b.lightPlain.path = '';
+    b.darkClassic.path = '';
+    b.darkPlain.path = '';
+    if (list.length === 0) return copied;
+    const dir: string = ctx.filesDir + '/backgrounds';
+    try { fs.mkdirSync(dir); } catch (e) {}
+    list.forEach((e: BgEntry) => {
+      const src: string = baseDir + '/backgrounds/' + e.key + '.jpg';
+      const dst: string = dir + '/' + e.key + '_' + stamp + '.jpg';
+      fs.copyFileSync(src, dst);
+      e.style.path = dst;
+      copied.push(dst);
+    });
+    return copied;
+  }
+
+  private removeBackgroundFiles(paths: string[]): void {
+    paths.forEach((p: string) => {
+      try { fs.unlinkSync(p); } catch (e) {}
+    });
+  }
+
   private writeFullManifest(dir: string, dataPath: string, obj: AppData,
     includeMaterials: boolean, createdAt: number): void {
     try {
@@ -422,6 +501,15 @@ export struct SettingsPage {
           m.materials.push(mm);
         });
       }
+      this.bgEntries(obj).forEach((e: BgEntry) => {
+        const filePath: string = dir + '/backgrounds/' + e.key + '.jpg';
+        const ms = fs.statSync(filePath);
+        const mb: ManifestBackground = new ManifestBackground();
+        mb.key = e.key;
+        mb.bytes = ms.size;
+        mb.sha256 = this.sha256File(filePath);
+        m.backgrounds.push(mb);
+      });
       const f = fs.openSync(dir + '/manifest.json', fs.OpenMode.CREATE | fs.OpenMode.READ_WRITE | fs.OpenMode.TRUNC);
       fs.writeSync(f.fd, JSON.stringify(m));
       fs.closeSync(f);
@@ -440,7 +528,7 @@ export struct SettingsPage {
     } catch (e) {
       throw new Error('备份清单损坏');
     }
-    if (m.format !== 'juxia-full' || (m.version !== 1 && m.version !== 2)) {
+    if (m.format !== 'juxia-full' || (m.version !== 1 && m.version !== 2 && m.version !== 3)) {
       throw new Error('备份清单版本不兼容');
     }
     let size: number = 0;
@@ -471,6 +559,19 @@ export struct SettingsPage {
         throw new Error('备份校验失败：材料校验不一致');
       }
     }
+    const bgs: ManifestBackground[] = m.backgrounds === undefined ? [] : m.backgrounds;
+    for (const mb of bgs) {
+      const p: string = baseDir + '/backgrounds/' + mb.key + '.jpg';
+      let stSize: number = 0;
+      try {
+        stSize = fs.statSync(p).size;
+      } catch (e) {
+        throw new Error('备份校验失败：背景图缺失');
+      }
+      if (stSize !== mb.bytes || this.sha256File(p) !== mb.sha256) {
+        throw new Error('备份校验失败：背景图校验不一致');
+      }
+    }
   }
 
   private purgeBackupDir(dir: string): void {
@@ -487,6 +588,15 @@ export struct SettingsPage {
     }
     try {
       fs.rmdirSync(matDir);
+    } catch (e) {
+    }
+    const bgDir: string = dir + '/backgrounds';
+    try {
+      const bgNames: string[] = fs.listFileSync(bgDir);
+      bgNames.forEach((name: string) => {
+        try { fs.unlinkSync(bgDir + '/' + name); } catch (e) {}
+      });
+      fs.rmdirSync(bgDir);
     } catch (e) {
     }
     try {
@@ -696,6 +806,7 @@ export struct SettingsPage {
           return;
         }
       }
+      this.copyBackgrounds(dir, obj);
       this.writeFullManifest(dir, dir + '/data.json', obj, this.fullIncludeMaterials, stamp);
       const zip: string = ctx.cacheDir + '/full_' + stamp + '.zip';
       await zlib.compressFile(dir, zip, { level: zlib.CompressLevel.COMPRESS_LEVEL_DEFAULT_COMPRESSION });
@@ -790,6 +901,7 @@ export struct SettingsPage {
       journal.newDir = ctx.filesDir + '/materials/' + stamp;
       RestoreJournal.write(ctx, journal);
       const newDir: string = this.stageImportMaterials(ctx, baseDir, d, stamp);
+      const bgPaths: string[] = this.stageBackgrounds(ctx, baseDir, d, stamp);
       journal.newDir = newDir;
       journal.phase = 'staged';
       RestoreJournal.write(ctx, journal);
@@ -797,6 +909,7 @@ export struct SettingsPage {
         await Store.get().replaceAll(d, token);
       } catch (e) {
         RestoreJournal.removeDir(newDir);
+        this.removeBackgroundFiles(bgPaths);
         RestoreJournal.remove(ctx);
         throw new Error(String((e as Error).message ?? '恢复失败'));
       }
@@ -906,6 +1019,7 @@ export struct SettingsPage {
           return;
         }
       }
+      this.copyBackgrounds(dir, obj);
       this.writeFullManifest(dir, dir + '/data.json', obj, this.plainIncludeMaterials, stamp);
       const zip: string = ctx.cacheDir + '/plain_' + stamp + '.zip';
       await zlib.compressFile(dir, zip, { level: zlib.CompressLevel.COMPRESS_LEVEL_DEFAULT_COMPRESSION });
@@ -969,6 +1083,7 @@ export struct SettingsPage {
       journal.newDir = ctx.filesDir + '/materials/' + stamp;
       RestoreJournal.write(ctx, journal);
       const newDir: string = this.stageImportMaterials(ctx, baseDir, d, stamp);
+      const bgPaths: string[] = this.stageBackgrounds(ctx, baseDir, d, stamp);
       journal.newDir = newDir;
       journal.phase = 'staged';
       RestoreJournal.write(ctx, journal);
@@ -976,6 +1091,7 @@ export struct SettingsPage {
         await Store.get().replaceAll(d, token);
       } catch (e) {
         RestoreJournal.removeDir(newDir);
+        this.removeBackgroundFiles(bgPaths);
         RestoreJournal.remove(ctx);
         throw new Error(String((e as Error).message ?? '恢复失败'));
       }
