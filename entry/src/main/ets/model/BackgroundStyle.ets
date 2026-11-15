@@ -13,7 +13,7 @@ export class BackgroundStyle {
   lightPlain: BgImageStyle = new BgImageStyle();
   darkClassic: BgImageStyle = new BgImageStyle();
   darkPlain: BgImageStyle = new BgImageStyle();
-  glow: string = 'weak';   // off / weak / normal
+  glow: string = 'normal'; // off / weak / normal
   dither: boolean = true;
   grain: string = 'normal'; // off / weak / normal
 }

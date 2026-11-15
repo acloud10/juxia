@@ -9,7 +9,7 @@ import { Tokens, getTokens, FONT_SERIF, FONT_SANS } from '../theme/Theme';
 import { TopBar, TabIcon } from '../components/Chrome';
 import { RitualOverlay } from '../components/RitualOverlay';
 import { WelcomeGuide } from '../components/WelcomeGuide';
-import { BackgroundStage } from '../components/BackgroundStage';
+import { BgImageStyle } from '../model/BackgroundStyle';
 import { TodayPage } from './TodayPage';
 import { MinePage } from './MinePage';
 import { LibraryPage } from './LibraryPage';
@@ -283,6 +283,29 @@ struct Index {
     return this.dark ? '#5754402e' : '#80d5c2ad';
   }
 
+  private bgStyle(): BgImageStyle {
+    const b = Store.get().data.settings.background;
+    if (this.dark) {
+      if (this.skin === 'plain' && b.darkPlain.path.length > 0) return b.darkPlain;
+      if (this.skin !== 'plain' && b.darkClassic.path.length > 0) return b.darkClassic;
+      return b.dark;
+    }
+    if (this.skin === 'plain' && b.lightPlain.path.length > 0) return b.lightPlain;
+    if (this.skin !== 'plain' && b.lightClassic.path.length > 0) return b.lightClassic;
+    return b.light;
+  }
+
+  private hasBg(): boolean {
+    return this.bgStyle().path.length > 0;
+  }
+
+  private grainOpacity(): number {
+    const g: string = Store.get().data.settings.background.grain;
+    if (g === 'off') return 0;
+    if (g === 'weak') return this.skin === 'plain' ? 0.1 : 0.24;
+    return this.skin === 'plain' ? 0.22 : 0.5;
+  }
+
   private startRitual(ctx: RitualCtx): void {
     this.ritualCtx = ctx;
     this.ritualVisible = true;
@@ -479,7 +502,6 @@ struct Index {
 
   build() {
     Stack({ alignContent: Alignment.Bottom }) {
-      BackgroundStage({ skin: this.skin, dark: this.dark })
       // 最底层兜底：API 26 不再设置原生窗口底色，用页面底色覆盖系统默认色。
       Column()
         .width('100%')
@@ -573,7 +595,20 @@ struct Index {
             })
         }
       }
-      if (this.dark) {
+      if (this.hasBg()) {
+        Image(this.bgStyle().path)
+          .width('100%')
+          .height('100%')
+          .objectFit(ImageFit.Cover)
+          .brightness(this.bgStyle().brightness)
+          .blur(this.bgStyle().blur)
+        Column()
+          .width('100%')
+          .height('100%')
+          .backgroundColor(this.dark ? '#000000' : '#F6F0E3')
+          .opacity(this.bgStyle().scrim)
+      }
+      if (this.dark && Store.get().data.settings.background.dither) {
         Column()
           .width('100%')
           .height('100%')
@@ -586,7 +621,7 @@ struct Index {
         .backgroundImage(this.dark ? $r('app.media.grain_night') : $r('app.media.grain'),
           this.dark ? ImageRepeat.NoRepeat : ImageRepeat.XY)
         .backgroundImageSize({ width: this.dark ? '100%' : 140, height: this.dark ? '100%' : 140 })
-        .opacity(this.skin === 'plain' ? 0.22 : 0.5)
+        .opacity(this.grainOpacity())
 
       Column() {
         TopBar()

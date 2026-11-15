@@ -139,9 +139,9 @@ export class Store {
       if (s.blur === undefined || isNaN(s.blur)) s.blur = 0;
       s.blur = Math.max(0, Math.min(20, s.blur));
       if (s.scrim === undefined || isNaN(s.scrim)) s.scrim = 0.38;
-      s.scrim = Math.max(0.2, Math.min(0.7, s.scrim));
+      s.scrim = Math.max(0, Math.min(1, s.scrim));
     });
-    if (bg.glow !== 'off' && bg.glow !== 'weak' && bg.glow !== 'normal') bg.glow = 'weak';
+    if (bg.glow !== 'off' && bg.glow !== 'weak' && bg.glow !== 'normal') bg.glow = 'normal';
     if (bg.grain !== 'off' && bg.grain !== 'weak' && bg.grain !== 'normal') bg.grain = 'normal';
     if (bg.dither === undefined) bg.dither = true;
     if (d.settings.privacyAccepted === undefined) d.settings.privacyAccepted = false;
@@ -682,12 +682,19 @@ export class Store {
 
   setBackgroundPath(key: string, path: string): void {
     const bg = this.data.settings.background;
+    const hadImage: boolean = bg.light.path.length > 0 || bg.dark.path.length > 0 ||
+      bg.lightClassic.path.length > 0 || bg.lightPlain.path.length > 0 ||
+      bg.darkClassic.path.length > 0 || bg.darkPlain.path.length > 0;
     if (key === 'light') bg.light.path = path;
     else if (key === 'dark') bg.dark.path = path;
     else if (key === 'lightClassic') bg.lightClassic.path = path;
     else if (key === 'lightPlain') bg.lightPlain.path = path;
     else if (key === 'darkClassic') bg.darkClassic.path = path;
     else if (key === 'darkPlain') bg.darkPlain.path = path;
+    if (!hadImage && path.length > 0) {
+      if (bg.glow === 'normal') bg.glow = 'off';
+      if (bg.grain === 'normal') bg.grain = 'weak';
+    }
     this.saveSettings();
   }
 

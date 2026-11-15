@@ -203,11 +203,9 @@ export struct BackgroundSettingsPanel {
       .width('100%')
       .padding({ top: 4, bottom: 4 })
 
-      if (this.editKey === 'light' || this.editKey === 'dark') {
-        this.SliderRow('亮度', 'brightness', 0.6, 1.4, 0.02)
-        this.SliderRow('模糊', 'blur', 0, 20, 1)
-        this.SliderRow('遮罩', 'scrim', 20, 70, 2)
-      }
+      this.SliderRow('亮度', 'brightness', 0.6, 1.4, 0.02)
+      this.SliderRow('模糊', 'blur', 0, 20, 1)
+      this.SliderRow('遮罩', 'scrim', 0, 100, 2)
 
       Row({ space: 8 }) {
         Text('氛围光').fontSize(12).fontColor(this.t().inkSoft)
@@ -245,6 +243,16 @@ export struct BackgroundSettingsPanel {
           .fontColor(this.t().inkSoft)
           .width('100%')
           .margin({ top: 4 })
+        Row({ space: 6 }) {
+          this.EditChip('浅色经典', 'lightClassic')
+          this.EditChip('浅色朴素', 'lightPlain')
+        }
+        .width('100%')
+        Row({ space: 6 }) {
+          this.EditChip('深色经典', 'darkClassic')
+          this.EditChip('深色朴素', 'darkPlain')
+        }
+        .width('100%')
         this.BgRow('浅色 · 经典', 'lightClassic')
         this.BgRow('浅色 · 朴素', 'lightPlain')
         this.BgRow('深色 · 经典', 'darkClassic')
