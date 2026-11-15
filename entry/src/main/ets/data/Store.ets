@@ -552,18 +552,26 @@ export class Store {
     this.bump();
   }
 
-  resetAll(): void {
-    this.data = new AppData();
-    this.data.meta.firstUse = Date.now();
-    this.data.day = new DayState();
-    this.data.day.date = todayStr();
+  async resetAll(): Promise<void> {
+    const next = new AppData();
+    next.meta.firstUse = Date.now();
+    next.day = new DayState();
+    next.day.date = todayStr();
+    const previous: AppData = this.data;
+    this.data = next;
     this.normalize();
-    clearLegacyKey();
-    if (this.repo !== null) {
-      this.repo.clearAllSentences();
+    try {
+      if (this.useDb && this.repo !== null) {
+        await this.repo.replaceAll(next, '');
+      } else if (this.prefs !== null) {
+        await this.persistPrefsNow('');
+      }
+      clearLegacyKey();
+      this.bump();
+    } catch (e) {
+      this.data = previous;
+      throw new Error(String((e as Error).message ?? '清空失败'));
     }
-    this.persist();
-    this.bump();
   }
 
   async replaceAll(d: AppData, restoreToken: string): Promise<void> {

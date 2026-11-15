@@ -530,6 +530,7 @@ export struct SettingsPage {
       const dst: string = newDir + '/' + m.id + '.txt';
       try {
         fs.copyFileSync(src, dst);
+        this.fsyncFile(dst);
         const st = fs.statSync(dst);
         m.path = dst;
         m.size = st.size;
@@ -587,6 +588,7 @@ export struct SettingsPage {
       while ((n = fs.readSync(src.fd, buf)) > 0) {
         fs.writeSync(dst.fd, buf.slice(0, n));
       }
+      try { fs.fsyncSync(dst.fd); } catch (e) {}
     } catch (e) {
       throw new Error('复制文件失败');
     } finally {
@@ -595,6 +597,20 @@ export struct SettingsPage {
       }
       if (dst !== null) {
         try { fs.closeSync(dst); } catch (e) {}
+      }
+    }
+  }
+
+  private fsyncFile(path: string): void {
+    let f: fs.File | null = null;
+    try {
+      f = fs.openSync(path, fs.OpenMode.READ_WRITE);
+      fs.fsyncSync(f.fd);
+    } catch (e) {
+      console.error('juxia fsync fail', String(e));
+    } finally {
+      if (f !== null) {
+        try { fs.closeSync(f); } catch (e) {}
       }
     }
   }
@@ -784,7 +800,12 @@ export struct SettingsPage {
         throw new Error(String((e as Error).message ?? '恢复失败'));
       }
       journal.phase = 'db_committed';
-      RestoreJournal.write(ctx, journal);
+      try {
+        RestoreJournal.write(ctx, journal);
+      } catch (e) {
+        this.afterRestoreJournalFailure();
+        return;
+      }
       let failedMaterials: number = 0;
       for (const m of Store.get().data.materials) {
         try {
@@ -812,7 +833,12 @@ export struct SettingsPage {
           return;
         }
         journal.phase = 'done';
-        RestoreJournal.write(ctx, journal);
+        try {
+          RestoreJournal.write(ctx, journal);
+        } catch (e) {
+          this.afterRestoreJournalFailure();
+          return;
+        }
         RestoreJournal.cleanupOldMaterials(ctx, newDir);
         RestoreJournal.remove(ctx);
         this.toast('完整备份已恢复，材料与索引一并回来');
@@ -829,6 +855,12 @@ export struct SettingsPage {
         AppError.report('完整备份恢复失败。', '确认文件完整、格式正确后重试；不要删除原文件。');
       }
     }
+  }
+
+  private afterRestoreJournalFailure(): void {
+    this.applyLoadedSettings();
+    this.load();
+    AppError.report('数据已恢复，但恢复日志写入失败。', '数据已经恢复；重启应用后会补完材料索引和清理。');
   }
 
   private async exportPlainFull(): Promise<void> {
@@ -947,7 +979,12 @@ export struct SettingsPage {
         throw new Error(String((e as Error).message ?? '恢复失败'));
       }
       journal.phase = 'db_committed';
-      RestoreJournal.write(ctx, journal);
+      try {
+        RestoreJournal.write(ctx, journal);
+      } catch (e) {
+        this.afterRestoreJournalFailure();
+        return;
+      }
       let failedMaterials: number = 0;
       for (const m of Store.get().data.materials) {
         try {
@@ -974,7 +1011,12 @@ export struct SettingsPage {
           return;
         }
         journal.phase = 'done';
-        RestoreJournal.write(ctx, journal);
+        try {
+          RestoreJournal.write(ctx, journal);
+        } catch (e) {
+          this.afterRestoreJournalFailure();
+          return;
+        }
         RestoreJournal.cleanupOldMaterials(ctx, newDir);
         RestoreJournal.remove(ctx);
         this.toast('不加密备份已恢复');
@@ -1201,6 +1243,12 @@ export struct SettingsPage {
     if (step >= 3) {
       const ctx = this.getUIContext().getHostContext() as common.UIAbilityContext;
       const mats = Store.get().data.materials;
+      try {
+        await Store.get().resetAll();
+      } catch (e) {
+        AppError.report('清空失败。', '数据仍在，请检查存储空间后重试。');
+        return;
+      }
       mats.forEach((m) => {
         if (m.path.length > 0) {
           try {
@@ -1210,7 +1258,6 @@ export struct SettingsPage {
         }
       });
       await ReminderService.cancelAll(ctx);
-      Store.get().resetAll();
       this.applyLoadedSettings();
       this.load();
       this.toast('已清空，一切重新开始');

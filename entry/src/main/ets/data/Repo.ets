@@ -61,13 +61,10 @@ export class Repo {
   }
 
   saveAll(d: AppData): void {
-    this.queued = this.makeSnapshot(d);
-    if (!this.busy) {
-      this.drainPromise = this.drain();
-      this.drainPromise.catch((e: Error) => {
-        console.error('juxia drain fail', String(e));
-      });
-    }
+    const snap: Snapshot = this.makeSnapshot(d);
+    this.pushRow(async () => {
+      await this.writeSnapshot(snap);
+    });
   }
 
   // 全量替换：等当前写入结束，再在一个事务里清空并写入；失败向上抛。
@@ -133,18 +130,12 @@ export class Repo {
 
   saveKv(d: AppData): void {
     const rows: relationalStore.ValuesBucket[] = this.kvRows(d);
-    if (this.queued !== null && !this.queued.kvOnly) {
-      // 已有待写的全量快照：只更新其中的 kv，绝不能覆盖掉 own/lib 等条目
-      this.queued.kv = rows;
-      return;
-    }
-    const snap = new Snapshot();
-    snap.kvOnly = true;
-    snap.kv = rows;
-    this.queued = snap;
-    if (!this.busy) {
-      this.drain();
-    }
+    this.pushRow(async () => {
+      const snap = new Snapshot();
+      snap.kvOnly = true;
+      snap.kv = rows;
+      await this.writeSnapshot(snap);
+    });
   }
 
   private async drain(): Promise<void> {
