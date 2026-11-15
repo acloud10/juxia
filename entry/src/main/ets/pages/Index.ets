@@ -48,6 +48,7 @@ struct Index {
   private switchTab(next: number): void {
     if (next === this.tab) return;
     this.tab = next;
+    if (next === 0) this.bgRev = this.bgRev + 1;
     this.pageOpacity = 0.92;
     this.getUIContext().animateTo({
       duration: 200,
@@ -565,6 +566,7 @@ struct Index {
       }
       if (this.bgReady && this.hasBg() && this.bgRev >= 0) {
         Image('file://' + this.bgStyle().path)
+          .id('bg-photo-' + this.bgRev + '-' + this.ui.bgSavedRev)
           .width('100%')
           .height('100%')
           .objectFit(ImageFit.Cover)

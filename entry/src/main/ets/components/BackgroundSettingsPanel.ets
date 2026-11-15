@@ -466,8 +466,8 @@ export struct BackgroundSettingsPanel {
       .onClick(() => { this.expanded = !this.expanded; })
 
       if (this.expanded && this.ui.dataVersion >= 0 && this.sliderRev >= 0) {
-        this.BgRow('经典浅色', 'light', this.sliderRev)
-        this.BgRow('经典深色', 'dark', this.sliderRev)
+        this.BgRow('经典浅色', 'light', this.sliderRev + this.ui.bgSavedRev)
+        this.BgRow('经典深色', 'dark', this.sliderRev + this.ui.bgSavedRev)
 
         Row({ space: 8 }) {
           Text('选择')
@@ -502,8 +502,8 @@ export struct BackgroundSettingsPanel {
             .width('100%')
             .margin({ top: 4 })
           Row({ space: 8 }) {
-            this.BgCell('朴素浅色', 'lightPlain', this.sliderRev)
-            this.BgCell('朴素深色', 'darkPlain', this.sliderRev)
+            this.BgCell('朴素浅色', 'lightPlain', this.sliderRev + this.ui.bgSavedRev)
+            this.BgCell('朴素深色', 'darkPlain', this.sliderRev + this.ui.bgSavedRev)
           }
           .width('100%')
           if (this.editKey === 'darkPlain') {
