@@ -766,6 +766,7 @@ export class Store {
   removeOwn(id: string): void {
     const e = this.data.own.find((x: OwnEntry) => x.id === id);
     if (!e) return;
+    this.removeFootForWound(id);
     this.data.own = this.data.own.filter((x: OwnEntry) => x.id !== id);
     const touchedLib: LibEntry[] = [];
     this.data.lib.forEach((l: LibEntry) => {
