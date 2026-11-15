@@ -67,6 +67,7 @@ export class OwnEntry {
   revisitAt: number = 0;
   snoozeUntil: number = 0;
   foot: string[] = [];
+  footIds: string[] = [];
   notes: NoteItem[] = [];
   replyToId: string = '';
   replyFrom: string = ''; // 可选：draw、revisit

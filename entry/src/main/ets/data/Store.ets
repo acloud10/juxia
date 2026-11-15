@@ -12,6 +12,7 @@ import { UiState } from '../state/UiState';
 import { AppError } from '../services/AppError';
 
 const PREF_NAME: string = 'juxia_store';
+const FOOT_UNKNOWN: string = '__foot_unknown__';
 
 interface DraftPayload {
   d: string;
@@ -169,6 +170,9 @@ export class Store {
     d.own.forEach((e: OwnEntry) => {
       if (!e.bindIds) e.bindIds = [];
       if (!e.foot) e.foot = [];
+      if (!e.footIds) e.footIds = [];
+      while (e.footIds.length < e.foot.length) e.footIds.push('');
+      if (e.footIds.length > e.foot.length) e.footIds = e.footIds.slice(0, e.foot.length);
       if (!e.notes) e.notes = [];
       if (e.replyToId === undefined) e.replyToId = '';
       if (e.replyFrom === undefined) e.replyFrom = '';
@@ -177,6 +181,50 @@ export class Store {
         e.notes.push(new NoteItem(e.createdAt > 0 ? e.createdAt : Date.now(), e.note));
       }
       e.note = '';
+    });
+    this.autoFillFootIds();
+  }
+
+  // 旧 foot 没有 id：按前缀 + 归档日期 + 分类反推；分不出的冻结，避免删错。
+  private autoFillFootIds(): void {
+    this.data.own.forEach((x: OwnEntry) => {
+      for (let i = 0; i < x.foot.length; i++) {
+        if (x.footIds[i] !== '') continue;
+        const line: string = x.foot[i];
+        const start: string = '它曾陪我度过「';
+        if (!line.startsWith(start)) {
+          x.footIds[i] = FOOT_UNKNOWN;
+          continue;
+        }
+        const close: number = line.indexOf('」', start.length);
+        if (close < 0) {
+          x.footIds[i] = FOOT_UNKNOWN;
+          continue;
+        }
+        const prefix: string = line.substring(0, close + 1);
+        const rest: string = line.substring(close + 1);
+        const m1: string = '，那件事于 ';
+        const m2: string = ' 标记为「';
+        if (!rest.startsWith(m1) || !rest.endsWith('」。')) {
+          x.footIds[i] = FOOT_UNKNOWN;
+          continue;
+        }
+        const p2: number = rest.indexOf(m2, m1.length);
+        if (p2 < 0) {
+          x.footIds[i] = FOOT_UNKNOWN;
+          continue;
+        }
+        const md: string = rest.substring(m1.length, p2);
+        const cat: string = rest.substring(p2 + m2.length, rest.length - 2);
+        const matches: OwnEntry[] = this.data.own.filter((e: OwnEntry) => {
+          if (e.kind !== 'wound' || e.archAt <= 0) return false;
+          if (this.footPrefix(e) !== prefix) return false;
+          const dt = new Date(e.archAt);
+          const emd: string = `${dt.getMonth() + 1}月${dt.getDate()}日`;
+          return emd === md && this.catLabel(e.archCat) === cat;
+        });
+        x.footIds[i] = matches.length === 1 ? matches[0].id : FOOT_UNKNOWN;
+      }
     });
   }
 
@@ -656,11 +704,17 @@ export class Store {
     const line: string = this.footLine(w);
     this.data.own.forEach((x: OwnEntry) => {
       if (!x.bindIds.includes(woundId)) return;
-      const idx: number = x.foot.findIndex((f: string) => f.startsWith(prefix));
+      let idx: number = x.footIds.findIndex((fid: string) => fid === woundId);
+      if (idx < 0) {
+        idx = x.foot.findIndex((f: string, i: number) =>
+          x.footIds[i] === '' && f.startsWith(prefix));
+      }
       if (idx >= 0) {
         x.foot[idx] = line;
+        x.footIds[idx] = woundId;
       } else {
         x.foot.push(line);
+        x.footIds.push(woundId);
       }
       this.writeOwn(x);
     });
@@ -671,9 +725,22 @@ export class Store {
     if (!w) return;
     const prefix: string = this.footPrefix(w);
     this.data.own.forEach((x: OwnEntry) => {
-      const next: string[] = x.foot.filter((f: string) => !f.startsWith(prefix));
-      if (next.length !== x.foot.length) {
-        x.foot = next;
+      const keptLines: string[] = [];
+      const keptIds: string[] = [];
+      let changed: boolean = false;
+      for (let i = 0; i < x.foot.length; i++) {
+        const fid: string = x.footIds[i] === undefined ? '' : x.footIds[i];
+        const hit: boolean = fid === woundId || (fid === '' && x.foot[i].startsWith(prefix));
+        if (hit) {
+          changed = true;
+        } else {
+          keptLines.push(x.foot[i]);
+          keptIds.push(fid);
+        }
+      }
+      if (changed) {
+        x.foot = keptLines;
+        x.footIds = keptIds;
         this.writeOwn(x);
       }
     });

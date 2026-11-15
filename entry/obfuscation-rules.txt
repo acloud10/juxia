@@ -38,6 +38,7 @@ text
 note
 bindIds
 foot
+footIds
 createdAt
 archCat
 archNote

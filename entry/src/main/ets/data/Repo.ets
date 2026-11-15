@@ -173,6 +173,7 @@ export class Repo {
         'revisitAt': e.revisitAt,
         'snoozeUntil': e.snoozeUntil,
         'foot': JSON.stringify(e.foot),
+        'footIds': JSON.stringify(e.footIds),
         'notes': JSON.stringify(e.notes),
         'replyToId': e.replyToId,
         'replyFrom': e.replyFrom
@@ -448,7 +449,7 @@ export class Repo {
         'CREATE TABLE IF NOT EXISTS own (' +
         'id TEXT PRIMARY KEY, kind TEXT, text TEXT, note TEXT, bindIds TEXT, ' +
         'createdAt INTEGER, archCat TEXT, archNote TEXT, archAt INTEGER, ' +
-        'revisitAt INTEGER, snoozeUntil INTEGER, foot TEXT, notes TEXT, replyToId TEXT, replyFrom TEXT)'
+        'revisitAt INTEGER, snoozeUntil INTEGER, foot TEXT, footIds TEXT, notes TEXT, replyToId TEXT, replyFrom TEXT)'
       );
       await s.executeSql(
         'CREATE TABLE IF NOT EXISTS lib (' +
@@ -466,6 +467,11 @@ export class Repo {
       }
       try {
         await s.executeSql('ALTER TABLE own ADD COLUMN replyFrom TEXT');
+      } catch (e) {
+        // 列已存在：忽略
+      }
+      try {
+        await s.executeSql('ALTER TABLE own ADD COLUMN footIds TEXT');
       } catch (e) {
         // 列已存在：忽略
       }
@@ -574,6 +580,10 @@ export class Repo {
       e.revisitAt = own.getLong(own.getColumnIndex('revisitAt'));
       e.snoozeUntil = own.getLong(own.getColumnIndex('snoozeUntil'));
       e.foot = this.parseStrings(own.getString(own.getColumnIndex('foot')));
+      const fi: number = own.getColumnIndex('footIds');
+      if (fi >= 0) e.footIds = this.parseStrings(own.getString(fi));
+      while (e.footIds.length < e.foot.length) e.footIds.push('');
+      if (e.footIds.length > e.foot.length) e.footIds = e.footIds.slice(0, e.foot.length);
       e.notes = this.parseNotes(own.getString(own.getColumnIndex('notes')));
       const rti: number = own.getColumnIndex('replyToId');
       if (rti >= 0) e.replyToId = own.getString(rti);
@@ -658,6 +668,7 @@ export class Repo {
       'revisitAt': e.revisitAt,
       'snoozeUntil': e.snoozeUntil,
       'foot': JSON.stringify(e.foot),
+      'footIds': JSON.stringify(e.footIds),
       'notes': JSON.stringify(e.notes),
       'replyToId': e.replyToId,
       'replyFrom': e.replyFrom
