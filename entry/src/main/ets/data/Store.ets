@@ -12,6 +12,7 @@ import { UiState } from '../state/UiState';
 import { AppError } from '../services/AppError';
 
 const PREF_NAME: string = 'juxia_store';
+const LEGACY_FOOT_UNKNOWN: string = '__legacy_unknown__';
 
 interface DraftPayload {
   d: string;
@@ -165,7 +166,52 @@ export class Store {
       }
       e.note = '';
     });
+    this.migrateFootIds();
+  }
 
+  // 旧 foot 没有 sourceId：能唯一判断的补 ID；无法判断的冻结，避免误改/误删。
+  private migrateFootIds(): void {
+    this.data.own.forEach((x: OwnEntry) => {
+      if (x.foot.length === 0) return;
+      for (let i = 0; i < x.foot.length; i++) {
+        if (x.footIds[i] !== '') continue;
+        const line: string = x.foot[i];
+        const start: string = '它曾陪我度过「';
+        if (!line.startsWith(start)) {
+          x.footIds[i] = LEGACY_FOOT_UNKNOWN;
+          continue;
+        }
+        const close: number = line.indexOf('」', start.length);
+        if (close < 0) {
+          x.footIds[i] = LEGACY_FOOT_UNKNOWN;
+          continue;
+        }
+        const prefix: string = line.substring(0, close + 1);
+        const rest: string = line.substring(close + 1);
+        const m1: string = '，那件事于 ';
+        const m2: string = ' 标记为「';
+        if (!rest.startsWith(m1) || !rest.endsWith('」。')) {
+          x.footIds[i] = LEGACY_FOOT_UNKNOWN;
+          continue;
+        }
+        const p2: number = rest.indexOf(m2, m1.length);
+        if (p2 < 0) {
+          x.footIds[i] = LEGACY_FOOT_UNKNOWN;
+          continue;
+        }
+        const md: string = rest.substring(m1.length, p2);
+        const cat: string = rest.substring(p2 + m2.length, rest.length - 2);
+        const matches: OwnEntry[] = this.data.own.filter((e: OwnEntry) => {
+          if (e.kind !== 'wound' || e.archAt <= 0) return false;
+          const short: string = e.text.length > 30 ? e.text.slice(0, 30) + '…' : e.text;
+          if (`它曾陪我度过「${short}」` !== prefix) return false;
+          const dt = new Date(e.archAt);
+          const emd: string = `${dt.getMonth() + 1}月${dt.getDate()}日`;
+          return emd === md && this.catLabel(e.archCat) === cat;
+        });
+        x.footIds[i] = matches.length === 1 ? matches[0].id : LEGACY_FOOT_UNKNOWN;
+      }
+    });
   }
 
   private persist(): void {
