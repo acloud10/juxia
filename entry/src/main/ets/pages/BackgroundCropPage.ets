@@ -5,11 +5,6 @@ import { BackgroundService } from '../services/BackgroundService';
 import { Store } from '../data/Store';
 import { Tokens, getTokens, FONT_SANS } from '../theme/Theme';
 
-interface CropParams {
-  src: string;
-  key: string;
-}
-
 @Entry
 @ComponentV2
 struct BackgroundCropPage {
@@ -26,10 +21,20 @@ struct BackgroundCropPage {
   }
 
   aboutToAppear(): void {
-    const p = this.getUIContext().getRouter().getParams() as CropParams;
-    if (p !== undefined && p.src !== undefined) {
-      this.src = p.src;
-      this.cropKey = p.key;
+    this.src = AppStorage.get<string>('bgCropSrc') ?? '';
+    this.cropKey = AppStorage.get<string>('bgCropKey') ?? 'light';
+    let ok: boolean = false;
+    try {
+      ok = this.src.length > 0 && fs.accessSync(this.src);
+    } catch (e) {
+      ok = false;
+    }
+    if (!ok) {
+      try {
+        this.getUIContext().getPromptAction().showToast({ message: '没有选到图片' });
+      } catch (e) {
+      }
+      this.getUIContext().getRouter().back();
     }
   }
 

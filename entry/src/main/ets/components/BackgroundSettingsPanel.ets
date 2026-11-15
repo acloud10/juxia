@@ -42,9 +42,10 @@ export struct BackgroundSettingsPanel {
       const stamp: number = Date.now();
       const cache: string = BackgroundService.cachePath(ctx, stamp);
       BackgroundService.copyToCache(ctx, uri, cache);
+      AppStorage.setOrCreate('bgCropSrc', cache);
+      AppStorage.setOrCreate('bgCropKey', key);
       this.getUIContext().getRouter().pushUrl({
-        url: 'pages/BackgroundCropPage',
-        params: { src: cache, key: key }
+        url: 'pages/BackgroundCropPage'
       }).catch(() => {});
     } catch (e) {
       try { this.getUIContext().getPromptAction().showToast({ message: '选择图片失败' }); } catch (e2) {}
