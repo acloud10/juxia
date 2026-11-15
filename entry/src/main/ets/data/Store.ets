@@ -168,10 +168,6 @@ export class Store {
     d.dislikes = d.dislikes.filter((e: DislikeEntry) => e.origin !== 'builtin');
     d.own.forEach((e: OwnEntry) => {
       if (!e.bindIds) e.bindIds = [];
-      if (!e.foot) e.foot = [];
-      if (!e.footIds) e.footIds = [];
-      while (e.footIds.length < e.foot.length) e.footIds.push('');
-      if (e.footIds.length > e.foot.length) e.footIds = e.footIds.slice(0, e.foot.length);
       if (!e.notes) e.notes = [];
       if (e.replyToId === undefined) e.replyToId = '';
       if (e.replyFrom === undefined) e.replyFrom = '';
@@ -627,8 +623,6 @@ export class Store {
       const md: string = `${dt.getMonth() + 1}月${dt.getDate()}日`;
       out.push(`它曾陪我度过「${short}」，那件事于 ${md} 标记为「${this.catLabel(w.archCat)}」。`);
     });
-    // 旧版本只有 foot 文本、没有 bindIds 关系时，保留原样展示；不再写入/迁移。
-    if (out.length === 0 && e.foot.length > 0 && e.bindIds.length === 0) return e.foot;
     return out;
   }
 
