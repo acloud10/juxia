@@ -80,6 +80,7 @@ export class Repo {
         console.error('juxia replace wait fail', String(e));
       }
     }
+    await this.flushRows();
     const previousToken: string = this.restoreTokenValue;
     this.restoreTokenValue = restoreToken;
     try {
@@ -115,6 +116,17 @@ export class Repo {
         await this.drainPromise;
       } catch (e) {
         console.error('juxia flush drain fail', String(e));
+      }
+    }
+    await this.flushRows();
+  }
+
+  private async flushRows(): Promise<void> {
+    while (this.rowBusy || this.rowTasks.length > 0) {
+      if (!this.rowBusy) {
+        await this.drainRows();
+      } else {
+        await new Promise<void>((resolve) => setTimeout(resolve, 10));
       }
     }
   }
