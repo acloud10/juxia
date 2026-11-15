@@ -753,6 +753,8 @@ export struct SettingsPage {
       const stamp: number = Date.now();
       const localZip: string = ctx.cacheDir + '/fullin_' + stamp + '.zip';
       await BackupService.decryptFile(uris[0], localZip, this.fullPw);
+      const originalBytes: number = await zlib.getOriginalSize(localZip);
+      this.assertFreeSpace(ctx.cacheDir, originalBytes);
       const dest: string = ctx.cacheDir + '/fullin_' + stamp;
       fs.mkdirSync(dest);
       await zlib.decompressFile(localZip, dest, {});
@@ -914,6 +916,8 @@ export struct SettingsPage {
       const stamp: number = Date.now();
       const local: string = ctx.cacheDir + '/plainin_' + stamp + '.zip';
       this.copyFileStream(uris[0], local);
+      const originalBytes: number = await zlib.getOriginalSize(local);
+      this.assertFreeSpace(ctx.cacheDir, originalBytes);
       const dest: string = ctx.cacheDir + '/plainin_' + stamp;
       fs.mkdirSync(dest);
       await zlib.decompressFile(local, dest, {});

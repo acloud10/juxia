@@ -2,6 +2,7 @@ import { AbilityConstant, UIAbility, Want, Configuration, ConfigurationConstant 
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window, display } from '@kit.ArkUI';
 import { UiState } from '../state/UiState';
+import { Store } from '../data/Store';
 
 export default class EntryAbility extends UIAbility {
   onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
@@ -9,6 +10,12 @@ export default class EntryAbility extends UIAbility {
     const dark: boolean = this.context.config.colorMode === ConfigurationConstant.ColorMode.COLOR_MODE_DARK;
     UiState.get().systemDark = dark;
     this.handleWant(want);
+  }
+
+  onBackground(): void {
+    Store.get().flush().catch((e: Error) => {
+      console.error('juxia background flush fail', String(e));
+    });
   }
 
   onNewWant(want: Want, launchParam: AbilityConstant.LaunchParam): void {

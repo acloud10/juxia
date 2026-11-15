@@ -581,6 +581,16 @@ export class Store {
     return this.fallbackToken;
   }
 
+  async flush(): Promise<void> {
+    if (this.useDb && this.repo !== null) {
+      await this.repo.flush();
+      return;
+    }
+    if (this.prefs !== null) {
+      await this.persistPrefsNow(this.fallbackToken);
+    }
+  }
+
   private catLabel(cat: string): string {
     if (cat === 'resolved') return '已解决';
     if (cat === 'letgo') return '已放下';

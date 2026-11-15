@@ -200,6 +200,12 @@ struct Index {
 
   private lastReschedule: number = 0;
 
+  onPageHide(): void {
+    Store.get().flush().catch((e: Error) => {
+      console.error('juxia page flush fail', String(e));
+    });
+  }
+
   onPageShow(): void {
     if (!this.ready) return;
     Store.get().postponeMissedRevisits();

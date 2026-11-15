@@ -16,7 +16,13 @@ export class RestoreRecovery {
   }
 
   static async recover(ctx: common.UIAbilityContext): Promise<void> {
-    const journal: RestoreJournalData | null = RestoreJournal.read(ctx);
+    let journal: RestoreJournalData | null = null;
+    try {
+      journal = RestoreJournal.read(ctx);
+    } catch (e) {
+      AppError.report('恢复日志损坏。', '请重新恢复备份；不要继续修改当前数据。');
+      return;
+    }
     if (journal === null) {
       return;
     }

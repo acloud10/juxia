@@ -98,6 +98,27 @@ export class Repo {
     return v === null ? '' : v;
   }
 
+  async flush(): Promise<void> {
+    if (this.store === null) {
+      return;
+    }
+    if (this.drainPromise !== null) {
+      try {
+        await this.drainPromise;
+      } catch (e) {
+        console.error('juxia flush wait fail', String(e));
+      }
+    }
+    if (this.queued !== null && !this.busy) {
+      this.drainPromise = this.drain();
+      try {
+        await this.drainPromise;
+      } catch (e) {
+        console.error('juxia flush drain fail', String(e));
+      }
+    }
+  }
+
   saveKv(d: AppData): void {
     const rows: relationalStore.ValuesBucket[] = this.kvRows(d);
     if (this.queued !== null && !this.queued.kvOnly) {

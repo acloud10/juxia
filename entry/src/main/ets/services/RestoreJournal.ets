@@ -16,47 +16,66 @@ export class RestoreJournal {
     return ctx.filesDir + '/restore-journal.json';
   }
 
+  static tmpPath(ctx: common.UIAbilityContext): string {
+    return ctx.filesDir + '/restore-journal.tmp';
+  }
+
   static read(ctx: common.UIAbilityContext): RestoreJournalData | null {
     const p: string = RestoreJournal.path(ctx);
     try {
       if (!fs.accessSync(p)) {
+        // 上次只写完了 tmp、还没 rename：视为没有提交，清掉半成品。
+        const tmp: string = RestoreJournal.tmpPath(ctx);
+        if (fs.accessSync(tmp)) {
+          fs.unlinkSync(tmp);
+        }
         return null;
       }
       const text: string = fs.readTextSync(p);
       const d = JSON.parse(text) as RestoreJournalData;
       if (d.format !== 'juxia-restore-journal' || d.version !== 1 ||
         d.token.length === 0 || d.newDir.length === 0) {
-        return null;
+        throw new Error('JOURNAL_SHAPE');
       }
       const root: string = ctx.filesDir + '/materials/';
       if (!d.newDir.startsWith(root)) {
-        return null;
+        throw new Error('JOURNAL_PATH');
       }
       return d;
     } catch (e) {
       console.error('juxia restore journal read fail', String(e));
-      return null;
+      throw new Error('JOURNAL_CORRUPT');
     }
   }
 
   static write(ctx: common.UIAbilityContext, d: RestoreJournalData): void {
     const p: string = RestoreJournal.path(ctx);
+    const tmp: string = RestoreJournal.tmpPath(ctx);
     let f: fs.File | null = null;
     try {
-      f = fs.openSync(p, fs.OpenMode.CREATE | fs.OpenMode.READ_WRITE | fs.OpenMode.TRUNC);
+      f = fs.openSync(tmp, fs.OpenMode.CREATE | fs.OpenMode.READ_WRITE | fs.OpenMode.TRUNC);
       fs.writeSync(f.fd, JSON.stringify(d));
       fs.fsyncSync(f.fd);
+      try { fs.closeSync(f); } catch (e) {}
+      f = null;
+      fs.renameSync(tmp, p);
     } catch (e) {
       throw new Error('JOURNAL_WRITE_FAILED');
     } finally {
       if (f !== null) {
         try { fs.closeSync(f); } catch (e) {}
       }
+      try {
+        if (fs.accessSync(tmp)) {
+          fs.unlinkSync(tmp);
+        }
+      } catch (e) {}
     }
   }
 
   static remove(ctx: common.UIAbilityContext): void {
     const p: string = RestoreJournal.path(ctx);
+    const tmp: string = RestoreJournal.tmpPath(ctx);
     try {
       if (fs.accessSync(p)) {
         fs.unlinkSync(p);
@@ -64,6 +83,11 @@ export class RestoreJournal {
     } catch (e) {
       console.error('juxia restore journal remove fail', String(e));
     }
+    try {
+      if (fs.accessSync(tmp)) {
+        fs.unlinkSync(tmp);
+      }
+    } catch (e) {}
   }
 
   static removeDir(dir: string): void {
