@@ -168,6 +168,7 @@ export class Store {
     d.dislikes = d.dislikes.filter((e: DislikeEntry) => e.origin !== 'builtin');
     d.own.forEach((e: OwnEntry) => {
       if (!e.bindIds) e.bindIds = [];
+      if (!e.foot) e.foot = [];
       if (!e.notes) e.notes = [];
       if (e.replyToId === undefined) e.replyToId = '';
       if (e.replyFrom === undefined) e.replyFrom = '';
@@ -610,10 +611,10 @@ export class Store {
     return cat;
   }
 
-  footLines(e: OwnEntry): string[] {
+  private buildFoot(bindIds: string[]): string[] {
     const out: string[] = [];
     const seen: string[] = [];
-    e.bindIds.forEach((id: string) => {
+    bindIds.forEach((id: string) => {
       if (seen.includes(id)) return;
       seen.push(id);
       const w = this.data.own.find((x: OwnEntry) => x.id === id);
@@ -624,6 +625,20 @@ export class Store {
       out.push(`它曾陪我度过「${short}」，那件事于 ${md} 标记为「${this.catLabel(w.archCat)}」。`);
     });
     return out;
+  }
+
+  // foot 是给旧版/导出兼容的缓存；关系仍以 bindIds 为准。
+  footLines(e: OwnEntry): string[] {
+    if (e.foot.length > 0) return e.foot;
+    return this.buildFoot(e.bindIds);
+  }
+
+  private syncFootForWound(woundId: string): void {
+    this.data.own.forEach((x: OwnEntry) => {
+      if (!x.bindIds.includes(woundId)) return;
+      x.foot = this.buildFoot(x.bindIds);
+      this.writeOwn(x);
+    });
   }
 
   archiveOwn(id: string, cat: string, note: string, revisitDays: number): void {
@@ -639,6 +654,7 @@ export class Store {
       e.snoozeUntil = 0;
     }
     this.writeOwn(e);
+    this.syncFootForWound(e.id);
     this.bump();
   }
 
@@ -670,11 +686,13 @@ export class Store {
     if (!enc) return false;
     if (enc.bindIds.includes(woundId)) {
       enc.bindIds = enc.bindIds.filter((x: string) => x !== woundId);
+      enc.foot = this.buildFoot(enc.bindIds);
       this.writeOwn(enc);
       this.bump();
       return false;
     }
     enc.bindIds.push(woundId);
+    enc.foot = this.buildFoot(enc.bindIds);
     this.writeOwn(enc);
     this.bump();
     return true;
@@ -720,6 +738,7 @@ export class Store {
         touchedLib.push(l);
       }
     });
+    this.syncFootForWound(id);
     if (this.useDb && this.repo !== null) {
       this.repo.deleteOwnRow(id);
       touchedLib.forEach((l: LibEntry) => this.repo?.saveLibRow(l));
@@ -749,6 +768,7 @@ export class Store {
     e.revisitAt = 0;
     e.snoozeUntil = 0;
     this.writeOwn(e);
+    this.syncFootForWound(e.id);
     this.bump();
   }
 

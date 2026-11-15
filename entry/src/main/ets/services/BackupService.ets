@@ -2,7 +2,11 @@
 import { cryptoFramework } from '@kit.CryptoArchitectureKit';
 import { fileIo as fs } from '@kit.CoreFileKit';
 import { SuppressWarnings, SuppressWarningsType } from '@kit.BasicServicesKit';
-import { AppData } from '../model/Types';
+import { AppData, OwnEntry } from '../model/Types';
+
+interface LegacyOwnFields {
+  footIds?: string[];
+}
 
 const ITERATIONS: number = 310000;
 const SALT_LEN: number = 32;
@@ -14,7 +18,12 @@ const TAG_LEN: number = 16;
 export class BackupService {
   static serialize(data: AppData): string {
     try {
-      return JSON.stringify(data);
+      const copy = JSON.parse(JSON.stringify(data)) as AppData;
+      copy.own.forEach((e: OwnEntry) => {
+        const legacy = e as LegacyOwnFields;
+        if (legacy.footIds !== undefined) legacy.footIds = undefined;
+      });
+      return JSON.stringify(copy);
     } catch (e) {
       throw new Error('备份序列化失败：' + String(e));
     }

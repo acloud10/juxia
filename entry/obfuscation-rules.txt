@@ -37,6 +37,7 @@ kind
 text
 note
 bindIds
+foot
 createdAt
 archCat
 archNote

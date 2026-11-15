@@ -825,7 +825,7 @@ export struct MinePage {
       }
       ForEach(Store.get().footLines(e), (f: string, idx: number) => {
         this.NoteLine(f)
-      }, (f: string, idx: number) => `${e.id}-foot-${idx}-${f.length}`)
+      }, (f: string, idx: number) => `${e.id}-foot-${idx}-${f}`)
       Flex({ wrap: FlexWrap.Wrap }) {
         this.QuietButton('加备注', () => {
           this.openNote(e);

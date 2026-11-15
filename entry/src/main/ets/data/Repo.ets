@@ -169,6 +169,7 @@ export class Repo {
         'archAt': e.archAt,
         'revisitAt': e.revisitAt,
         'snoozeUntil': e.snoozeUntil,
+        'foot': JSON.stringify(e.foot),
         'notes': JSON.stringify(e.notes),
         'replyToId': e.replyToId,
         'replyFrom': e.replyFrom
@@ -444,7 +445,7 @@ export class Repo {
         'CREATE TABLE IF NOT EXISTS own (' +
         'id TEXT PRIMARY KEY, kind TEXT, text TEXT, note TEXT, bindIds TEXT, ' +
         'createdAt INTEGER, archCat TEXT, archNote TEXT, archAt INTEGER, ' +
-        'revisitAt INTEGER, snoozeUntil INTEGER, notes TEXT, replyToId TEXT, replyFrom TEXT)'
+        'revisitAt INTEGER, snoozeUntil INTEGER, foot TEXT, notes TEXT, replyToId TEXT, replyFrom TEXT)'
       );
       await s.executeSql(
         'CREATE TABLE IF NOT EXISTS lib (' +
@@ -569,6 +570,7 @@ export class Repo {
       e.archAt = own.getLong(own.getColumnIndex('archAt'));
       e.revisitAt = own.getLong(own.getColumnIndex('revisitAt'));
       e.snoozeUntil = own.getLong(own.getColumnIndex('snoozeUntil'));
+      e.foot = this.parseStrings(own.getString(own.getColumnIndex('foot')));
       e.notes = this.parseNotes(own.getString(own.getColumnIndex('notes')));
       const rti: number = own.getColumnIndex('replyToId');
       if (rti >= 0) e.replyToId = own.getString(rti);
@@ -652,6 +654,7 @@ export class Repo {
       'archAt': e.archAt,
       'revisitAt': e.revisitAt,
       'snoozeUntil': e.snoozeUntil,
+      'foot': JSON.stringify(e.foot),
       'notes': JSON.stringify(e.notes),
       'replyToId': e.replyToId,
       'replyFrom': e.replyFrom
