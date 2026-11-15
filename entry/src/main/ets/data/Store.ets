@@ -722,7 +722,7 @@ export class Store {
 
   private removeFootForWound(woundId: string): void {
     const w = this.data.own.find((x: OwnEntry) => x.id === woundId);
-    if (!w) return;
+    if (!w || w.kind !== 'wound') return;
     const prefix: string = this.footPrefix(w);
     this.data.own.forEach((x: OwnEntry) => {
       const keptLines: string[] = [];
@@ -730,7 +730,8 @@ export class Store {
       let changed: boolean = false;
       for (let i = 0; i < x.foot.length; i++) {
         const fid: string = x.footIds[i] === undefined ? '' : x.footIds[i];
-        const hit: boolean = fid === woundId || (fid === '' && x.foot[i].startsWith(prefix));
+        const hit: boolean = fid === woundId ||
+          ((fid === '' || fid === FOOT_UNKNOWN) && x.foot[i].startsWith(prefix));
         if (hit) {
           changed = true;
         } else {
