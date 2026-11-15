@@ -619,6 +619,18 @@ export class Store {
     return cat;
   }
 
+  private footLine(w: OwnEntry): string {
+    const short: string = w.text.length > 30 ? w.text.slice(0, 30) + '…' : w.text;
+    const dt = new Date(w.archAt);
+    const md: string = `${dt.getMonth() + 1}月${dt.getDate()}日`;
+    return `它曾陪我度过「${short}」，那件事于 ${md} 标记为「${this.catLabel(w.archCat)}」。`;
+  }
+
+  private footPrefix(w: OwnEntry): string {
+    const short: string = w.text.length > 30 ? w.text.slice(0, 30) + '…' : w.text;
+    return `它曾陪我度过「${short}」`;
+  }
+
   private buildFoot(bindIds: string[]): string[] {
     const out: string[] = [];
     const seen: string[] = [];
@@ -626,26 +638,44 @@ export class Store {
       if (seen.includes(id)) return;
       seen.push(id);
       const w = this.data.own.find((x: OwnEntry) => x.id === id);
-      if (!w || w.kind !== 'wound' || w.archAt <= 0) return;
-      const short: string = w.text.length > 30 ? w.text.slice(0, 30) + '…' : w.text;
-      const dt = new Date(w.archAt);
-      const md: string = `${dt.getMonth() + 1}月${dt.getDate()}日`;
-      out.push(`它曾陪我度过「${short}」，那件事于 ${md} 标记为「${this.catLabel(w.archCat)}」。`);
+      if (w && w.kind === 'wound' && w.archAt > 0) out.push(this.footLine(w));
     });
     return out;
   }
 
-  // foot 是给旧版/导出兼容的缓存；关系仍以 bindIds 为准。
+  // foot 是历史记录：取消关联不删；归档补/更新；复活删；删除保留。
   footLines(e: OwnEntry): string[] {
     if (e.foot.length > 0) return e.foot;
     return this.buildFoot(e.bindIds);
   }
 
-  private syncFootForWound(woundId: string): void {
+  private addOrUpdateFootForWound(woundId: string): void {
+    const w = this.data.own.find((x: OwnEntry) => x.id === woundId);
+    if (!w || w.kind !== 'wound' || w.archAt <= 0) return;
+    const prefix: string = this.footPrefix(w);
+    const line: string = this.footLine(w);
     this.data.own.forEach((x: OwnEntry) => {
       if (!x.bindIds.includes(woundId)) return;
-      x.foot = this.buildFoot(x.bindIds);
+      const idx: number = x.foot.findIndex((f: string) => f.startsWith(prefix));
+      if (idx >= 0) {
+        x.foot[idx] = line;
+      } else {
+        x.foot.push(line);
+      }
       this.writeOwn(x);
+    });
+  }
+
+  private removeFootForWound(woundId: string): void {
+    const w = this.data.own.find((x: OwnEntry) => x.id === woundId);
+    if (!w) return;
+    const prefix: string = this.footPrefix(w);
+    this.data.own.forEach((x: OwnEntry) => {
+      const next: string[] = x.foot.filter((f: string) => !f.startsWith(prefix));
+      if (next.length !== x.foot.length) {
+        x.foot = next;
+        this.writeOwn(x);
+      }
     });
   }
 
@@ -662,7 +692,7 @@ export class Store {
       e.snoozeUntil = 0;
     }
     this.writeOwn(e);
-    this.syncFootForWound(e.id);
+    this.addOrUpdateFootForWound(e.id);
     this.bump();
   }
 
@@ -694,13 +724,11 @@ export class Store {
     if (!enc) return false;
     if (enc.bindIds.includes(woundId)) {
       enc.bindIds = enc.bindIds.filter((x: string) => x !== woundId);
-      enc.foot = this.buildFoot(enc.bindIds);
       this.writeOwn(enc);
       this.bump();
       return false;
     }
     enc.bindIds.push(woundId);
-    enc.foot = this.buildFoot(enc.bindIds);
     this.writeOwn(enc);
     this.bump();
     return true;
@@ -746,7 +774,6 @@ export class Store {
         touchedLib.push(l);
       }
     });
-    this.syncFootForWound(id);
     if (this.useDb && this.repo !== null) {
       this.repo.deleteOwnRow(id);
       touchedLib.forEach((l: LibEntry) => this.repo?.saveLibRow(l));
@@ -776,7 +803,7 @@ export class Store {
     e.revisitAt = 0;
     e.snoozeUntil = 0;
     this.writeOwn(e);
-    this.syncFootForWound(e.id);
+    this.removeFootForWound(e.id);
     this.bump();
   }
 
