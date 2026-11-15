@@ -6,12 +6,16 @@ import { image } from '@kit.ImageKit';
 
 export class BackgroundService {
   static async pick(ctx: common.UIAbilityContext): Promise<string> {
-    const picker = new photoAccessHelper.PhotoViewPicker();
-    const opts = new photoAccessHelper.PhotoSelectOptions();
-    opts.MIMEType = photoAccessHelper.PhotoViewMIMETypes.IMAGE_TYPE;
-    opts.maxSelectNumber = 1;
-    const result = await picker.select(opts);
-    return result.photoUris.length > 0 ? result.photoUris[0] : '';
+    try {
+      const picker = new photoAccessHelper.PhotoViewPicker();
+      const opts = new photoAccessHelper.PhotoSelectOptions();
+      opts.MIMEType = photoAccessHelper.PhotoViewMIMETypes.IMAGE_TYPE;
+      opts.maxSelectNumber = 1;
+      const result = await picker.select(opts);
+      return result.photoUris.length > 0 ? result.photoUris[0] : '';
+    } catch (e) {
+      throw new Error('PICK_IMAGE_FAILED');
+    }
   }
 
   static cachePath(ctx: common.UIAbilityContext, stamp: number): string {
@@ -33,6 +37,8 @@ export class BackgroundService {
       while ((n = fs.readSync(src.fd, buf)) > 0) {
         fs.writeSync(dst.fd, buf.slice(0, n));
       }
+    } catch (e) {
+      throw new Error('COPY_IMAGE_FAILED');
     } finally {
       if (src !== null) {
         try { fs.closeSync(src); } catch (e) {}
@@ -50,19 +56,20 @@ export class BackgroundService {
     } catch (e) {
     }
     const dest: string = BackgroundService.imagePath(ctx, key);
-    const packer = image.createImagePacker();
-    const buf: ArrayBuffer = await packer.packing(pm, { format: 'image/jpeg', quality: 85 });
     let f: fs.File | null = null;
     try {
+      const packer = image.createImagePacker();
       f = fs.openSync(dest, fs.OpenMode.CREATE | fs.OpenMode.READ_WRITE | fs.OpenMode.TRUNC);
-      fs.writeSync(f.fd, buf);
+      await packer.packToFile(pm, f.fd, { format: 'image/jpeg', quality: 85 });
       fs.fsyncSync(f.fd);
+      return dest;
+    } catch (e) {
+      throw new Error('SAVE_IMAGE_FAILED');
     } finally {
       if (f !== null) {
         try { fs.closeSync(f); } catch (e) {}
       }
     }
-    return dest;
   }
 
   static remove(ctx: common.UIAbilityContext, path: string): void {

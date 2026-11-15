@@ -1,6 +1,5 @@
 // 句栖 · 背景设置面板（从 SettingsPage 抽出的独立组件）
 import { common } from '@kit.AbilityKit';
-import { router } from '@kit.ArkUI';
 import { fileIo as fs } from '@kit.CoreFileKit';
 import { Store } from '../data/Store';
 import { BackgroundService } from '../services/BackgroundService';
@@ -43,12 +42,12 @@ export struct BackgroundSettingsPanel {
       const stamp: number = Date.now();
       const cache: string = BackgroundService.cachePath(ctx, stamp);
       BackgroundService.copyToCache(ctx, uri, cache);
-      router.pushUrl({
+      this.getUIContext().getRouter().pushUrl({
         url: 'pages/BackgroundCropPage',
         params: { src: cache, key: key }
-      });
+      }).catch(() => {});
     } catch (e) {
-      this.getUIContext().getPromptAction().showToast({ message: '选择图片失败' });
+      try { this.getUIContext().getPromptAction().showToast({ message: '选择图片失败' }); } catch (e2) {}
     } finally {
       this.busy = false;
     }
@@ -61,7 +60,7 @@ export struct BackgroundSettingsPanel {
       BackgroundService.remove(ctx, s.path);
       s.path = '';
       Store.get().saveSettings();
-      this.getUIContext().getPromptAction().showToast({ message: '已移除背景' });
+      try { this.getUIContext().getPromptAction().showToast({ message: '已移除背景' }); } catch (e) {}
     }
   }
 

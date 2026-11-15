@@ -1,6 +1,5 @@
 // 句栖 · 背景图裁剪：全屏预览，可见区域就是最终背景
 import { common } from '@kit.AbilityKit';
-import { router } from '@kit.ArkUI';
 import { fileIo as fs } from '@kit.CoreFileKit';
 import { BackgroundService } from '../services/BackgroundService';
 import { Store } from '../data/Store';
@@ -27,7 +26,7 @@ struct BackgroundCropPage {
   }
 
   aboutToAppear(): void {
-    const p = router.getParams() as CropParams;
+    const p = this.getUIContext().getRouter().getParams() as CropParams;
     if (p !== undefined && p.src !== undefined) {
       this.src = p.src;
       this.cropKey = p.key;
@@ -43,10 +42,10 @@ struct BackgroundCropPage {
       const path: string = await BackgroundService.savePixelMap(ctx, pm, this.cropKey);
       Store.get().setBackgroundPath(this.cropKey, path);
       try { fs.unlinkSync(this.src); } catch (e) {}
-      router.back();
+      this.getUIContext().getRouter().back();
     } catch (e) {
       this.saving = false;
-      this.getUIContext().getPromptAction().showToast({ message: '保存背景失败' });
+      try { this.getUIContext().getPromptAction().showToast({ message: '保存背景失败' }); } catch (e2) {}
     }
   }
 
@@ -100,7 +99,7 @@ struct BackgroundCropPage {
           .borderRadius(14)
           .onClick(() => {
             try { fs.unlinkSync(this.src); } catch (e) {}
-            router.back();
+            this.getUIContext().getRouter().back();
           })
         Text(this.saving ? '保存中…' : '使用这张')
           .layoutWeight(1)
