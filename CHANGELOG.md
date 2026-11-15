@@ -12,6 +12,8 @@
 - manifest v2 增加 data.json 与每个材料文件的 SHA-256
 - 正常保存会保留 restore token，不会被全量快照覆盖
 - 删除整包 encryptBytes / decryptBytes 旧入口，只保留流式文件入口
+- 新增自定义背景图：浅色/深色、经典/朴素覆盖、裁剪、亮度/模糊/遮罩、光晕/纸纹/dither 开关
+- 背景设置抽成 BackgroundStage / BackgroundSettingsPanel / BackgroundCropPage / BackgroundService
 - 明文导出改为流式复制，不再整包读入内存
 - 恢复 journal 改为 tmp + fsync + rename 原子写，损坏时不再静默当作无日志
 - 解压前检查 zip 原始展开大小与剩余空间，避免解压撑满磁盘

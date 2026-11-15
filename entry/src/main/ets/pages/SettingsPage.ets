@@ -13,6 +13,7 @@ import { Tokens, getTokens, FONT_SERIF, FONT_SANS } from '../theme/Theme';
 import { UiState } from '../state/UiState';
 import { AppError } from '../services/AppError';
 import { RestoreJournal, RestoreJournalData } from '../services/RestoreJournal';
+import { BackgroundSettingsPanel } from '../components/BackgroundSettingsPanel';
 
 
 const MIN_FREE_RESERVE_BYTES: number = 64 * 1024 * 1024;
@@ -1569,6 +1570,9 @@ export struct SettingsPage {
         .backgroundColor(this.t().card).backdropBlur(this.dark ? 0 : 10)
         .borderRadius(this.t().radiusCard)
         .border({ width: 1, color: this.t().line })
+
+        this.GroupTitle('背景')
+        BackgroundSettingsPanel({ skin: this.skin, dark: this.dark })
 
         this.GroupTitle('仪式感')
         Column() {

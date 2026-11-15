@@ -1,4 +1,5 @@
-// 句栖 · 数据模型（从 HTML 版逐字段迁移）
+// 句栖 · 数据模型
+import { BackgroundStyle } from './BackgroundStyle';
 export const DAY_MS: number = 86400000;
 
 export class Settings {
@@ -27,6 +28,7 @@ export class Settings {
   fontScale: number = 1.0;
   fontScaleFollow: boolean = true;
   privacyAccepted: boolean = false;
+  background: BackgroundStyle = new BackgroundStyle();
 }
 
 export class DayState {

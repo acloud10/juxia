@@ -9,6 +9,7 @@ import { Tokens, getTokens, FONT_SERIF, FONT_SANS } from '../theme/Theme';
 import { TopBar, TabIcon } from '../components/Chrome';
 import { RitualOverlay } from '../components/RitualOverlay';
 import { WelcomeGuide } from '../components/WelcomeGuide';
+import { BackgroundStage } from '../components/BackgroundStage';
 import { TodayPage } from './TodayPage';
 import { MinePage } from './MinePage';
 import { LibraryPage } from './LibraryPage';
@@ -478,6 +479,7 @@ struct Index {
 
   build() {
     Stack({ alignContent: Alignment.Bottom }) {
+      BackgroundStage({ skin: this.skin, dark: this.dark })
       // 最底层兜底：API 26 不再设置原生窗口底色，用页面底色覆盖系统默认色。
       Column()
         .width('100%')
