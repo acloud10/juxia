@@ -607,8 +607,8 @@ export class Store {
     next.day.date = todayStr();
     const previous: AppData = this.data;
     this.data = next;
-    this.normalize();
     try {
+      this.normalize();
       if (this.useDb && this.repo !== null) {
         await this.repo.replaceAll(next, '');
       } else if (this.prefs !== null) {
