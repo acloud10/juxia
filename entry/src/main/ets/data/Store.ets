@@ -12,7 +12,6 @@ import { UiState } from '../state/UiState';
 import { AppError } from '../services/AppError';
 
 const PREF_NAME: string = 'juxia_store';
-const LEGACY_FOOT_UNKNOWN: string = '__legacy_unknown__';
 
 interface DraftPayload {
   d: string;
@@ -181,52 +180,6 @@ export class Store {
         e.notes.push(new NoteItem(e.createdAt > 0 ? e.createdAt : Date.now(), e.note));
       }
       e.note = '';
-    });
-    this.migrateFootIds();
-  }
-
-  // 旧 foot 没有 sourceId：能唯一判断的补 ID；无法判断的冻结，避免误改/误删。
-  private migrateFootIds(): void {
-    this.data.own.forEach((x: OwnEntry) => {
-      if (x.foot.length === 0) return;
-      for (let i = 0; i < x.foot.length; i++) {
-        if (x.footIds[i] !== '') continue;
-        const line: string = x.foot[i];
-        const start: string = '它曾陪我度过「';
-        if (!line.startsWith(start)) {
-          x.footIds[i] = LEGACY_FOOT_UNKNOWN;
-          continue;
-        }
-        const close: number = line.indexOf('」', start.length);
-        if (close < 0) {
-          x.footIds[i] = LEGACY_FOOT_UNKNOWN;
-          continue;
-        }
-        const prefix: string = line.substring(0, close + 1);
-        const rest: string = line.substring(close + 1);
-        const m1: string = '，那件事于 ';
-        const m2: string = ' 标记为「';
-        if (!rest.startsWith(m1) || !rest.endsWith('」。')) {
-          x.footIds[i] = LEGACY_FOOT_UNKNOWN;
-          continue;
-        }
-        const p2: number = rest.indexOf(m2, m1.length);
-        if (p2 < 0) {
-          x.footIds[i] = LEGACY_FOOT_UNKNOWN;
-          continue;
-        }
-        const md: string = rest.substring(m1.length, p2);
-        const cat: string = rest.substring(p2 + m2.length, rest.length - 2);
-        const matches: OwnEntry[] = this.data.own.filter((e: OwnEntry) => {
-          if (e.kind !== 'wound' || e.archAt <= 0) return false;
-          const short: string = e.text.length > 30 ? e.text.slice(0, 30) + '…' : e.text;
-          if (`它曾陪我度过「${short}」` !== prefix) return false;
-          const dt = new Date(e.archAt);
-          const emd: string = `${dt.getMonth() + 1}月${dt.getDate()}日`;
-          return emd === md && this.catLabel(e.archCat) === cat;
-        });
-        x.footIds[i] = matches.length === 1 ? matches[0].id : LEGACY_FOOT_UNKNOWN;
-      }
     });
   }
 
@@ -661,6 +614,24 @@ export class Store {
     return cat;
   }
 
+  footLines(e: OwnEntry): string[] {
+    const out: string[] = [];
+    const seen: string[] = [];
+    e.bindIds.forEach((id: string) => {
+      if (seen.includes(id)) return;
+      seen.push(id);
+      const w = this.data.own.find((x: OwnEntry) => x.id === id);
+      if (!w || w.kind !== 'wound' || w.archAt <= 0) return;
+      const short: string = w.text.length > 30 ? w.text.slice(0, 30) + '…' : w.text;
+      const dt = new Date(w.archAt);
+      const md: string = `${dt.getMonth() + 1}月${dt.getDate()}日`;
+      out.push(`它曾陪我度过「${short}」，那件事于 ${md} 标记为「${this.catLabel(w.archCat)}」。`);
+    });
+    // 旧版本只有 foot 文本、没有 bindIds 关系时，保留原样展示；不再写入/迁移。
+    if (out.length === 0 && e.foot.length > 0 && e.bindIds.length === 0) return e.foot;
+    return out;
+  }
+
   archiveOwn(id: string, cat: string, note: string, revisitDays: number): void {
     const e = this.data.own.find((x: OwnEntry) => x.id === id);
     if (!e) return;
@@ -673,35 +644,7 @@ export class Store {
       e.revisitAt = 0;
       e.snoozeUntil = 0;
     }
-    if (e.kind === 'wound') {
-      const archDate = new Date();
-      const md: string = `${archDate.getMonth() + 1}月${archDate.getDate()}日`;
-      this.data.own.forEach((x: OwnEntry) => {
-        if (x.bindIds.includes(e.id)) {
-          const short: string = e.text.length > 30 ? e.text.slice(0, 30) + '…' : e.text;
-          const prefix: string = `它曾陪我度过「${short}」`;
-          const line: string = `${prefix}，那件事于 ${md} 标记为「${this.catLabel(cat)}」。`;
-          let idx: number = x.footIds.findIndex((fid: string) => fid === e.id);
-          if (idx < 0) {
-            idx = x.foot.findIndex((f: string, i: number) =>
-              x.footIds[i] === '' && f.startsWith(prefix));
-          }
-          if (idx >= 0) {
-            x.foot[idx] = line;
-            x.footIds[idx] = e.id;
-          } else {
-            x.foot.push(line);
-            x.footIds.push(e.id);
-          }
-        }
-      });
-    }
     this.writeOwn(e);
-    this.data.own.forEach((x: OwnEntry) => {
-      if (x.bindIds.includes(e.id)) {
-        this.writeOwn(x);
-      }
-    });
     this.bump();
   }
 
@@ -775,7 +718,6 @@ export class Store {
   removeOwn(id: string): void {
     const e = this.data.own.find((x: OwnEntry) => x.id === id);
     if (!e) return;
-    const touchedFoot: OwnEntry[] = this.dropFootFor(e);
     this.data.own = this.data.own.filter((x: OwnEntry) => x.id !== id);
     const touchedLib: LibEntry[] = [];
     this.data.lib.forEach((l: LibEntry) => {
@@ -786,7 +728,6 @@ export class Store {
     });
     if (this.useDb && this.repo !== null) {
       this.repo.deleteOwnRow(id);
-      touchedFoot.forEach((x: OwnEntry) => this.repo?.saveOwnRow(x));
       touchedLib.forEach((l: LibEntry) => this.repo?.saveLibRow(l));
     } else {
       this.persistPrefs();
@@ -805,49 +746,15 @@ export class Store {
     return true;
   }
 
-  private dropFootFor(e: OwnEntry): OwnEntry[] {
-    const short: string = e.text.length > 30 ? e.text.slice(0, 30) + '…' : e.text;
-    const prefix: string = `它曾陪我度过「${short}」`;
-    const touched: OwnEntry[] = [];
-    this.data.own.forEach((x: OwnEntry) => {
-      if (x.foot.length === 0) return;
-      let changed: boolean = false;
-      const keptLines: string[] = [];
-      const keptIds: string[] = [];
-      for (let i = 0; i < x.foot.length; i++) {
-        const fid: string = x.footIds[i] === undefined ? '' : x.footIds[i];
-        const isThis: boolean = fid === e.id || (fid === '' && x.foot[i].startsWith(prefix));
-        if (isThis) {
-          changed = true;
-        } else {
-          keptLines.push(x.foot[i]);
-          keptIds.push(fid);
-        }
-      }
-      if (changed) {
-        x.foot = keptLines;
-        x.footIds = keptIds;
-        touched.push(x);
-      }
-    });
-    return touched;
-  }
-
   revive(id: string): void {
     const e = this.data.own.find((x: OwnEntry) => x.id === id);
     if (!e) return;
-    const touched: OwnEntry[] = this.dropFootFor(e);
     e.archAt = 0;
     e.archCat = '';
     e.archNote = '';
     e.revisitAt = 0;
     e.snoozeUntil = 0;
     this.writeOwn(e);
-    if (this.useDb && this.repo !== null) {
-      touched.forEach((x: OwnEntry) => this.repo?.saveOwnRow(x));
-    } else {
-      this.persistPrefs();
-    }
     this.bump();
   }
 

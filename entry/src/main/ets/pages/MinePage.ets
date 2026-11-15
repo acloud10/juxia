@@ -1,4 +1,4 @@
-﻿// 句栖 · 我的（鼓励池 / 旧事簿）
+// 句栖 · 我的（鼓励池 / 旧事簿）
 import { curves } from '@kit.ArkUI';
 import { window, display } from '@kit.ArkUI';
 import { common } from '@kit.AbilityKit';
@@ -248,7 +248,7 @@ export struct MinePage {
     return list.filter((e: OwnEntry) => {
       if (e.text.toLowerCase().includes(kw)) return true;
       if (e.notes.some((n: NoteItem) => n.text.toLowerCase().includes(kw))) return true;
-      if (e.foot.some((f: string) => f.toLowerCase().includes(kw))) return true;
+      if (Store.get().footLines(e).some((f: string) => f.toLowerCase().includes(kw))) return true;
       return this.boundNames(e).some((n: string) => n.toLowerCase().includes(kw));
     });
   }
@@ -823,9 +823,9 @@ export struct MinePage {
       if (this.latestNote(e).length > 0) {
         this.NoteLine(this.latestNote(e))
       }
-      ForEach(e.foot, (f: string, idx: number) => {
+      ForEach(Store.get().footLines(e), (f: string, idx: number) => {
         this.NoteLine(f)
-      }, (f: string, idx: number) => `${e.id}-foot-${idx}`)
+      }, (f: string, idx: number) => `${e.id}-foot-${idx}-${f.length}`)
       Flex({ wrap: FlexWrap.Wrap }) {
         this.QuietButton('加备注', () => {
           this.openNote(e);
