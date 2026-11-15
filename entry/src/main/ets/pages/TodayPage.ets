@@ -509,8 +509,6 @@ export struct TodayPage {
           .lineHeight(16)
           .letterSpacing(this.skin === 'plain' ? 0.2 : 1)
           .fontColor(this.t().inkSoft)
-          .maxLines(1)
-          .textOverflow({ overflow: TextOverflow.Ellipsis })
           .width('100%')
         Text(sub2)
           .fontFamily(FONT_SANS)
@@ -518,8 +516,6 @@ export struct TodayPage {
           .lineHeight(16)
           .letterSpacing(this.skin === 'plain' ? 0.2 : 1)
           .fontColor(this.t().inkSoft)
-          .maxLines(1)
-          .textOverflow({ overflow: TextOverflow.Ellipsis })
           .width('100%')
       }
       .layoutWeight(1)
