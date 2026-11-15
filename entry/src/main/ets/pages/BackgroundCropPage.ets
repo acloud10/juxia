@@ -1,6 +1,7 @@
 // 句栖 · 背景图裁剪：全屏预览，可见区域就是最终背景
 import { common } from '@kit.AbilityKit';
 import { fileIo as fs } from '@kit.CoreFileKit';
+import { image } from '@kit.ImageKit';
 import { BackgroundService } from '../services/BackgroundService';
 import { Store } from '../data/Store';
 import { Tokens, getTokens, FONT_SANS } from '../theme/Theme';
@@ -15,26 +16,42 @@ struct BackgroundCropPage {
   @Local ty: number = 0;
   @Local saving: boolean = false;
   @Local dark: boolean = false;
+  @Local skin: string = 'classic';
+  @Local pixelMap: image.PixelMap | null = null;
 
   private t(): Tokens {
-    return getTokens('classic', this.dark);
+    return getTokens(this.skin, this.dark);
   }
 
   aboutToAppear(): void {
     this.src = AppStorage.get<string>('bgCropSrc') ?? '';
     this.cropKey = AppStorage.get<string>('bgCropKey') ?? 'light';
-    let ok: boolean = false;
-    try {
-      ok = this.src.length > 0 && fs.accessSync(this.src);
-    } catch (e) {
-      ok = false;
-    }
-    if (!ok) {
+    this.skin = AppStorage.get<string>('bgCropSkin') ?? 'classic';
+    this.dark = AppStorage.get<boolean>('bgCropDark') ?? false;
+    if (this.src.length === 0) {
       try {
         this.getUIContext().getPromptAction().showToast({ message: '没有选到图片' });
       } catch (e) {
       }
       this.getUIContext().getRouter().back();
+    } else {
+      this.loadImage();
+    }
+  }
+
+  private async loadImage(): Promise<void> {
+    let f: fs.File | null = null;
+    try {
+      f = fs.openSync(this.src, fs.OpenMode.READ_ONLY);
+      const src = image.createImageSource(f.fd);
+      this.pixelMap = await src.createPixelMap();
+    } catch (e) {
+      try { this.getUIContext().getPromptAction().showToast({ message: '无法读取图片' }); } catch (e2) {}
+      this.getUIContext().getRouter().back();
+    } finally {
+      if (f !== null) {
+        try { fs.closeSync(f); } catch (e) {}
+      }
     }
   }
 
@@ -43,12 +60,22 @@ struct BackgroundCropPage {
     this.saving = true;
     try {
       const ctx = this.getUIContext().getHostContext() as common.UIAbilityContext;
-      const pm = await this.getUIContext().getComponentSnapshot().get('bgCropImage');
-      const path: string = await BackgroundService.savePixelMap(ctx, pm, this.cropKey);
+      let path: string = '';
+      try {
+        const pm = await this.getUIContext().getComponentSnapshot().get('bgCropImage');
+        path = await BackgroundService.savePixelMap(ctx, pm, this.cropKey);
+      } catch (e) {
+        if (this.pixelMap !== null) {
+          path = await BackgroundService.savePixelMap(ctx, this.pixelMap, this.cropKey);
+        }
+      }
+      if (path.length === 0) {
+        throw new Error('EMPTY_PATH');
+      }
       Store.get().setBackgroundPath(this.cropKey, path);
-      try { fs.unlinkSync(this.src); } catch (e) {}
       this.getUIContext().getRouter().back();
     } catch (e) {
+      console.error('juxia bg crop save fail', String(e));
       this.saving = false;
       try { this.getUIContext().getPromptAction().showToast({ message: '保存背景失败' }); } catch (e2) {}
     }
@@ -56,7 +83,7 @@ struct BackgroundCropPage {
 
   build() {
     Stack({ alignContent: Alignment.Bottom }) {
-      Image(this.src)
+      Image(this.pixelMap !== null ? this.pixelMap : this.src)
         .id('bgCropImage')
         .width('100%')
         .height('100%')
@@ -103,7 +130,6 @@ struct BackgroundCropPage {
           .backgroundColor(this.t().card)
           .borderRadius(14)
           .onClick(() => {
-            try { fs.unlinkSync(this.src); } catch (e) {}
             this.getUIContext().getRouter().back();
           })
         Text(this.saving ? '保存中…' : '使用这张')
@@ -124,6 +150,11 @@ struct BackgroundCropPage {
     }
     .width('100%')
     .height('100%')
-    .backgroundColor(this.dark ? '#14110b' : '#F6F0E3')
+    .backgroundColor(this.t().bg)
+  }
+
+  pageTransition(): void {
+    PageTransitionEnter({ duration: 200, curve: Curve.EaseOut }).opacity(0)
+    PageTransitionExit({ duration: 200, curve: Curve.EaseOut }).opacity(0)
   }
 }

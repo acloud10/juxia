@@ -27,25 +27,39 @@ export class BackgroundService {
   }
 
   static copyToCache(ctx: common.UIAbilityContext, uri: string, dest: string): void {
-    let src: fs.File | null = null;
-    let dst: fs.File | null = null;
+    let copied: boolean = false;
     try {
-      src = fs.openSync(uri, fs.OpenMode.READ_ONLY);
-      dst = fs.openSync(dest, fs.OpenMode.CREATE | fs.OpenMode.READ_WRITE | fs.OpenMode.TRUNC);
-      const buf = new ArrayBuffer(64 * 1024);
-      let n: number = 0;
-      while ((n = fs.readSync(src.fd, buf)) > 0) {
-        fs.writeSync(dst.fd, buf.slice(0, n));
+      fs.copyFileSync(uri, dest);
+      copied = fs.statSync(dest).size > 0;
+    } catch (e) {
+      copied = false;
+    }
+    if (!copied) {
+      let src: fs.File | null = null;
+      let dst: fs.File | null = null;
+      try {
+        src = fs.openSync(uri, fs.OpenMode.READ_ONLY);
+        dst = fs.openSync(dest, fs.OpenMode.CREATE | fs.OpenMode.READ_WRITE | fs.OpenMode.TRUNC);
+        const buf = new ArrayBuffer(64 * 1024);
+        let n: number = 0;
+        while ((n = fs.readSync(src.fd, buf)) > 0) {
+          fs.writeSync(dst.fd, buf.slice(0, n));
+        }
+      } catch (e) {
+        throw new Error('COPY_IMAGE_FAILED');
+      } finally {
+        if (src !== null) {
+          try { fs.closeSync(src); } catch (e) {}
+        }
+        if (dst !== null) {
+          try { fs.closeSync(dst); } catch (e) {}
+        }
       }
+    }
+    try {
+      if (fs.statSync(dest).size === 0) throw new Error('EMPTY_IMAGE');
     } catch (e) {
       throw new Error('COPY_IMAGE_FAILED');
-    } finally {
-      if (src !== null) {
-        try { fs.closeSync(src); } catch (e) {}
-      }
-      if (dst !== null) {
-        try { fs.closeSync(dst); } catch (e) {}
-      }
     }
   }
 
@@ -64,6 +78,7 @@ export class BackgroundService {
       fs.fsyncSync(f.fd);
       return dest;
     } catch (e) {
+      console.error('juxia bg save fail', String(e));
       throw new Error('SAVE_IMAGE_FAILED');
     } finally {
       if (f !== null) {

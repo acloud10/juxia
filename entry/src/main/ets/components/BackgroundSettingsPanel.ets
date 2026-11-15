@@ -13,6 +13,7 @@ export struct BackgroundSettingsPanel {
   @Local editKey: string = 'light';
   @Local advanced: boolean = false;
   @Local busy: boolean = false;
+  @Local expanded: boolean = false;
 
   private t(): Tokens {
     return getTokens(this.skin, this.dark);
@@ -39,11 +40,10 @@ export struct BackgroundSettingsPanel {
       const ctx = this.getUIContext().getHostContext() as common.UIAbilityContext;
       const uri: string = await BackgroundService.pick(ctx);
       if (uri.length === 0) return;
-      const stamp: number = Date.now();
-      const cache: string = BackgroundService.cachePath(ctx, stamp);
-      BackgroundService.copyToCache(ctx, uri, cache);
-      AppStorage.setOrCreate('bgCropSrc', cache);
+      AppStorage.setOrCreate('bgCropSrc', uri);
       AppStorage.setOrCreate('bgCropKey', key);
+      AppStorage.setOrCreate('bgCropSkin', this.skin);
+      AppStorage.setOrCreate('bgCropDark', this.dark);
       this.getUIContext().getRouter().pushUrl({
         url: 'pages/BackgroundCropPage'
       }).catch(() => {});
@@ -71,6 +71,10 @@ export struct BackgroundSettingsPanel {
     else if (field === 'blur') s.blur = v;
     else if (field === 'scrim') s.scrim = v;
     Store.get().saveSettings();
+  }
+
+  private modeValue(field: string): string {
+    return field === 'glow' ? this.bg().glow : this.bg().grain;
   }
 
   @Builder
@@ -146,10 +150,6 @@ export struct BackgroundSettingsPanel {
     .padding({ top: 4, bottom: 4 })
   }
 
-  private modeValue(field: string): string {
-    return field === 'glow' ? this.bg().glow : this.bg().grain;
-  }
-
   @Builder
   ModeChip(label: string, value: string, field: string) {
     Text(label)
@@ -180,84 +180,94 @@ export struct BackgroundSettingsPanel {
 
   build() {
     Column({ space: 8 }) {
-      Text('自定义背景')
-        .fontFamily(FONT_SERIF)
-        .fontSize(16)
-        .fontColor(this.t().ink)
-        .width('100%')
-
-      this.BgRow('浅色模式', 'light')
-      this.BgRow('深色模式', 'dark')
-
-      Row({ space: 8 }) {
-        Text('调整')
-          .fontSize(12)
-          .fontColor(this.t().inkSoft)
-        this.EditChip('浅色', 'light')
-        this.EditChip('深色', 'dark')
+      Row() {
+        Text('自定义背景')
+          .fontFamily(FONT_SERIF)
+          .fontSize(16)
+          .fontColor(this.t().ink)
         Blank()
-        Text(this.advanced ? '收起高级' : '高级')
+        Text(this.expanded ? '收起' : '展开')
           .fontSize(12)
-          .fontColor(this.t().sealInk)
-          .onClick(() => { this.advanced = !this.advanced; })
-      }
-      .width('100%')
-      .padding({ top: 4, bottom: 4 })
-
-      this.SliderRow('亮度', 'brightness', 0.6, 1.4, 0.02)
-      this.SliderRow('模糊', 'blur', 0, 20, 1)
-      this.SliderRow('遮罩', 'scrim', 0, 100, 2)
-
-      Row({ space: 8 }) {
-        Text('氛围光').fontSize(12).fontColor(this.t().inkSoft)
-        this.ModeChip('关', 'off', 'glow')
-        this.ModeChip('弱', 'weak', 'glow')
-        this.ModeChip('标准', 'normal', 'glow')
-      }
-      .width('100%')
-
-      Row({ space: 8 }) {
-        Text('纸纹').fontSize(12).fontColor(this.t().inkSoft)
-        this.ModeChip('关', 'off', 'grain')
-        this.ModeChip('弱', 'weak', 'grain')
-        this.ModeChip('标准', 'normal', 'grain')
-      }
-      .width('100%')
-
-      if (this.dark) {
-        Row() {
-          Text('深色 dither').fontSize(12).fontColor(this.t().inkSoft)
-          Blank()
-          Toggle({ type: ToggleType.Switch, isOn: this.bg().dither })
-            .selectedColor(this.t().seal)
-            .onChange((on: boolean) => {
-              this.bg().dither = on;
-              Store.get().saveSettings();
-            })
-        }
-        .width('100%')
-      }
-
-      if (this.advanced) {
-        Text('经典 / 朴素分别覆盖')
-          .fontSize(11)
           .fontColor(this.t().inkSoft)
+      }
+      .width('100%')
+      .padding({ top: 2, bottom: 2 })
+      .onClick(() => { this.expanded = !this.expanded; })
+
+      if (this.expanded) {
+        this.BgRow('浅色模式', 'light')
+        this.BgRow('深色模式', 'dark')
+
+        Row({ space: 8 }) {
+          Text('调整')
+            .fontSize(12)
+            .fontColor(this.t().inkSoft)
+          this.EditChip('浅色', 'light')
+          this.EditChip('深色', 'dark')
+          Blank()
+          Text(this.advanced ? '收起高级' : '高级')
+            .fontSize(12)
+            .fontColor(this.t().sealInk)
+            .onClick(() => { this.advanced = !this.advanced; })
+        }
+        .width('100%')
+        .padding({ top: 4, bottom: 4 })
+
+        this.SliderRow('亮度', 'brightness', 0.6, 1.4, 0.02)
+        this.SliderRow('模糊', 'blur', 0, 20, 1)
+        this.SliderRow('遮罩', 'scrim', 0, 100, 2)
+
+        Row({ space: 8 }) {
+          Text('氛围光').fontSize(12).fontColor(this.t().inkSoft)
+          this.ModeChip('关', 'off', 'glow')
+          this.ModeChip('弱', 'weak', 'glow')
+          this.ModeChip('标准', 'normal', 'glow')
+        }
+        .width('100%')
+
+        Row({ space: 8 }) {
+          Text('纸纹').fontSize(12).fontColor(this.t().inkSoft)
+          this.ModeChip('关', 'off', 'grain')
+          this.ModeChip('弱', 'weak', 'grain')
+          this.ModeChip('标准', 'normal', 'grain')
+        }
+        .width('100%')
+
+        if (this.dark) {
+          Row() {
+            Text('深色 dither').fontSize(12).fontColor(this.t().inkSoft)
+            Blank()
+            Toggle({ type: ToggleType.Switch, isOn: this.bg().dither })
+              .selectedColor(this.t().seal)
+              .onChange((on: boolean) => {
+                this.bg().dither = on;
+                Store.get().saveSettings();
+              })
+          }
           .width('100%')
-          .margin({ top: 4 })
-        Row({ space: 6 }) {
-          this.EditChip('浅色经典', 'lightClassic')
-          this.EditChip('浅色朴素', 'lightPlain')
         }
-        .width('100%')
-        Row({ space: 6 }) {
-          this.EditChip('深色经典', 'darkClassic')
-          this.EditChip('深色朴素', 'darkPlain')
+
+        if (this.advanced) {
+          Text('经典 / 朴素分别覆盖')
+            .fontSize(11)
+            .fontColor(this.t().inkSoft)
+            .width('100%')
+            .margin({ top: 4 })
+          Row({ space: 6 }) {
+            this.EditChip('浅色经典', 'lightClassic')
+            this.EditChip('浅色朴素', 'lightPlain')
+          }
+          .width('100%')
+          Row({ space: 6 }) {
+            this.EditChip('深色经典', 'darkClassic')
+            this.EditChip('深色朴素', 'darkPlain')
+          }
+          .width('100%')
+          this.BgRow('浅色 · 经典', 'lightClassic')
+          this.BgRow('浅色 · 朴素', 'lightPlain')
+          this.BgRow('深色 · 经典', 'darkClassic')
+          this.BgRow('深色 · 朴素', 'darkPlain')
         }
-        .width('100%')
-        this.BgRow('浅色 · 经典', 'lightClassic')
-        this.BgRow('浅色 · 朴素', 'lightPlain')
-        this.BgRow('深色 · 经典', 'darkClassic')
-        this.BgRow('深色 · 朴素', 'darkPlain')
       }
     }
     .width('100%')
