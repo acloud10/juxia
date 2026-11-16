@@ -223,7 +223,7 @@ struct Index {
     this.ready = true;
     this.fadeBoot();
     setTimeout(() => {
-      MaterialRepair.run();
+      MaterialRepair.run(ctx);
     }, 1200);
     if (this.ui.openRevisit) {
       this.applyOpenRevisit();
