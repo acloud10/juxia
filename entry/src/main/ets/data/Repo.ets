@@ -115,37 +115,10 @@ export class Repo {
   private makeSnapshot(d: AppData, restoreToken: string = ''): Snapshot {
     const snap = new Snapshot();
     d.own.forEach((e: OwnEntry) => {
-      const b: relationalStore.ValuesBucket = {
-        'id': e.id,
-        'kind': e.kind,
-        'text': e.text,
-        'note': e.note,
-        'bindIds': JSON.stringify(e.bindIds),
-        'createdAt': e.createdAt,
-        'archCat': e.archCat,
-        'archNote': e.archNote,
-        'archAt': e.archAt,
-        'revisitAt': e.revisitAt,
-        'snoozeUntil': e.snoozeUntil,
-        'foot': JSON.stringify(e.foot),
-        'footIds': JSON.stringify(e.footIds),
-        'notes': JSON.stringify(e.notes),
-        'replyToId': e.replyToId,
-        'replyFrom': e.replyFrom
-      };
-      snap.own.push(b);
+      snap.own.push(this.ownBucket(e));
     });
     d.lib.forEach((e: LibEntry) => {
-      const b: relationalStore.ValuesBucket = {
-        'id': e.id,
-        'text': e.text,
-        'source': e.source,
-        'origin': e.origin,
-        'tag': e.tag,
-        'createdAt': e.createdAt,
-        'bindIds': JSON.stringify(e.bindIds)
-      };
-      snap.lib.push(b);
+      snap.lib.push(this.libBucket(e));
     });
     d.dislikes.forEach((e: DislikeEntry) => {
       const b: relationalStore.ValuesBucket = {

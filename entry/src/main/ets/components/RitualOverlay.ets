@@ -32,6 +32,7 @@ export struct RitualOverlay {
   @Local replyText: string = '';
   @Local replyCount: number = 0;
   private timer: number = -1;
+  private revealTimer: number = -1;
 
   private t(): Tokens {
     return getTokens(this.skin, this.dark);
@@ -44,7 +45,7 @@ export struct RitualOverlay {
       this.revealed = true;
     } else if (mode === 'short') {
       this.stage = 'reveal';
-      this.timer = setTimeout(() => {
+      this.revealTimer = setTimeout(() => {
         this.revealed = true;
       }, 60);
     }
@@ -54,9 +55,10 @@ export struct RitualOverlay {
   }
 
   aboutToDisappear(): void {
-    if (this.timer >= 0) {
-      clearTimeout(this.timer);
-    }
+    if (this.timer >= 0) clearTimeout(this.timer);
+    if (this.revealTimer >= 0) clearTimeout(this.revealTimer);
+    this.timer = -1;
+    this.revealTimer = -1;
   }
 
   private chars(): string[] {
@@ -131,21 +133,24 @@ export struct RitualOverlay {
   private tapPacket(): void {
     if (this.open) return;
     this.open = true;
+    if (this.timer >= 0) clearTimeout(this.timer);
+    if (this.revealTimer >= 0) clearTimeout(this.revealTimer);
     this.timer = setTimeout(() => {
       this.stage = 'reveal';
-      setTimeout(() => {
+      this.revealTimer = setTimeout(() => {
         this.revealed = true;
       }, 40);
     }, 1150);
   }
 
   private skip(): void {
-    if (this.timer >= 0) {
-      clearTimeout(this.timer);
-    }
+    if (this.timer >= 0) clearTimeout(this.timer);
+    if (this.revealTimer >= 0) clearTimeout(this.revealTimer);
+    this.timer = -1;
+    this.revealTimer = -1;
     this.open = true;
     this.stage = 'reveal';
-    setTimeout(() => {
+    this.revealTimer = setTimeout(() => {
       this.revealed = true;
     }, 40);
   }

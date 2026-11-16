@@ -102,8 +102,6 @@ struct BackgroundCropPage {
 
   private handleTouch(event: TouchEvent): void {
     const n: number = event.touches.length;
-    console.info('juxia-touch type=' + event.type + ' n=' + n + ' tx=' + this.tx.toFixed(1) +
-      ' ty=' + this.ty.toFixed(1) + ' zoom=' + this.zoom.toFixed(2) + ' pm=' + (this.pixelMap !== null));
     if (this.pixelMap === null) return;
     if (event.type === TouchType.Down) {
       if (n >= 2) {
@@ -192,10 +190,6 @@ struct BackgroundCropPage {
           y: Math.round(top),
           size: { width: Math.round(cw), height: Math.round(ch) }
         };
-        console.info('juxia-crop region x=' + region.x + ' y=' + region.y +
-          ' w=' + region.size.width + ' h=' + region.size.height +
-          ' zoom=' + this.zoom.toFixed(2) + ' tx=' + this.tx.toFixed(1) +
-          ' ty=' + this.ty.toFixed(1));
         const out = await this.pixelMap.createCroppedAndScaledPixelMap(
           region, this.vw / cw, this.vh / ch);
         path = await BackgroundService.savePixelMap(ctx, out, this.cropKey);
@@ -215,12 +209,6 @@ struct BackgroundCropPage {
         .filter((p: string) => p.length > 0);
       BackgroundService.cleanup(ctx, keep);
       UiState.get().bgSavedRev = UiState.get().bgSavedRev + 1;
-      try {
-        const st = fs.statSync(path);
-        console.info('juxia-bg saved key=' + this.cropKey + ' path=' + path + ' size=' + st.size);
-      } catch (e) {
-        console.error('juxia-bg saved file missing ' + path);
-      }
       this.getUIContext().getRouter().back();
     } catch (e) {
       console.error('juxia bg crop save fail', String(e));

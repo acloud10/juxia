@@ -1581,7 +1581,7 @@ export struct LibraryPage {
               })
               Scroll(this.disScroll) {
                 Column({ space: 0 }) {
-                  ForEach(this.pagedDislikes(), (d: DislikeEntry) => {
+                  ForEach(this.pagedDislikes(), (d: DislikeEntry, idx: number) => {
                     Column({ space: 0 }) {
                       Text(d.text)
                         .fontSize(14.5)
@@ -1607,7 +1607,7 @@ export struct LibraryPage {
                     .width('100%')
                     .padding({ top: 10, bottom: 4 })
                     .border({ width: { top: 1 }, color: this.t().lineSoft })
-                  }, (d: DislikeEntry) => d.text)
+                  }, (d: DislikeEntry, idx: number) => `${d.at}-${idx}`)
                   if (this.filteredDislikes().length > this.disLimit) {
                     Text(`加载更多（还有 ${this.filteredDislikes().length - this.disLimit} 条）`)
                       .fontFamily(FONT_SANS)

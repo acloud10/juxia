@@ -203,7 +203,6 @@ export struct BackgroundSettingsPanel {
   }
 
   private updateNum(key: string, field: string, v: number): void {
-    console.info('juxia-slider key=' + key + ' field=' + field + ' v=' + v.toFixed(3));
     const s = this.styleOf(key);
     if (field === 'brightness') s.brightness = v;
     else if (field === 'blur') s.blur = v;
@@ -332,7 +331,7 @@ export struct BackgroundSettingsPanel {
           ? this.brightUi.toFixed(2)
           : (field === 'blur'
             ? Math.round(this.blurUi).toString()
-            : Math.round(this.scrimUi).toString() + '%')) + (rev < 0 ? '?' : ''))
+            : Math.round(this.scrimUi).toString() + '%')))
           .fontFamily(FONT_SANS).fontSize(11).fontColor(this.t().inkSoft)
       }
       .width('100%')
@@ -359,7 +358,7 @@ export struct BackgroundSettingsPanel {
       Row() {
         Text(label).fontSize(12).fontColor(this.t().inkSoft)
         Blank()
-        Text(`${Math.round(field === 'glow' ? this.styleOf(this.editKey).glowValue : this.styleOf(this.editKey).grainValue)}%` + (rev < 0 ? '?' : ''))
+        Text(`${Math.round(field === 'glow' ? this.styleOf(this.editKey).glowValue : this.styleOf(this.editKey).grainValue)}%`)
           .fontSize(11).fontColor(this.t().inkSoft)
       }
       .width('100%')
@@ -372,7 +371,6 @@ export struct BackgroundSettingsPanel {
         .width('100%')
         .selectedColor(this.t().seal)
         .onChange((v: number) => {
-          console.info('juxia-level field=' + field + ' v=' + v.toFixed(1));
           const s = this.styleOf(this.editKey);
           const effective: boolean = this.editKey === this.effectiveKey();
           if (field === 'glow') {

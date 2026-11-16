@@ -198,10 +198,6 @@ struct Index {
     const keepPaths: string[] = [b.light.path, b.dark.path, b.lightPlain.path, b.darkPlain.path]
       .filter((p: string) => p.length > 0);
     BackgroundService.cleanup(ctx, keepPaths);
-    console.info('juxia-bg init light=' + b.light.path + ' dark=' + b.dark.path +
-      ' bright L=' + b.light.brightness + ' LC=' + b.lightClassic.brightness +
-      ' LP=' + b.lightPlain.brightness + ' D=' + b.dark.brightness +
-      ' DC=' + b.darkClassic.brightness + ' DP=' + b.darkPlain.brightness);
     this.flushError();
     const st = Store.get();
     this.bootLong = st.data.settings.bootLong;

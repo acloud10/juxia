@@ -517,9 +517,9 @@ export struct ArchivePage {
       if (e.archNote.length > 0) {
         this.NoteLine(`${fmtMD(e.archAt)}  ${e.archNote}`)
       }
-      ForEach(this.notesOf(e), (n: string) => {
+      ForEach(this.notesOf(e), (n: string, idx: number) => {
         this.NoteLine(n)
-      }, (n: string) => n)
+      }, (n: string, idx: number) => `${e.id}-note-${idx}`)
       if (e.kind === 'wound' && (e.archCat === 'resolved' || e.archCat === 'letgo')) {
         Text(e.revisitAt > 0
           ? `回访：${fmtMD(e.revisitAt)} 轻轻问一次${e.snoozeUntil > Date.now() ? `（再等等到 ${fmtMD(e.snoozeUntil)}）` : ''}`

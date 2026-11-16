@@ -178,20 +178,22 @@ export struct TodayPage {
 
   private pickLib(list: LibEntry[]): LibEntry | null {
     if (list.length === 0) return null;
-    let e: LibEntry = list[Math.floor(Math.random() * list.length)];
-    if (list.length > 1 && e.text === this.lastText) {
-      e = list[Math.floor(Math.random() * list.length)];
-    }
+    const pool: LibEntry[] = list.length > 1
+      ? list.filter((x: LibEntry) => x.text !== this.lastText)
+      : list;
+    const use: LibEntry[] = pool.length > 0 ? pool : list;
+    const e: LibEntry = use[Math.floor(Math.random() * use.length)];
     this.lastText = e.text;
     return e;
   }
 
   private pickOwn(list: OwnEntry[]): OwnEntry | null {
     if (list.length === 0) return null;
-    let e: OwnEntry = list[Math.floor(Math.random() * list.length)];
-    if (list.length > 1 && e.text === this.lastText) {
-      e = list[Math.floor(Math.random() * list.length)];
-    }
+    const pool: OwnEntry[] = list.length > 1
+      ? list.filter((x: OwnEntry) => x.text !== this.lastText)
+      : list;
+    const use: OwnEntry[] = pool.length > 0 ? pool : list;
+    const e: OwnEntry = use[Math.floor(Math.random() * use.length)];
     this.lastText = e.text;
     return e;
   }

@@ -1207,10 +1207,13 @@ export struct SettingsPage {
       this.toast('没有文件型材料可导出');
       return;
     }
+    let workDir: string = '';
+    let zipPath: string = '';
     try {
       const ctx = this.getUIContext().getHostContext() as common.UIAbilityContext;
       const stamp: number = Date.now();
       const dir: string = ctx.cacheDir + '/matpack_' + stamp;
+      workDir = dir;
       fs.mkdirSync(dir);
       const items: MatPackItem[] = [];
       let failedMaterials: number = 0;
@@ -1233,12 +1236,17 @@ export struct SettingsPage {
       fs.writeSync(mf.fd, JSON.stringify(pack));
       fs.closeSync(mf);
       const zip: string = ctx.cacheDir + '/matpack_' + stamp + '.zip';
+      zipPath = zip;
       await zlib.compressFile(dir, zip, { level: zlib.CompressLevel.COMPRESS_LEVEL_DEFAULT_COMPRESSION });
       const pickerCtx = new picker.DocumentViewPicker(ctx);
       const opts = new picker.DocumentSaveOptions();
       opts.newFileNames = [`句栖材料包-${stamp}.zip`];
       const uris: string[] = await pickerCtx.save(opts);
-      if (uris.length === 0) return;
+      if (uris.length === 0) {
+        try { fs.unlinkSync(zip); } catch (e) {}
+        this.purgeBackupDir(dir);
+        return;
+      }
       const stat = fs.statSync(zip);
       const rf = fs.openSync(zip, fs.OpenMode.READ_ONLY);
       const wf = fs.openSync(uris[0], fs.OpenMode.READ_WRITE | fs.OpenMode.CREATE | fs.OpenMode.TRUNC);
@@ -1252,7 +1260,13 @@ export struct SettingsPage {
       this.toast(failedMaterials > 0
         ? `已导出 ${items.length} 份，${failedMaterials} 份失败（${Math.round(stat.size / 1024)} KB）`
         : `已导出 ${items.length} 份材料（${Math.round(stat.size / 1024)} KB）`);
+      try { fs.unlinkSync(zip); } catch (e) {}
+      this.purgeBackupDir(dir);
     } catch (e) {
+      if (zipPath.length > 0) {
+        try { fs.unlinkSync(zipPath); } catch (e2) {}
+      }
+      if (workDir.length > 0) this.purgeBackupDir(workDir);
       AppError.report('材料包导出失败。', '检查存储空间后重试；文件过多时先分批。');
     }
   }
@@ -1309,8 +1323,10 @@ export struct SettingsPage {
       let count: number = 0;
       let skipped: number = 0;
       let failed: number = 0;
+      let indexFailed: number = 0;
       for (const it of items) {
         const src: string = packDir + '/' + it.id + '.txt';
+        let attached: boolean = false;
         try {
           const srcStat = fs.statSync(src);
           if (this.sameMaterialExists(it.name, srcStat.size)) {
@@ -1322,20 +1338,21 @@ export struct SettingsPage {
           const dst: string = matDir + '/' + newId + '.txt';
           fs.copyFileSync(src, dst);
           Store.get().attachMaterialFile(newId, it.name, dst, srcStat.size);
+          attached = true;
+          count++;
           Store.get().clearMaterialIndex(newId);
           const indexed = await MaterialIndexer.indexFile(newId, dst);
-          if (!indexed.ok) {
-            failed++;
-            continue;
-          }
-          count++;
+          if (!indexed.ok) indexFailed++;
         } catch (e) {
-          failed++;
+          if (attached) indexFailed++;
+          else failed++;
         }
       }
       this.toast(failed > 0
         ? `已恢复 ${count} 份，跳过 ${skipped} 份，失败 ${failed} 份`
-        : (skipped > 0 ? `已恢复 ${count} 份材料，跳过 ${skipped} 份已存在` : `已恢复 ${count} 份材料并重建索引`));
+        : (indexFailed > 0
+          ? `已恢复 ${count} 份，跳过 ${skipped} 份，${indexFailed} 份索引未建立`
+          : (skipped > 0 ? `已恢复 ${count} 份材料，跳过 ${skipped} 份已存在` : `已恢复 ${count} 份材料并重建索引`)));
     } catch (e) {
       AppError.report('材料包导入失败。', '确认压缩包完整、未被修改后重试。');
     }
@@ -1404,7 +1421,9 @@ export struct SettingsPage {
     }
     this.getUIContext().showAlertDialog({
       title: step === 1 ? '清空全部数据？' : '真的清空？',
-      message: step === 1 ? '此操作不可撤销，建议先导出密语备份。' : '所有句子、备注、回忆与天数都会消失，无法找回。',
+      message: step === 1
+        ? '此操作不可撤销，建议先导出密语备份。'
+        : '所有句子、备注、回忆、材料与设置都会消失，无法找回；自定义背景会保留。',
       primaryButton: {
         value: '取消',
         action: () => {
@@ -2502,7 +2521,7 @@ export struct SettingsPage {
 
         this.GroupTitle('清空数据')
         Column({ space: 8 }) {
-          Text('清空后所有句子、省身、备注、材料和设置都会消失，无法恢复。')
+          Text('清空后所有句子、省身、备注、材料和设置都会消失，无法恢复；自定义背景会保留。')
             .fontFamily(FONT_SANS)
             .fontSize(12)
             .lineHeight(21)
