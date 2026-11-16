@@ -270,7 +270,7 @@ export struct SettingsPage {
       e.revisitAt = d.getTime();
       e.snoozeUntil = 0;
     });
-    st.saveKv();
+    st.saveSettings();
     const ctx = this.getUIContext().getHostContext() as common.UIAbilityContext;
     ReminderService.rescheduleAll(ctx);
     this.toast(`回访时间已定为 ${this.draftHour.toString().padStart(2, '0')}:${this.draftMinute.toString().padStart(2, '0')}`);
