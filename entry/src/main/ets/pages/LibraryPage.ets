@@ -319,6 +319,9 @@ export struct LibraryPage {
   private async importTxt(): Promise<void> {
     let srcFile: fs.File | null = null;
     let dstFile: fs.File | null = null;
+    let created: MaterialEntry | null = null;
+    let dstPath: string = '';
+    let keep: boolean = false;
     try {
       const ctx = this.getUIContext().getHostContext() as common.UIAbilityContext;
       const docPicker = new picker.DocumentViewPicker(ctx);
@@ -350,11 +353,11 @@ export struct LibraryPage {
       if (dot > 0) fileName = fileName.slice(0, dot);
       const dst: string = dir + '/' + Date.now().toString(36) + '.txt';
       dstFile = fs.openSync(dst, fs.OpenMode.CREATE | fs.OpenMode.READ_WRITE | fs.OpenMode.TRUNC);
-      const m: MaterialEntry = Store.get().addMaterialFile(fileName, dst, stat.size);
-      this.reload();
+      created = Store.get().addMaterialFile(fileName, dst, stat.size);
+      dstPath = dst;
       this.matIndexing = true;
       this.matProgress = '正在复制文件…';
-      this.toast(`已导入《${fileName}》，正在建立句子索引…`);
+      this.toast(`正在导入《${fileName}》…`);
       const buf = new ArrayBuffer(64 * 1024);
       let copied: number = 0;
       let n: number = 0;
@@ -372,20 +375,23 @@ export struct LibraryPage {
         console.error('juxia material close fail', String(e));
       }
       dstFile = null;
+      if (created === null) throw new Error('MATERIAL_NOT_CREATED');
       this.matProgress = '正在建立句子索引…';
-      const result = await MaterialIndexer.indexFile(m.id, dst, isMarkdown);
+      const result = await MaterialIndexer.indexFile(created.id, dst, isMarkdown, true);
       if (!result.ok) {
         this.matProgress = '索引失败';
         this.matIndexing = false;
-        this.toast(`《${fileName}》已导入，但索引失败；请重新导入或重启后重试`);
+        this.toast(`《${fileName}》导入失败，已撤销，请重试`);
         return;
       }
       const count: number = result.count;
+      keep = true;
       this.matProgress = `已索引 ${count} 句`;
+      this.reload();
       this.toast(`《${fileName}》已入库，可以检索了`);
       this.matIndexing = false;
     } catch (e) {
-      this.toast('导入失败，请换一个 .txt / .md 文件');
+      this.toast('导入失败，请重试');
     } finally {
       this.matIndexing = false;
       if (srcFile !== null) {
@@ -401,6 +407,13 @@ export struct LibraryPage {
         } catch (e) {
           console.error('juxia material close fail', String(e));
         }
+      }
+      if (!keep && created !== null) {
+        Store.get().deleteMaterial(created.id);
+        if (dstPath.length > 0) {
+          try { fs.unlinkSync(dstPath); } catch (e) {}
+        }
+        this.reload();
       }
     }
   }

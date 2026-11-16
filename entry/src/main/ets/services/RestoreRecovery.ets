@@ -56,7 +56,7 @@ export class RestoreRecovery {
     for (const m of store.data.materials) {
       try {
         store.clearMaterialIndex(m.id);
-        const r = await MaterialIndexer.indexFile(m.id, m.path);
+        const r = await MaterialIndexer.indexFile(m.id, m.path, false, true);
         if (!r.ok) {
           failed++;
         }

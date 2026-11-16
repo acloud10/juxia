@@ -946,7 +946,7 @@ export struct SettingsPage {
       for (const m of Store.get().data.materials) {
         try {
           Store.get().clearMaterialIndex(m.id);
-          const indexed = await MaterialIndexer.indexFile(m.id, m.path);
+          const indexed = await MaterialIndexer.indexFile(m.id, m.path, false, true);
           if (!indexed.ok) {
             failedMaterials++;
           }
@@ -1128,7 +1128,7 @@ export struct SettingsPage {
       for (const m of Store.get().data.materials) {
         try {
           Store.get().clearMaterialIndex(m.id);
-          const indexed = await MaterialIndexer.indexFile(m.id, m.path);
+          const indexed = await MaterialIndexer.indexFile(m.id, m.path, false, true);
           if (!indexed.ok) {
             failedMaterials++;
           }
@@ -1272,6 +1272,8 @@ export struct SettingsPage {
   }
 
   private async importMaterials(): Promise<void> {
+    let localPath: string = '';
+    let destDir: string = '';
     try {
       const ctx = this.getUIContext().getHostContext() as common.UIAbilityContext;
       const pickerCtx = new picker.DocumentViewPicker(ctx);
@@ -1282,6 +1284,7 @@ export struct SettingsPage {
       if (!uris || uris.length === 0) return;
       const stamp: number = Date.now();
       const local: string = ctx.cacheDir + '/matimport_' + stamp + '.zip';
+      localPath = local;
       const rf = fs.openSync(uris[0], fs.OpenMode.READ_ONLY);
       const wf = fs.openSync(local, fs.OpenMode.CREATE | fs.OpenMode.READ_WRITE | fs.OpenMode.TRUNC);
       const buf = new ArrayBuffer(64 * 1024);
@@ -1292,6 +1295,7 @@ export struct SettingsPage {
       fs.closeSync(rf);
       fs.closeSync(wf);
       const dest: string = ctx.cacheDir + '/matimport_' + stamp;
+      destDir = dest;
       fs.mkdirSync(dest);
       await zlib.decompressFile(local, dest, {});
       const manifestPath: string = this.findFile(dest, 'manifest.json');
@@ -1323,10 +1327,9 @@ export struct SettingsPage {
       let count: number = 0;
       let skipped: number = 0;
       let failed: number = 0;
-      let indexFailed: number = 0;
       for (const it of items) {
         const src: string = packDir + '/' + it.id + '.txt';
-        let attached: boolean = false;
+        let newId: string = '';
         try {
           const srcStat = fs.statSync(src);
           if (this.sameMaterialExists(it.name, srcStat.size)) {
@@ -1334,27 +1337,37 @@ export struct SettingsPage {
             continue;
           }
           // 不复用分享包里的 id：避免覆盖接收方已有材料
-          const newId: string = this.newMaterialId();
+          newId = this.newMaterialId();
           const dst: string = matDir + '/' + newId + '.txt';
           fs.copyFileSync(src, dst);
           Store.get().attachMaterialFile(newId, it.name, dst, srcStat.size);
-          attached = true;
-          count++;
           Store.get().clearMaterialIndex(newId);
-          const indexed = await MaterialIndexer.indexFile(newId, dst);
-          if (!indexed.ok) indexFailed++;
+          const indexed = await MaterialIndexer.indexFile(newId, dst, false, true);
+          if (!indexed.ok) {
+            Store.get().deleteMaterial(newId);
+            try { fs.unlinkSync(dst); } catch (e) {}
+            newId = '';
+            failed++;
+            continue;
+          }
+          count++;
         } catch (e) {
-          if (attached) indexFailed++;
-          else failed++;
+          if (newId.length > 0) {
+            Store.get().deleteMaterial(newId);
+          }
+          failed++;
         }
       }
       this.toast(failed > 0
-        ? `已恢复 ${count} 份，跳过 ${skipped} 份，失败 ${failed} 份`
-        : (indexFailed > 0
-          ? `已恢复 ${count} 份，跳过 ${skipped} 份，${indexFailed} 份索引未建立`
-          : (skipped > 0 ? `已恢复 ${count} 份材料，跳过 ${skipped} 份已存在` : `已恢复 ${count} 份材料并重建索引`)));
+        ? `已恢复 ${count} 份，跳过 ${skipped} 份，失败 ${failed} 份（已回滚）`
+        : (skipped > 0 ? `已恢复 ${count} 份材料，跳过 ${skipped} 份已存在` : `已恢复 ${count} 份材料并重建索引`));
     } catch (e) {
       AppError.report('材料包导入失败。', '确认压缩包完整、未被修改后重试。');
+    } finally {
+      if (localPath.length > 0) {
+        try { fs.unlinkSync(localPath); } catch (e) {}
+      }
+      if (destDir.length > 0) this.removeFlatDir(destDir);
     }
   }
 

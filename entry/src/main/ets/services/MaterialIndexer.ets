@@ -71,7 +71,7 @@ export class MaterialIndexer {
     }
   }
 
-  static async indexFile(id: string, path: string, markdown: boolean = false): Promise<MaterialIndexResult> {
+  static async indexFile(id: string, path: string, markdown: boolean = false, quiet: boolean = false): Promise<MaterialIndexResult> {
     let file: fs.File | null = null;
     try {
       file = fs.openSync(path, fs.OpenMode.READ_ONLY);
@@ -112,7 +112,9 @@ export class MaterialIndexer {
       }
       return { ok: true, count: ord };
     } catch (e) {
-      AppError.report('材料索引失败。', '回到材料库重新导入；原文件不会被删除。');
+      if (!quiet) {
+        AppError.report('材料索引失败。', '回到材料库重新导入；原文件不会被删除。');
+      }
       return { ok: false, count: 0 };
     } finally {
       if (file !== null) {
