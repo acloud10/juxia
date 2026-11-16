@@ -18,6 +18,7 @@ import { SettingsPage } from './SettingsPage';
 import { UiState } from '../state/UiState';
 import { AppError } from '../services/AppError';
 import { RestoreRecovery } from '../services/RestoreRecovery';
+import { MaterialRepair } from '../services/MaterialRepair';
 import { BackgroundService } from '../services/BackgroundService';
 
 @Entry
@@ -221,6 +222,9 @@ struct Index {
     this.applyDark(st.data.settings.theme);
     this.ready = true;
     this.fadeBoot();
+    setTimeout(() => {
+      MaterialRepair.run();
+    }, 1200);
     if (this.ui.openRevisit) {
       this.applyOpenRevisit();
     }

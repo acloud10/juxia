@@ -5,6 +5,7 @@ import { picker, fileIo as fs } from '@kit.CoreFileKit';
 import { Store } from '../data/Store';
 import { LibEntry, DislikeEntry, MaterialEntry, RitualCtx, OwnEntry, fmtDate } from '../model/Types';
 import { MaterialIndexer } from '../services/MaterialIndexer';
+import { MaterialRepair } from '../services/MaterialRepair';
 import { Tokens, getTokens, FONT_SERIF, FONT_SANS } from '../theme/Theme';
 import { ArrayDataSource } from '../utils/DataSource';
 import { splitSentences } from '../utils/TextSplit';
@@ -376,6 +377,7 @@ export struct LibraryPage {
       }
       dstFile = null;
       if (created === null) throw new Error('MATERIAL_NOT_CREATED');
+      MaterialRepair.mark(dst);
       this.matProgress = '正在建立句子索引…';
       const result = await MaterialIndexer.indexFile(created.id, dst, isMarkdown, true);
       if (!result.ok) {
@@ -385,6 +387,7 @@ export struct LibraryPage {
         return;
       }
       const count: number = result.count;
+      MaterialRepair.clear(dst);
       keep = true;
       this.matProgress = `已索引 ${count} 句`;
       this.reload();
@@ -411,6 +414,7 @@ export struct LibraryPage {
       if (!keep && created !== null) {
         Store.get().deleteMaterial(created.id);
         if (dstPath.length > 0) {
+          MaterialRepair.clear(dstPath);
           try { fs.unlinkSync(dstPath); } catch (e) {}
         }
         this.reload();

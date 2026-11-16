@@ -10,6 +10,7 @@ import { BackgroundStyle, BgImageStyle } from '../model/BackgroundStyle';
 import { BackupService } from '../services/BackupService';
 import { ReminderService } from '../services/ReminderService';
 import { MaterialIndexer } from '../services/MaterialIndexer';
+import { MaterialRepair } from '../services/MaterialRepair';
 import { Tokens, getTokens, FONT_SERIF, FONT_SANS } from '../theme/Theme';
 import { UiState } from '../state/UiState';
 import { AppError } from '../services/AppError';
@@ -1341,19 +1342,25 @@ export struct SettingsPage {
           const dst: string = matDir + '/' + newId + '.txt';
           fs.copyFileSync(src, dst);
           Store.get().attachMaterialFile(newId, it.name, dst, srcStat.size);
+          MaterialRepair.mark(dst);
           Store.get().clearMaterialIndex(newId);
           const indexed = await MaterialIndexer.indexFile(newId, dst, false, true);
           if (!indexed.ok) {
+            MaterialRepair.clear(dst);
             Store.get().deleteMaterial(newId);
             try { fs.unlinkSync(dst); } catch (e) {}
             newId = '';
             failed++;
             continue;
           }
+          MaterialRepair.clear(dst);
           count++;
         } catch (e) {
           if (newId.length > 0) {
+            const dstPath: string = matDir + '/' + newId + '.txt';
+            MaterialRepair.clear(dstPath);
             Store.get().deleteMaterial(newId);
+            try { fs.unlinkSync(dstPath); } catch (e2) {}
           }
           failed++;
         }
