@@ -49,6 +49,9 @@ export struct ArchivePage {
   private tlDs: ArrayDataSource<TlNote> = new ArrayDataSource<TlNote>();
   @Local revisitDaysValue: number = 7;
   @Local revisitDaysText: string = '7';
+  @Local revisitContentH: number = 380;
+  @Local timelineContentH: number = 520;
+  @Local archContentH: number = 420;
 
   private toast(message: string): void {
     try {
@@ -650,7 +653,7 @@ export struct ArchivePage {
         .width('100%')
         .padding({ top: 10, bottom: 10 })
         .border({ width: { top: 1 }, color: this.t().lineSoft })
-      }, (n: TlNote) => n.id)
+      }, (n: TlNote) => `${n.id}-${n.text.length}-${n.note.length}`)
     }
     .width('100%')
     .padding(18)
@@ -788,8 +791,11 @@ export struct ArchivePage {
           }
           .width('100%')
           .padding({ left: 18, right: 18, top: 6, bottom: 8 })
+          .onAreaChange((_old, area) => {
+            this.revisitContentH = Number(area.height);
+          })
           }
-          .height(380)
+          .height(this.revisitContentH > 380 ? 380 : this.revisitContentH)
           .scrollBar(BarState.Off)
           .edgeEffect(EdgeEffect.Spring)
           .width('100%')
@@ -797,10 +803,12 @@ export struct ArchivePage {
           .borderRadius(this.t().radiusCard)
           .border({ width: 1, color: this.t().line })
           .margin({ top: 10 })
-          InnerScrollNav({
-            onTop: () => { this.revisitScroll.scrollTo({ xOffset: 0, yOffset: 0, animation: { duration: 300, curve: Curve.EaseOut } }); },
-            onBottom: () => { this.revisitScroll.scrollEdge(Edge.Bottom); }
-          })
+          if (this.revisitContentH > 380) {
+            InnerScrollNav({
+              onTop: () => { this.revisitScroll.scrollTo({ xOffset: 0, yOffset: 0, animation: { duration: 300, curve: Curve.EaseOut } }); },
+              onBottom: () => { this.revisitScroll.scrollEdge(Edge.Bottom); }
+            })
+          }
         }
 
         Flex({ wrap: FlexWrap.Wrap }) {
@@ -838,16 +846,24 @@ export struct ArchivePage {
 
         if (this.tab === 'timeline') {
           Scroll(this.timelineScroll) {
-            this.Timeline()
+            Column({ space: 0 }) {
+              this.Timeline()
+            }
+            .width('100%')
+            .onAreaChange((_old, area) => {
+              this.timelineContentH = Number(area.height);
+            })
           }
-          .height(520)
+          .height(this.timelineContentH > 520 ? 520 : this.timelineContentH)
           .scrollBar(BarState.Off)
           .edgeEffect(EdgeEffect.Spring)
           .width('100%')
-          InnerScrollNav({
-            onTop: () => { this.timelineScroll.scrollTo({ xOffset: 0, yOffset: 0, animation: { duration: 300, curve: Curve.EaseOut } }); },
-            onBottom: () => { this.timelineScroll.scrollEdge(Edge.Bottom); }
-          })
+          if (this.timelineContentH > 520) {
+            InnerScrollNav({
+              onTop: () => { this.timelineScroll.scrollTo({ xOffset: 0, yOffset: 0, animation: { duration: 300, curve: Curve.EaseOut } }); },
+              onBottom: () => { this.timelineScroll.scrollEdge(Edge.Bottom); }
+            })
+          }
         } else {
           if (this.categoryList().length === 0) {
             Column({ space: 6 }) {
@@ -875,15 +891,20 @@ export struct ArchivePage {
                 }, (e: OwnEntry) => `${e.id}-${e.archAt}-${e.notes.length}-${e.revisitAt}`)
               }
               .width('100%')
+              .onAreaChange((_old, area) => {
+                this.archContentH = Number(area.height);
+              })
             }
-            .height(420)
+            .height(this.archContentH > 420 ? 420 : this.archContentH)
             .scrollBar(BarState.Off)
             .edgeEffect(EdgeEffect.Spring)
             .width('100%')
-            InnerScrollNav({
-              onTop: () => { this.archScroll.scrollTo({ xOffset: 0, yOffset: 0, animation: { duration: 300, curve: Curve.EaseOut } }); },
-              onBottom: () => { this.archScroll.scrollEdge(Edge.Bottom); }
-            })
+            if (this.archContentH > 420) {
+              InnerScrollNav({
+                onTop: () => { this.archScroll.scrollTo({ xOffset: 0, yOffset: 0, animation: { duration: 300, curve: Curve.EaseOut } }); },
+                onBottom: () => { this.archScroll.scrollEdge(Edge.Bottom); }
+              })
+            }
           }
         }
 

@@ -37,6 +37,9 @@ export struct MinePage {
   private encDs: ArrayDataSource<OwnEntry> = new ArrayDataSource<OwnEntry>();
   private wndDs: ArrayDataSource<OwnEntry> = new ArrayDataSource<OwnEntry>();
   @Local wnd: OwnEntry[] = [];
+  @Local encContentH: number = 360;
+  @Local wndContentH: number = 360;
+  @Local refContentH: number = 420;
   @Local q: string = '';
   @Local panel: string = '';
   @Local targetId: string = '';
@@ -134,6 +137,15 @@ export struct MinePage {
 
   private listScroll(kind: string): Scroller {
     return kind === 'encourage' ? this.encScroll : this.wndScroll;
+  }
+
+  private listContentH(kind: string): number {
+    return kind === 'encourage' ? this.encContentH : this.wndContentH;
+  }
+
+  private listViewH(kind: string): number {
+    const h: number = this.listContentH(kind);
+    return h > 360 ? 360 : h;
   }
 
   private scrollTop(kind: string): void {
@@ -947,18 +959,25 @@ export struct MinePage {
             Column({ space: 0 }) {
               LazyForEach(kind === 'encourage' ? this.encDs : this.wndDs, (e: OwnEntry) => {
                 this.EntryRow(e)
-              }, (e: OwnEntry) => e.id)
+              }, (e: OwnEntry) => `${e.id}-${e.text.length}-${e.note.length}-${e.notes.length}-${e.revisitAt}-${e.archAt}`)
             }
             .width('100%')
+            .onAreaChange((_old, area) => {
+              const h: number = Number(area.height);
+              if (kind === 'encourage') this.encContentH = h;
+              else this.wndContentH = h;
+            })
           }
-          .height(360)
+          .height(this.listViewH(kind))
           .scrollBar(BarState.Off)
           .edgeEffect(EdgeEffect.Spring)
           .width('100%')
-          InnerScrollNav({
-            onTop: () => { this.scrollTop(kind); },
-            onBottom: () => { this.scrollBottom(kind); }
-          })
+          if (this.listContentH(kind) > 360) {
+            InnerScrollNav({
+              onTop: () => { this.scrollTop(kind); },
+              onBottom: () => { this.scrollBottom(kind); }
+            })
+          }
         }
       }
     }
@@ -1108,15 +1127,20 @@ export struct MinePage {
               }
             }
             .width('100%')
+            .onAreaChange((_old, area) => {
+              this.refContentH = Number(area.height);
+            })
           }
-          .height(420)
+          .height(this.refContentH > 420 ? 420 : this.refContentH)
           .scrollBar(BarState.Off)
           .edgeEffect(EdgeEffect.Spring)
           .width('100%')
-          InnerScrollNav({
-            onTop: () => { this.refScroll.scrollTo({ xOffset: 0, yOffset: 0, animation: { duration: 300, curve: Curve.EaseOut } }); },
-            onBottom: () => { this.refScroll.scrollEdge(Edge.Bottom); }
-          })
+          if (this.refContentH > 420) {
+            InnerScrollNav({
+              onTop: () => { this.refScroll.scrollTo({ xOffset: 0, yOffset: 0, animation: { duration: 300, curve: Curve.EaseOut } }); },
+              onBottom: () => { this.refScroll.scrollEdge(Edge.Bottom); }
+            })
+          }
         }
       }
     }

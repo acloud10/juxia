@@ -221,6 +221,7 @@ struct Index {
     ReminderService.rescheduleAll(ctx, false);
     this.applyDark(st.data.settings.theme);
     this.ready = true;
+    this.startDayTimer();
     this.fadeBoot();
     setTimeout(() => {
       MaterialRepair.run(ctx);
@@ -231,6 +232,27 @@ struct Index {
   }
 
   private lastReschedule: number = 0;
+  private dayTimer: number = -1;
+
+  private refreshDay(): void {
+    const st = Store.get();
+    st.rollDay();
+    UiState.get().dayCount = st.dayCount();
+  }
+
+  private startDayTimer(): void {
+    if (this.dayTimer >= 0) return;
+    this.dayTimer = setInterval(() => {
+      this.refreshDay();
+    }, 60000) as number;
+  }
+
+  aboutToDisappear(): void {
+    if (this.dayTimer >= 0) {
+      clearInterval(this.dayTimer);
+      this.dayTimer = -1;
+    }
+  }
 
   onPageHide(): void {
     Store.get().flush().catch((e: Error) => {
@@ -240,6 +262,7 @@ struct Index {
 
   onPageShow(): void {
     if (!this.ready) return;
+    this.refreshDay();
     Store.get().postponeMissedRevisits();
     const now: number = Date.now();
     if (now - this.lastReschedule < 60000) return;

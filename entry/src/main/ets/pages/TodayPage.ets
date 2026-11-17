@@ -896,7 +896,7 @@ export struct TodayPage {
         }
         ForEach(this.revisit, (e: OwnEntry) => {
           this.RevisitCard(e)
-        }, (e: OwnEntry) => e.id)
+        }, (e: OwnEntry) => `${e.id}-${e.text.length}-${e.notes.length}-${e.revisitAt}`)
 
         if (!this.seen) {
           Column({ space: 0 }) {

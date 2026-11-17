@@ -39,6 +39,7 @@ export struct LibraryPage {
   @Local matEditId: string = '';
   @Local matQuery: string = '';
   @Local matCount: number = 0;
+  @Local matContentH: number = 420;
   @Local matIndexing: boolean = false;
   @Local matSaving: boolean = false;
   @Local matProgress: string = '';
@@ -1086,7 +1087,7 @@ export struct LibraryPage {
         .width('100%')
         .padding({ top: 10, bottom: 6 })
         .border({ width: { top: 1 }, color: this.t().lineSoft })
-      }, (m: MaterialEntry) => m.id)
+      }, (m: MaterialEntry) => `${m.id}-${m.name.length}-${m.text.length}-${m.path.length}-${m.size}`)
     }
   }
 
@@ -1398,15 +1399,20 @@ export struct LibraryPage {
           this.MaterialList()
         }
         .width('100%')
+        .onAreaChange((_old, area) => {
+          this.matContentH = Number(area.height);
+        })
       }
-      .height(420)
+      .height(this.matContentH > 420 ? 420 : this.matContentH)
       .scrollBar(BarState.Off)
       .edgeEffect(EdgeEffect.Spring)
       .width('100%')
-      InnerScrollNav({
-        onTop: () => { this.matScroll.scrollTo({ xOffset: 0, yOffset: 0, animation: { duration: 300, curve: Curve.EaseOut } }); },
-        onBottom: () => { this.matScroll.scrollEdge(Edge.Bottom); }
-      })
+      if (this.matContentH > 420) {
+        InnerScrollNav({
+          onTop: () => { this.matScroll.scrollTo({ xOffset: 0, yOffset: 0, animation: { duration: 300, curve: Curve.EaseOut } }); },
+          onBottom: () => { this.matScroll.scrollEdge(Edge.Bottom); }
+        })
+      }
       Divider().color(this.t().line).margin({ top: 8, bottom: 8 })
       this.MaterialForm()
       Divider().color(this.t().line).margin({ top: 12, bottom: 4 })
@@ -1496,7 +1502,7 @@ export struct LibraryPage {
                 Column({ space: 0 }) {
                   LazyForEach(this.libDs, (e: LibEntry) => {
                     this.LibRow(e)
-                  }, (e: LibEntry) => e.id)
+                  }, (e: LibEntry) => `${e.id}-${e.text.length}-${e.source.length}-${e.tag.length}`)
                 }
                 .width('100%')
               }
@@ -1545,7 +1551,7 @@ export struct LibraryPage {
                   Column({ space: 0 }) {
                     ForEach(this.pagedReplies(), (e: OwnEntry) => {
                       this.ReplyRow(e)
-                    }, (e: OwnEntry) => e.id)
+                    }, (e: OwnEntry) => `${e.id}-${e.text.length}`)
                     if (this.filteredReplies().length > this.replyLimit) {
                       Text(`加载更多（还有 ${this.filteredReplies().length - this.replyLimit} 条）`)
                         .fontFamily(FONT_SANS)
