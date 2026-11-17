@@ -272,6 +272,8 @@ struct Index {
     if (!this.ready) return;
     this.refreshDay();
     this.scheduleDayTick();
+    // 回到前台强制所有页重载：恢复/清空/背景保存后不依赖子页各自的 @Monitor。
+    UiState.get().dataVersion = UiState.get().dataVersion + 1;
     Store.get().postponeMissedRevisits();
     const now: number = Date.now();
     if (now - this.lastReschedule < 60000) return;
