@@ -10,11 +10,13 @@ import { Tokens, getTokens, FONT_SERIF, FONT_SANS } from '../theme/Theme';
 import { ArrayDataSource } from '../utils/DataSource';
 import { splitSentences } from '../utils/TextSplit';
 import { UiState } from '../state/UiState';
+import { RefreshBus } from '../state/RefreshBus';
 import { InnerScrollNav } from '../components/InnerScrollNav';
 
 @ComponentV2
 export struct LibraryPage {
   @Local ui: UiState = UiState.get();
+  private refreshHandler: () => void = (): void => { this.reload(); };
   @Event startRitual: (ctx: RitualCtx) => void = () => {};
   private get skin(): string { return this.ui.skin; }
   private get dark(): boolean { return this.ui.dark; }
@@ -73,7 +75,12 @@ export struct LibraryPage {
   }
 
   aboutToAppear(): void {
+    RefreshBus.register(this.refreshHandler);
     this.reload();
+  }
+
+  aboutToDisappear(): void {
+    RefreshBus.unregister(this.refreshHandler);
   }
 
   @Monitor('ui.dataVersion')

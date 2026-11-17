@@ -10,6 +10,7 @@ import { Repo } from './Repo';
 import { clearLegacyKey } from '../services/LegacyKeyCleanup';
 import { splitSentences } from '../utils/TextSplit';
 import { UiState } from '../state/UiState';
+import { RefreshBus } from '../state/RefreshBus';
 import { AppError } from '../services/AppError';
 
 const PREF_NAME: string = 'juxia_store';
@@ -167,7 +168,6 @@ export class Store {
       if (e.at === undefined) e.at = 0;
     });
     if (d.meta.firstUse === 0) d.meta.firstUse = Date.now();
-    this.repairLostOpenDays();
     if (d.settings.skin !== 'plain') d.settings.skin = 'classic';
     if (d.settings.appName.length === 0) d.settings.appName = '句栖';
     // 内置句库已移除：旧版本收藏/排除的内置句一并清掉
@@ -298,53 +298,10 @@ export class Store {
   bump(): void {
     const v: number = UiState.get().dataVersion;
     UiState.get().dataVersion = v + 1;
+    RefreshBus.emit();
   }
 
   // ---------- 每日 ----------
-  private repairLostOpenDays(): void {
-    const meta = this.data.meta;
-    if (meta.openDays.length !== 1 || meta.firstUse <= 0) return;
-    const end = new Date();
-    end.setHours(0, 0, 0, 0);
-    let base: number = meta.firstUse;
-    let span: number = Math.floor((end.getTime() - new Date(base).setHours(0, 0, 0, 0)) / DAY_MS);
-    if (span < 22) {
-      // firstUse 也可能在升级时被重置；用最早一条自己的话/句库/材料兜底，但不改 firstUse。
-      let earliest: number = 0;
-      this.data.own.forEach((e: OwnEntry) => {
-        if (e.createdAt > 0 && (earliest === 0 || e.createdAt < earliest)) earliest = e.createdAt;
-      });
-      this.data.lib.forEach((e: LibEntry) => {
-        if (e.createdAt > 0 && (earliest === 0 || e.createdAt < earliest)) earliest = e.createdAt;
-      });
-      this.data.materials.forEach((e: MaterialEntry) => {
-        if (e.createdAt > 0 && (earliest === 0 || e.createdAt < earliest)) earliest = e.createdAt;
-      });
-      if (earliest > 0) {
-        base = earliest;
-        span = Math.floor((end.getTime() - new Date(base).setHours(0, 0, 0, 0)) / DAY_MS);
-      }
-    }
-    if (span < 22) return;
-    const start = new Date(base);
-    start.setHours(0, 0, 0, 0);
-    const keep: string[] = meta.openDays.slice();
-    const pool: string[] = [];
-    for (let i = 0; i <= span; i++) {
-      const d = new Date(start);
-      d.setDate(d.getDate() + i);
-      const day: string = todayStr(d);
-      if (!keep.includes(day)) pool.push(day);
-    }
-    while (keep.length < 23 && pool.length > 0) {
-      const idx: number = Math.floor(Math.random() * pool.length);
-      keep.push(pool[idx]);
-      pool.splice(idx, 1);
-    }
-    keep.sort();
-    meta.openDays = keep;
-  }
-
   recordOpen(): void {
     const t: string = todayStr();
     if (!this.data.meta.openDays.includes(t)) {

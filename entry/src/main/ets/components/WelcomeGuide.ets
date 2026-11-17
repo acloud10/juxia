@@ -81,6 +81,13 @@ export struct WelcomeGuide {
     return cols[index];
   }
 
+  private guideScrim(): string {
+    if (this.dark) {
+      return this.skin === 'plain' ? '#F21B1A17' : '#F21C1915';
+    }
+    return this.skin === 'plain' ? '#F2F5EFE2' : '#F2F6F0E3';
+  }
+
   private packetFill(): string {
     if (this.dark) return this.skin === 'plain' ? '#2F2A22' : '#2B2B26';
     return this.skin === 'plain' ? this.t().cardSolid : '#fdf9ee';
@@ -233,7 +240,7 @@ export struct WelcomeGuide {
       top: this.ui.safeTop + 18,
       bottom: this.ui.safeBottom + 10
     })
-    .backgroundColor(this.dark ? '#C71b1a17' : '#C7f6f0e3')
+    .backgroundColor(this.guideScrim())
     .transition(TransitionEffect.OPACITY.animation({ duration: 200, curve: Curve.EaseOut }))
   }
 

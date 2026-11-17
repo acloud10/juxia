@@ -488,6 +488,36 @@ export class Repo {
     }
   }
 
+  private parseMeta(raw: string): MetaState {
+    const meta = JSON.parse(raw) as MetaState;
+    if (meta.openDays !== undefined && meta.openDays.length > 0) return meta;
+    // 旧版 release 开启属性混淆但未保留 meta 字段名；键名丢了，值还在。
+    // openDays 的值是 YYYY-MM-DD 字符串数组，可按值特征从旧 JSON 中抢救真实历史。
+    try {
+      const obj = JSON.parse(raw) as Record<string, Object>;
+      const keys: string[] = Object.keys(obj);
+      for (let i = 0; i < keys.length; i++) {
+        const val: Object = obj[keys[i]];
+        if (Array.isArray(val)) {
+          const arr: Object[] = val as Object[];
+          const days: string[] = [];
+          arr.forEach((x: Object) => {
+            if (typeof x === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(x as string)) {
+              days.push(x as string);
+            }
+          });
+          if (days.length > 0) {
+            meta.openDays = days;
+            break;
+          }
+        }
+      }
+    } catch (e) {
+      console.error('juxia meta salvage fail', String(e));
+    }
+    return meta;
+  }
+
   private async loadAll(): Promise<AppData> {
     const d = new AppData();
     const s = this.store;
@@ -567,7 +597,7 @@ export class Repo {
       try {
         if (k === 'settings') d.settings = JSON.parse(v) as Settings;
         else if (k === 'day') d.day = JSON.parse(v) as DayState;
-        else if (k === 'meta') d.meta = JSON.parse(v) as MetaState;
+        else if (k === 'meta') d.meta = this.parseMeta(v);
       } catch (e) {
         console.error('juxia kv row parse fail', k, String(e));
       }

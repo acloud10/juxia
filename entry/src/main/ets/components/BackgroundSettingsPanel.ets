@@ -6,6 +6,7 @@ import { BackgroundService } from '../services/BackgroundService';
 import { BackgroundStyle, BgImageStyle } from '../model/BackgroundStyle';
 import { Tokens, getTokens, FONT_SANS, FONT_SERIF } from '../theme/Theme';
 import { UiState } from '../state/UiState';
+import { RefreshBus } from '../state/RefreshBus';
 
 @ComponentV2
 export struct BackgroundSettingsPanel {
@@ -24,13 +25,23 @@ export struct BackgroundSettingsPanel {
   @Local blurUi: number = 0;
   @Local scrimUi: number = 38;
   @Local ditherUi: number = 100;
+  private refreshHandler: () => void = (): void => {
+    this.bgState = Store.get().data.settings.background;
+    this.sliderRev = this.sliderRev + 1;
+  };
 
   aboutToAppear(): void {
+    RefreshBus.register(this.refreshHandler);
     this.bgState = Store.get().data.settings.background;
     this.glowUi = this.bgState.glowValue;
     this.grainUi = this.bgState.grainValue;
     this.ditherUi = this.bgState.ditherValue;
     this.selectKey(this.effectiveKey());
+  }
+
+  aboutToDisappear(): void {
+    RefreshBus.unregister(this.refreshHandler);
+    this.restorePreview();
   }
 
   private effectiveKey(): string {
@@ -73,27 +84,20 @@ export struct BackgroundSettingsPanel {
   }
 
   private activateKey(key: string): void {
-    if (key === 'light' || key === 'dark') {
-      const wasPlain: boolean = this.ui.skin === 'plain';
-      this.applyTheme(key);
-      this.applySkin('classic');
-      this.selectKey(key);
-      if (wasPlain) {
-        try {
-          this.getUIContext().getPromptAction().showToast({
-            message: '已切回经典；朴素单独调节请点“高级”'
-          });
-        } catch (e) {
-        }
-      }
-      return;
-    }
+    // 点浅色/深色是预览切换：立刻切到对应明暗/皮肤，但不写 settings.theme，
+    // 否则“跟随系统”会被永久改成 light/dark。
     if (key === 'lightPlain' || key === 'darkPlain') {
       this.ensurePlain(key);
-      this.applySkin('plain');
-      this.applyTheme(key === 'lightPlain' ? 'light' : 'dark');
     }
+    this.ui.skin = (key === 'lightPlain' || key === 'darkPlain') ? 'plain' : 'classic';
+    this.ui.dark = key === 'dark' || key === 'darkPlain';
     this.selectKey(key);
+  }
+
+  private restorePreview(): void {
+    const s = Store.get().data.settings;
+    this.ui.skin = s.skin;
+    this.ui.dark = s.theme === 'dark' || (s.theme === 'system' && this.ui.systemDark);
   }
 
   private selectKey(key: string): void {
@@ -461,9 +465,19 @@ export struct BackgroundSettingsPanel {
       }
       .width('100%')
       .padding({ top: 2, bottom: 2 })
-      .onClick(() => { this.expanded = !this.expanded; })
+      .onClick(() => {
+        if (this.expanded) this.restorePreview();
+        this.expanded = !this.expanded;
+      })
 
       if (this.expanded && this.ui.dataVersion >= 0 && this.sliderRev >= 0) {
+        Text('浅色 / 深色与朴素浅色 / 深色仅用于预览；收起“自定义背景”后会恢复原来的主题与界面设置。')
+          .fontFamily(FONT_SANS)
+          .fontSize(11)
+          .lineHeight(18)
+          .fontColor(this.t().inkSoft)
+          .width('100%')
+          .margin({ top: 2, bottom: 4 })
         this.BgRow('经典浅色', 'light', this.sliderRev + this.ui.bgSavedRev)
         this.BgRow('经典深色', 'dark', this.sliderRev + this.ui.bgSavedRev)
 
@@ -520,6 +534,8 @@ export struct BackgroundSettingsPanel {
         this.selectKey(this.effectiveKey());
         this.cleanupFiles();
         this.sliderRev = this.sliderRev + 1;
+      } else {
+        this.restorePreview();
       }
     })
     .padding(16)

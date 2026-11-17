@@ -7,6 +7,7 @@ import { ReminderService } from '../services/ReminderService';
 import { Tokens, getTokens, FONT_SERIF, FONT_SANS } from '../theme/Theme';
 import { ArrayDataSource } from '../utils/DataSource';
 import { UiState } from '../state/UiState';
+import { RefreshBus } from '../state/RefreshBus';
 import { InnerScrollNav } from '../components/InnerScrollNav';
 
 class TlNote {
@@ -30,6 +31,7 @@ class MonthStat {
 @ComponentV2
 export struct ArchivePage {
   @Local ui: UiState = UiState.get();
+  private refreshHandler: () => void = (): void => { this.reload(); };
   private get skin(): string { return this.ui.skin; }
   private get dark(): boolean { return this.ui.dark; }
   @Local tab: string = 'timeline';
@@ -62,7 +64,12 @@ export struct ArchivePage {
   }
 
   aboutToAppear(): void {
+    RefreshBus.register(this.refreshHandler);
     this.reload();
+  }
+
+  aboutToDisappear(): void {
+    RefreshBus.unregister(this.refreshHandler);
   }
 
   @Monitor('ui.dataVersion')

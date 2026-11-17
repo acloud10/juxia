@@ -8,6 +8,7 @@ import { ReminderService } from '../services/ReminderService';
 import { Tokens, getTokens, FONT_SERIF, FONT_SANS } from '../theme/Theme';
 import { ArrayDataSource } from '../utils/DataSource';
 import { UiState } from '../state/UiState';
+import { RefreshBus } from '../state/RefreshBus';
 import { InnerScrollNav } from '../components/InnerScrollNav';
 
 class ReflectGroup {
@@ -68,14 +69,17 @@ export struct MinePage {
   @Local coverOpacity: number = 0;
   @Local kbHeight: number = 0;
   private win: window.Window | null = null;
+  private refreshHandler: () => void = (): void => { this.reload(); };
 
   aboutToAppear(): void {
+    RefreshBus.register(this.refreshHandler);
     this.reload();
     this.bindKeyboard();
   }
 
 
   aboutToDisappear(): void {
+    RefreshBus.unregister(this.refreshHandler);
     if (this.win !== null) {
       try {
         this.win.off('keyboardHeightChange');
@@ -1452,6 +1456,9 @@ export struct MinePage {
     .width('100%')
     .height('100%')
     .align(Alignment.Top)
+    .onVisibleAreaChange([0.0, 1.0], (visible: boolean, ratio: number) => {
+      if (visible && ratio > 0.1) this.reload();
+    })
     .bindContentCover($$this.sheetOpen, this.SheetContent(), { modalTransition: ModalTransition.DEFAULT, onAppear: () => {
       this.coverOpacity = 0;
       setTimeout(() => {

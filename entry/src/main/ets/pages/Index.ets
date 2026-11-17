@@ -16,6 +16,7 @@ import { LibraryPage } from './LibraryPage';
 import { ArchivePage } from './ArchivePage';
 import { SettingsPage } from './SettingsPage';
 import { UiState } from '../state/UiState';
+import { RefreshBus } from '../state/RefreshBus';
 import { AppError } from '../services/AppError';
 import { RestoreRecovery } from '../services/RestoreRecovery';
 import { MaterialRepair } from '../services/MaterialRepair';
@@ -49,6 +50,8 @@ struct Index {
   private switchTab(next: number): void {
     if (next === this.tab) return;
     this.tab = next;
+    // 已挂载过的 TabContent 切回来不会重新 aboutToAppear，显式触发子页 reload。
+    UiState.get().dataVersion = UiState.get().dataVersion + 1;
     if (next === 0) this.bgRev = this.bgRev + 1;
     this.pageOpacity = 0.92;
     this.getUIContext().animateTo({
@@ -169,6 +172,7 @@ struct Index {
   }
 
   async aboutToAppear(): Promise<void> {
+    RefreshBus.register(this.refreshHandler);
     try {
       const density: number = display.getDefaultDisplaySync().densityPixels;
       this.ditherVP = 256 / density;
@@ -232,6 +236,9 @@ struct Index {
   }
 
   private lastReschedule: number = 0;
+  private refreshHandler: () => void = (): void => {
+    this.bgRev = this.bgRev + 1;
+  };
   private dayTimer: number = -1;
 
   private refreshDay(): void {
@@ -256,6 +263,7 @@ struct Index {
   }
 
   aboutToDisappear(): void {
+    RefreshBus.unregister(this.refreshHandler);
     if (this.dayTimer >= 0) {
       clearTimeout(this.dayTimer);
       this.dayTimer = -1;

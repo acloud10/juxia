@@ -9,6 +9,7 @@ import { Tokens, getTokens, FONT_SERIF, FONT_SANS } from '../theme/Theme';
 import { MoodIcon } from '../components/Chrome';
 import { ReminderService } from '../services/ReminderService';
 import { UiState } from '../state/UiState';
+import { RefreshBus } from '../state/RefreshBus';
 
 @ComponentV2
 export struct TodayPage {
@@ -52,6 +53,7 @@ export struct TodayPage {
   @Local backupDismissed: boolean = false;
   @Local needSource: boolean = false;
   private lastText: string = '';
+  private refreshHandler: () => void = (): void => { this.load(); };
 
   @Monitor('sheetOpen')
   syncSheet(monitor: IMonitor): void {
@@ -59,7 +61,12 @@ export struct TodayPage {
   }
 
   aboutToAppear(): void {
+    RefreshBus.register(this.refreshHandler);
     this.load();
+  }
+
+  aboutToDisappear(): void {
+    RefreshBus.unregister(this.refreshHandler);
   }
 
   private load(): void {
