@@ -1,0 +1,98 @@
+name: Android Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: android
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install SDK packages
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Restore release keystore
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          mkdir -p .signing
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 -d > .signing/juxia-release.jks
+          cat > keystore.properties <<EOF
+          storeFile=.signing/juxia-release.jks
+          storePassword=$ANDROID_KEYSTORE_PASSWORD
+          keyAlias=$ANDROID_KEY_ALIAS
+          keyPassword=$ANDROID_KEY_PASSWORD
+          EOF
+
+      - name: Build signed release
+        run: ./gradlew :app:assembleRelease --no-daemon --max-workers=2
+
+      - name: Verify signature
+        run: |
+          set -euo pipefail
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify \
+            --print-certs app/build/outputs/apk/release/app-release.apk
+
+      - name: Prepare release assets
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME#v}"
+          cp app/build/outputs/apk/release/app-release.apk "juxia-android-${version}.apk"
+          sha256sum "juxia-android-${version}.apk" > SHA256SUMS.txt
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: 句栖 ${{ github.ref_name }}
+          body: |
+            ## Android ${{ github.ref_name }}
+
+            下载下方 `juxia-android-*.apk`。
+
+            Android 版目前仍不完备，功能和 UI 可能与鸿蒙版存在差异，
+            不能保证没有 bug。升级、迁移或清空数据前请先导出备份，
+            重要数据不要只留一份。
+
+            ## HarmonyOS
+
+            GitHub 不提供 HAP/APP 安装包。
+            请到华为应用市场搜索「句栖」下载。
+
+            ## 校验
+
+            下载后请核对下方的 `SHA256SUMS.txt`。
+          files: |
+            android/juxia-android-*.apk
+            android/SHA256SUMS.txt
+          fail_on_unmatched_files: true
+
+      - name: Show checksum
+        run: cat SHA256SUMS.txt

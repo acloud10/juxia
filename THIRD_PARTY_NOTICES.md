@@ -105,3 +105,35 @@ INCLUDING ANY GENERAL, SPECIAL, INDIRECT, INCIDENTAL, OR CONSEQUENTIAL
 DAMAGES, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF THE USE OR INABILITY TO USE THE FONT SOFTWARE OR FROM
 OTHER DEALINGS IN THE FONT SOFTWARE.
+
+---
+
+# Android third-party components
+
+## SQLCipher for Android
+
+Copyright (c) Zetetic LLC and contributors.
+SQLCipher Community Edition is distributed under a BSD-style license.
+License and notices: https://www.zetetic.net/sqlcipher/license/
+
+The Android build also includes SQLite (public domain),
+SQLite Android Bindings (public domain), and OpenSSL
+(Apache-2.0 / OpenSSL dual license).
+
+## Haze
+
+Copyright (c) Chris Banes.
+Licensed under the Apache License, Version 2.0.
+Source: https://github.com/chrisbanes/haze
+
+## AndroidX / Jetpack Compose / Kotlin
+
+AndroidX, Jetpack Compose, Kotlin, Kotlin Coroutines and
+kotlinx.serialization are licensed under the Apache License, Version 2.0.
+Sources: https://developer.android.com/jetpack, https://kotlinlang.org/
+
+## JUnit
+
+JUnit 4 is used only for tests and is not shipped in the APK.
+Licensed under the Eclipse Public License 1.0.
+

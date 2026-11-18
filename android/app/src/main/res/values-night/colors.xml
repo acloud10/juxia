@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 对齐鸿蒙 resources/dark/element/color.json 的 start_window_background（夜间） -->
+    <color name="juxia_window_bg">#191712</color>
+</resources>

@@ -1,8 +1,61 @@
 # 句栖 / Juxia
 
-句栖是一个本地优先的句子记录与回看工具，使用 HarmonyOS ArkTS / ArkUI 编写。
+句栖是一个本地优先的句子记录与回看工具，HarmonyOS 主版本使用 ArkTS / ArkUI 编写，另有 Android 版。
 
 它把想对自己说的话收好，在需要的时候重新遇见：写一句鼓励、把旧事放进树洞、归档后约定回访，也可以在句库和材料里找一句陪自己待一会儿。
+
+## 下载
+
+### Android
+
+到 GitHub Releases 下载最新 **signed release APK**：
+
+```text
+https://github.com/acloud10/juxia/releases
+```
+
+Android 版目前仍不完备，功能和 UI 可能与鸿蒙版存在差异，不能保证没有 bug。升级、迁移或清空数据前请先导出备份；重要数据不要只留一份。
+
+### HarmonyOS
+
+GitHub 不提供 HAP/APP 安装包。
+
+请到 **华为应用市场搜索「句栖」** 下载。
+
+## 源码拉取
+
+### 只拉鸿蒙
+
+```powershell
+git clone --filter=blob:none --sparse https://github.com/acloud10/juxia.git
+cd juxia
+git sparse-checkout set AppScope entry hvigor optional-ai docs
+```
+
+### 只拉 Android
+
+```powershell
+git clone --filter=blob:none --sparse https://github.com/acloud10/juxia.git
+cd juxia
+git sparse-checkout set android
+```
+
+### 全拉
+
+```powershell
+git clone https://github.com/acloud10/juxia.git
+```
+
+GitHub 网页的 **Download ZIP** 会下载整个仓库；只有 `git clone` + `sparse-checkout` 能只拉一部分。
+
+## Android 版说明
+
+Android 工程在 `android/`，使用 Kotlin + Jetpack Compose。
+
+- 仍不完备，不能保证没有 bug。
+- 备份 `.sj4` 与鸿蒙版共享格式，但真实跨端互导仍需自行验证。
+- 正式 APK 由固定 release keystore 签名；仓库不包含密钥。
+- 构建与签名说明见 `android/README.md`。
 
 ## 关于 AI（历史备选）
 
@@ -82,6 +135,7 @@ signing/
 
 ```text
 AppScope/                 应用级配置与图标
+android/                  Android 工程（Kotlin + Compose）
 entry/
   src/main/ets/           ArkTS 页面、组件、状态、服务
   src/main/resources/     字符串、颜色、媒体、字体、隐私页

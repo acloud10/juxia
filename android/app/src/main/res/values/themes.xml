@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 启动窗口底色对齐鸿蒙 start_window_background：日间纸色 / 夜间近黑，避免冷启动闪白 -->
+    <style name="Theme.Juxia" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/juxia_window_bg</item>
+    </style>
+</resources>
