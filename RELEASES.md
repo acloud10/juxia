@@ -21,17 +21,17 @@ packages/releases/
 
 ### 1.0.5
 
-`	ext
+```text
 versionCode: 1000005
 targetSdkVersion: 26.0.0
 compileSdkVersion: 26.0.0
 compatibleSdkVersion: 6.1.0(23)
 buildMode: release
-`
+```
 
 本地包：
 
-`	ext
+```text
 packages/releases/1.0.5/句栖-1.0.5-release.app
 6,056,386 字节
 SHA-256: CEBE5ABDF99AEE74E6662F93EC476CBE24D32DDC883C173B1568830278265893
@@ -39,7 +39,7 @@ SHA-256: CEBE5ABDF99AEE74E6662F93EC476CBE24D32DDC883C173B1568830278265893
 packages/releases/1.0.5/句栖-1.0.5-release.hap
 8,721,612 字节
 SHA-256: 29F122A919FDC20EA0BE5DA5BEB5343354CE0AED065C29F280829BE5DF7B0344
-`
+```
 
 
 ### Android 1.0.5
@@ -67,11 +67,11 @@ GitHub 不提供 HAP/APP 安装包；请到华为应用市场搜索「句栖」�
 
 主要更新：
 
-`	ext
+```text
 审核反馈修复：数据刷新、背景刷新、导入/清空刷新
 新手指引预览与收起恢复
 旧版混淆 meta 的 openDays 兼容恢复
-`
+```
 
 ### 1.0.4
 
