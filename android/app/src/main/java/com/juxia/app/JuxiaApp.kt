@@ -6,6 +6,7 @@ import com.juxia.app.services.MaterialRepair
 import com.juxia.app.services.ReminderService
 import com.juxia.app.services.RestoreRecovery
 import com.juxia.app.services.AppError
+import com.juxia.app.services.BackgroundPreviewJournal
 import com.juxia.app.state.UiState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

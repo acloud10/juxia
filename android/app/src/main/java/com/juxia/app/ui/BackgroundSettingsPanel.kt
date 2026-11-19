@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.sp
 import com.juxia.app.data.Store
 import com.juxia.app.model.BgImageStyle
 import com.juxia.app.services.BackgroundService
+import com.juxia.app.services.BackgroundPreviewJournal
 import com.juxia.app.state.UiState
 import com.juxia.app.ui.theme.FontSans
 import com.juxia.app.ui.theme.FontSerif
@@ -74,6 +75,7 @@ fun BackgroundSettingsPanel(onClose: () -> Unit) {
         st.data.settings.theme = originalTheme
         st.data.settings.skin = originalSkin
         st.saveSettings()
+        BackgroundPreviewJournal.clear(ctx)
         UiState.syncFromStore()
         UiState.applyBackground()
     }
@@ -113,12 +115,14 @@ fun BackgroundSettingsPanel(onClose: () -> Unit) {
     }
 
     fun applyTheme(theme: String) {
+        BackgroundPreviewJournal.write(ctx, originalTheme, originalSkin)
         st.data.settings.theme = theme
         st.saveSettings()
         UiState.syncFromStore()
     }
 
     fun applySkin(skin: String) {
+        BackgroundPreviewJournal.write(ctx, originalTheme, originalSkin)
         st.data.settings.skin = skin
         st.saveSettings()
         UiState.syncFromStore()

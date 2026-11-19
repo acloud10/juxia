@@ -181,9 +181,14 @@ fun SettingsPage() {
         scope.launch {
             busy = true
             try {
-                val payload = BackupOps.buildMaterialsPayload(ctx)
-                ctx.contentResolver.openOutputStream(uri)?.use { out -> out.write(payload) }
-                    ?: throw java.io.IOException("无法写入所选位置")
+                val zipFile = BackupOps.buildMaterialsZip(ctx)
+                try {
+                    ctx.contentResolver.openOutputStream(uri)?.use { out ->
+                        zipFile.inputStream().buffered(64 * 1024).use { it.copyTo(out) }
+                    } ?: throw java.io.IOException("无法写入所选位置")
+                } finally {
+                    zipFile.delete()
+                }
                 UiState.showToast("材料包已导出")
             } catch (e: Exception) {
                 UiState.showToast("导出失败：" + (e.message ?: ""))

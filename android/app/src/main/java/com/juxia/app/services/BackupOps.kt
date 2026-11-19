@@ -451,7 +451,8 @@ object BackupOps {
         var items: MutableList<MatPackItem> = mutableListOf()
     )
 
-    suspend fun buildMaterialsPayload(ctx: Context): ByteArray =
+    /** 材料包写到临时文件；调用方负责删除。避免整包读入内存。 */
+    suspend fun buildMaterialsZip(ctx: Context): File =
         withContext(Dispatchers.IO) {
             val st = Store.instance
             val tmp = File.createTempFile("juxia_mats", ".zip")
@@ -475,11 +476,17 @@ object BackupOps {
                     zos.closeEntry()
                 }
                 if (tmp.length() > MAX_BACKUP_BYTES) throw BackupException("材料包超过 256MB，未生成。")
-                tmp.readBytes()
-            } finally {
+                tmp
+            } catch (e: Exception) {
                 tmp.delete()
+                throw e
             }
         }
+
+    suspend fun buildMaterialsPayload(ctx: Context): ByteArray {
+        val f = buildMaterialsZip(ctx)
+        return try { f.readBytes() } finally { f.delete() }
+    }
 
     /** 材料包导入：去重落盘 + 索引。
      *  返回 Triple(新增, 跳过重复, 失败)——索引失败整份回滚（删记录+删文件），
