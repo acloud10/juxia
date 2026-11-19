@@ -104,6 +104,7 @@ object BackupOps {
 
     /** 单条目体积上限（zip bomb 防线；中央目录即给出解压后大小，不解压即可预检） */
     private const val MAX_ENTRY_BYTES = 64L * 1024 * 1024
+    private const val MAX_BACKUP_BYTES = 256L * 1024 * 1024
 
     /** 鸿蒙版清单标识（1.0.4 起本端也写成这个，保证跨端可导入） */
     const val FORMAT_FULL = "juxia-full"
@@ -175,7 +176,8 @@ object BackupOps {
         val st = Store.instance
         for (m in st.data.materials) {
             if (m.name == name && m.size == size) {
-                if (firstLine.isNullOrEmpty()) return true
+                // 首行为空不能直接判重：必须比较首个非空行
+                if (firstLine.isNullOrEmpty()) return false
                 val head = runCatching {
                     MaterialIndexer.readText(m.path).lines().firstOrNull { it.isNotBlank() }
                 }.getOrNull()
@@ -220,6 +222,21 @@ object BackupOps {
         }
     }
 
+    private fun hashEntry(zip: ZipFile, ze: java.util.zip.ZipEntry): Pair<Long, String> {
+        val digest = MessageDigest.getInstance("SHA-256")
+        var size = 0L
+        zip.getInputStream(ze).use { input ->
+            val buf = ByteArray(64 * 1024)
+            while (true) {
+                val n = input.read(buf)
+                if (n < 0) break
+                digest.update(buf, 0, n)
+                size += n
+            }
+        }
+        return size to digest.digest().joinToString("") { "%02x".format(it) }
+    }
+
     fun verifyFullManifest(zip: ZipFile): FullManifest {
         val entry = findEntry(zip, "manifest.json") ?: throw BackupException(Err.LIST_CORRUPT)
         val manifest = readManifest(entry, zip)
@@ -232,26 +249,26 @@ object BackupOps {
         // 1) 本端 entries[]：逐文件 size + sha256
         for (me in manifest.entries) {
             val ze = findEntry(zip, me.name) ?: throw BackupException(Err.CHECK_MAT_MISSING)
-            val bytes = try {
-                zip.getInputStream(ze).use { it.readBytes() }
+            val (size, sha) = try {
+                hashEntry(zip, ze)
             } catch (e: Exception) {
                 throw BackupException(Err.CHECK_DATA_READ)
             }
-            if (bytes.size.toLong() != me.size) throw BackupException(Err.CHECK_SIZE)
-            if (sha256Hex(bytes) != me.sha256) throw BackupException(Err.CHECK_DATA)
+            if (size != me.size) throw BackupException(Err.CHECK_SIZE)
+            if (sha != me.sha256) throw BackupException(Err.CHECK_DATA)
         }
 
         // 2) 鸿蒙 juxia-full：data.json 与每个材料/背景文件逐个核对
         if (manifest.format == FORMAT_FULL) {
             fun check(name: String, expectBytes: Long, expectSha: String) {
                 val ze = findEntry(zip, name) ?: throw BackupException(Err.CHECK_MAT_MISSING)
-                val bytes = try {
-                    zip.getInputStream(ze).use { it.readBytes() }
+                val (size, sha) = try {
+                    hashEntry(zip, ze)
                 } catch (e: Exception) {
                     throw BackupException(Err.CHECK_DATA_READ)
                 }
-                if (expectBytes > 0 && bytes.size.toLong() != expectBytes) throw BackupException(Err.CHECK_SIZE)
-                if (expectSha.isNotEmpty() && sha256Hex(bytes) != expectSha) throw BackupException(Err.CHECK_DATA)
+                if (expectBytes > 0 && size != expectBytes) throw BackupException(Err.CHECK_SIZE)
+                if (expectSha.isNotEmpty() && sha != expectSha) throw BackupException(Err.CHECK_DATA)
             }
             check("data.json", manifest.dataBytes, manifest.dataSha256)
             manifest.materials.forEach { check("materials/${it.id}.txt", it.bytes, it.sha256) }
@@ -299,6 +316,14 @@ object BackupOps {
     /** 完整备份（#16 流式化）：写到临时 zip 返回文件，调用方用完自行删除。
      *  两遍法：第一遍流式算各条目 size+sha256，manifest 居首写，第二遍流式拷贝。 */
     suspend fun buildFullZip(ctx: Context, includeMaterials: Boolean): Pair<File, Boolean> =
+        try {
+            buildFullZipOnce(ctx, includeMaterials)
+        } finally {
+            val staging = File(ctx.cacheDir, "bg_staging")
+            if (staging.exists()) runCatching { RestoreJournal.removeDir(staging.absolutePath) }
+        }
+
+    private suspend fun buildFullZipOnce(ctx: Context, includeMaterials: Boolean): Pair<File, Boolean> =
         withContext(Dispatchers.IO) {
             val st = Store.instance
             data class Entry(val name: String, val source: () -> java.io.InputStream)
@@ -364,6 +389,7 @@ object BackupOps {
                         size += n
                     }
                     val sha = digest.digest().joinToString("") { "%02x".format(it) }
+                    if (size > MAX_ENTRY_BYTES) throw BackupException("备份单条目超过 64MB，未生成。")
                     manifest.entries.add(ManifestEntry(e.name, size, sha))
                     when {
                         e.name == "data.json" -> {
@@ -395,6 +421,10 @@ object BackupOps {
                 }
             }
             if (staging.exists()) RestoreJournal.removeDir(staging.absolutePath)
+            if (tmp.length() > MAX_BACKUP_BYTES) {
+                tmp.delete()
+                throw BackupException("备份文件超过 256MB，未生成。")
+            }
             tmp to includeMaterials
         }
 
@@ -444,6 +474,7 @@ object BackupOps {
                     zos.write(json.encodeToString(MatPackManifest.serializer(), manifest).toByteArray(Charsets.UTF_8))
                     zos.closeEntry()
                 }
+                if (tmp.length() > MAX_BACKUP_BYTES) throw BackupException("材料包超过 256MB，未生成。")
                 tmp.readBytes()
             } finally {
                 tmp.delete()
@@ -529,6 +560,7 @@ object BackupOps {
                 }
                 pack
             } finally {
+                try { zip.close() } catch (_: Exception) {}
                 zipFile.delete()
             }
         }
@@ -545,7 +577,8 @@ object BackupOps {
                 val src = pack.files[m.id]
                 if (src == null || !src.exists()) { skipped++; continue }
                 val firstLine = src.inputStream().buffered().use { input ->
-                    java.io.BufferedReader(java.io.InputStreamReader(input, Charsets.UTF_8)).readLine()
+                    java.io.BufferedReader(java.io.InputStreamReader(input, Charsets.UTF_8))
+                        .lineSequence().firstOrNull { it.isNotBlank() } ?: ""
                 }
                 if (sameMaterialExists(m.name, src.length(), firstLine)) { skipped++; continue }
                 val id = newMaterialId()
@@ -602,6 +635,19 @@ object BackupOps {
                     json.decodeFromString(AppData.serializer(), it.toString(Charsets.UTF_8))
                 } ?: throw BackupException(Err.CHECK_MAT_MISSING)
 
+                if (manifest != null && manifest.format == FORMAT_FULL && manifest.version >= 3) {
+                    val dataMats = payload.data.materials
+                    if (!manifest.includeMaterials && dataMats.isNotEmpty()) {
+                        throw BackupException(Err.CHECK_MAT_COUNT)
+                    }
+                    if (manifest.includeMaterials) {
+                        if (manifest.materialCount != dataMats.size) throw BackupException(Err.CHECK_MAT_COUNT)
+                        val dataIds = dataMats.map { it.id }.toSet()
+                        val fileIds = manifest.materials.map { it.id }.toSet()
+                        if (dataIds != fileIds) throw BackupException(Err.CHECK_MAT_COUNT)
+                    }
+                }
+
                 if (manifest != null && manifest.format == FORMAT_FULL) {
                     payload.hfFormat = true
                     // 鸿蒙布局：材料清单在 data.json 的 materials 里，文件是 materials/<id>.txt；
@@ -612,7 +658,8 @@ object BackupOps {
                     }
                     if (payload.hasMaterials) {
                         for (m in payload.materials) {
-                            val ze = findEntry(zip, "materials/${m.id}.txt") ?: continue
+                            val ze = findEntry(zip, "materials/${m.id}.txt")
+                                ?: throw BackupException(Err.CHECK_MAT_MISSING)
                             if (ze.size > MAX_ENTRY_BYTES) throw BackupException(Err.CHECK_MAT)
                             val dest = File(tmpDir, "mat_${m.id}.txt")
                             zip.getInputStream(ze).use { input ->
@@ -622,7 +669,8 @@ object BackupOps {
                         }
                     }
                     for (bg in manifest.backgrounds) {
-                        val ze = findEntry(zip, "backgrounds/${bg.key}.jpg") ?: continue
+                        val ze = findEntry(zip, "backgrounds/${bg.key}.jpg")
+                            ?: throw BackupException(Err.CHECK_MAT_MISSING)
                         if (ze.size > MAX_ENTRY_BYTES) throw BackupException(Err.CHECK_BG)
                         val dest = File(tmpDir, "bgkey_${bg.key}")
                         zip.getInputStream(ze).use { input ->
@@ -767,7 +815,7 @@ object BackupOps {
                     if (m.path.isNotEmpty()) {
                         if (!Store.instance.indexMaterial(m.id)) failed++
                     } else if (m.text.isNotEmpty()) {
-                        Store.instance.reindexMaterial(m.id, m.text)
+                        if (!Store.instance.reindexMaterial(m.id, m.text)) failed++
                     }
                 }
                 if (failed > 0) {

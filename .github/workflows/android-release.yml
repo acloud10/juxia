@@ -70,6 +70,7 @@ jobs:
         run: |
           set -euo pipefail
           version="${{ inputs.tag }}"
+          version="${version#android-v}"
           version="${version#v}"
           cp app/build/outputs/apk/release/app-release.apk "juxia-android-${version}.apk"
           sha256sum "juxia-android-${version}.apk" > SHA256SUMS.txt

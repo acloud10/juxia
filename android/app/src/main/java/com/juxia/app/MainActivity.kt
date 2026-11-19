@@ -33,6 +33,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -121,6 +122,7 @@ private fun JuxiaRoot() {
 
     UiState.syncFromStore()
     val readyNow by Store.instance.ready.collectAsState()
+    val initErr by Store.instance.initError.collectAsState()
     // 引导/隐私门写的是普通 data 字段；必须订阅全局 dataVersion 才会重算 when。
     val dataRev by UiState.dataVersion.collectAsState()
     if (dataRev < 0L) return
@@ -150,7 +152,7 @@ private fun JuxiaRoot() {
     }
 
     when {
-        !readyNow || !mainReady -> BootScreen()
+        !readyNow || !mainReady -> BootScreen(initErr)
         !st.data.settings.privacyAccepted -> PrivacyGate()
         !st.data.meta.seen -> WelcomeGuide { st.data.meta.seen = true; st.saveKv(); UiState.bump() }
         else -> MainScaffold()
@@ -161,10 +163,12 @@ private fun JuxiaRoot() {
 // ---------- 启动屏（bootText/bootHoldMs/bootFontScale；颜色跟随系统深浅） ----------
 
 @Composable
-private fun BootScreen() {
+private fun BootScreen(initErr: String = "") {
     val systemDark by UiState.systemDark.collectAsState()
     val t = com.juxia.app.ui.theme.getTokens("classic", systemDark)
     val st = Store.instance
+    val ctx = LocalContext.current
+    val scope = rememberCoroutineScope()
     Box(
         Modifier
             .fillMaxSize()
@@ -178,6 +182,26 @@ private fun BootScreen() {
             fontSize = scaledSp(28.0 * st.data.settings.bootFontScale),
             letterSpacing = 2.sp
         )
+        if (initErr.isNotBlank()) {
+            Text(
+                "启动失败。数据没有删除。",
+                color = t.inkSoftColor,
+                fontFamily = FontSans,
+                fontSize = 12.sp,
+                modifier = Modifier.padding(top = 18.dp)
+            )
+            Text(
+                "可重试；若仍失败，先不要清空数据。",
+                color = t.inkSoftColor,
+                fontFamily = FontSans,
+                fontSize = 11.sp,
+                modifier = Modifier.padding(top = 4.dp)
+            )
+            androidx.compose.material3.TextButton(onClick = {
+                scope.launch { runCatching { st.init(ctx) } }
+            }) { Text("重试", color = t.sealColor) }
+        }
+        ToastHost()
     }
 }
 

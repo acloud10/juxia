@@ -44,7 +44,10 @@ object DbKey {
             val raw = ByteArray(32).also { SecureRandom().nextBytes(it) }
             cipher.init(Cipher.ENCRYPT_MODE, key)
             val blob = cipher.iv + cipher.doFinal(raw)
-            prefs.edit().putString(PREF_ENC, Base64.encodeToString(blob, Base64.NO_WRAP)).apply()
+            // 首次口令必须在创建数据库前同步落盘；失败就不要带着未保存的口令建库
+            if (!prefs.edit().putString(PREF_ENC, Base64.encodeToString(blob, Base64.NO_WRAP)).commit()) {
+                throw IllegalStateException("DB_KEY_PERSIST_FAILED")
+            }
             Log.i("juxia", "db key created")
             return Base64.encodeToString(raw, Base64.NO_WRAP)
         }

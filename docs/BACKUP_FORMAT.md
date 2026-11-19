@@ -73,11 +73,15 @@ materials/       可选
 ```json
 {
   "format": "juxia-full",
-  "version": 1,
+  "version": 3,
   "createdAt": 0,
   "dataBytes": 0,
+  "dataSha256": "",
   "materialCount": 0,
-  "includeMaterials": false
+  "materials": [],
+  "backgrounds": [],
+  "includeMaterials": false,
+  "entries": []
 }
 ```
 
@@ -86,10 +90,13 @@ materials/       可选
 | 字段 | 说明 |
 |---|---|
 | `format` | 固定 `juxia-full` |
-| `version` | 当前为 1 |
+| `version` | 当前为 3；兼容读取 v1–v3 |
 | `createdAt` | 导出时间戳 |
 | `dataBytes` | `data.json` 字节数 |
+| `dataSha256` | `data.json` 的 SHA-256 |
 | `materialCount` | 材料数量 |
+| `materials` | 材料 id / 字节数 / SHA-256 |
+| `backgrounds` | 六槽位背景 key / 字节数 / SHA-256 |
 | `includeMaterials` | 是否包含材料 |
 
 恢复时会校验：
@@ -97,8 +104,10 @@ materials/       可选
 ```text
 format
 version
-dataBytes
-materialCount
+dataBytes / dataSha256
+entries[]（本端导出时）
+materials[] / materialCount / data.json.materials 的 id 集合
+backgrounds[] 及对应 ZIP 文件
 ```
 
 ## 4. 材料包 `.zip`

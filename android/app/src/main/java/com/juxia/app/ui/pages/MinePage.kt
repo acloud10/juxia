@@ -212,7 +212,7 @@ fun MinePage() {
             entries = filtered("wound"),
             open = "wound" in expanded,
             onToggle = { expanded = if (it) expanded + "wound" else expanded - "wound" },
-            onNote = { panel = "note"; panelEntryId = it.id; noteInput = latestNote(it) },
+            onNote = { panel = "note"; panelEntryId = it.id; noteInput = st.loadDraft("note_" + it.id).ifEmpty { latestNote(it) } },
             onBind = { panel = "bind"; panelEntryId = it.id; bindRev++ },
             onArchive = {
                 panel = "archive"; panelEntryId = it.id

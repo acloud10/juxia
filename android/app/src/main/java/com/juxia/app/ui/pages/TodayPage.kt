@@ -147,10 +147,11 @@ fun TodayPage() {
 
     fun draw(kind: String, fallbackLib: Boolean = false) {
         if (kind == "encourage" || kind == "wound") {
-            val entry = pickOwn(kind)
-            if (entry == null || (!st.data.settings.drawOwn && !fallbackLib)) {
+            // 「自己的话」关闭时，任何入口都不能再抽自己的话
+            val entry = if (st.data.settings.drawOwn) pickOwn(kind) else null
+            if (entry == null) {
                 // 自己的话不可抽 → 句库兜底或引导
-                if (fallbackLib || st.data.settings.drawLib) {
+                if (st.data.settings.drawLib) {
                     val lib = pickLib()
                     if (lib == null) {
                         if (needSource) { sheetMode = "source"; sheetOpen = true } else UiState.showToast("句库里没有可以抽的句子")
@@ -166,6 +167,10 @@ fun TodayPage() {
             val badge = if (kind == "encourage") "自己的话 · 鼓励" else "自己的话 · 一件旧事"
             UiState.startRitual(RitualCtx(type = "own", badge = badge, tag = "自己写的", entry = entry, todayFlow = true))
         } else {
+            if (!st.data.settings.drawLib) {
+                if (needSource) { sheetMode = "source"; sheetOpen = true } else UiState.showToast("句库来源已关闭")
+                return
+            }
             val lib = pickLib()
             if (lib == null) {
                 if (needSource) { sheetMode = "source"; sheetOpen = true } else UiState.showToast("句库里没有可以抽的句子")

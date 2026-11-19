@@ -25,6 +25,16 @@ android {
         releasePropsFile.inputStream().use { releaseProps.load(it) }
     }
     signingConfigs {
+        // 本机调试签名（keystore 不进公开仓库）；没有该文件时交给 AGP 默认 debug 签名
+        val debugStore = rootProject.file(".signing/debug.keystore")
+        if (debugStore.exists()) {
+            getByName("debug") {
+                storeFile = debugStore
+                storePassword = "android"
+                keyAlias = "androiddebugkey"
+                keyPassword = "android"
+            }
+        }
         if (releasePropsFile.exists()) {
             create("release") {
                 storeFile = rootProject.file(

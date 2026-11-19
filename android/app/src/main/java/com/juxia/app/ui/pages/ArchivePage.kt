@@ -162,6 +162,7 @@ fun ArchivePage() {
                         revisitList().forEach { e ->
                             RevisitCard(e, replyOpenId == e.id, replyText,
                                 onReplyOpen = { replyOpenId = e.id; replyText = "" },
+                                onReplyClose = { replyOpenId = ""; replyText = "" },
                                 onReplyChange = { replyText = it },
                                 onReplySave = {
                                     val body = replyText.trim()
@@ -423,7 +424,7 @@ fun ArchivePage() {
 @Composable
 private fun RevisitCard(
     e: OwnEntry, replyOpen: Boolean, replyText: String,
-    onReplyOpen: () -> Unit, onReplyChange: (String) -> Unit, onReplySave: () -> Unit,
+    onReplyOpen: () -> Unit, onReplyClose: () -> Unit, onReplyChange: (String) -> Unit, onReplySave: () -> Unit,
     onSoon: () -> Unit, onCancel: () -> Unit
 ) {
     val t = appTokens()
@@ -452,7 +453,7 @@ private fun RevisitCard(
                 com.juxia.app.ui.PaperInput(value = replyText, onChange = onReplyChange,
                     placeholder = "不用写完整，回一句话就好")
                 Row(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    QuietButton("取消") { onReplyChange(""); onReplyOpen() }
+                    QuietButton("取消") { onReplyChange(""); onReplyClose() }
                     PrimaryButton("保存回信") { onReplySave() }
                 }
             }

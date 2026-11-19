@@ -15,7 +15,7 @@ import java.util.Calendar
 
 // 句栖 · 回访提醒（翻译自 ReminderService.ets：按天聚合 + running/queued 合并）
 // 语义映射：鸿蒙 reminderAgent（系统日历式托管）→ AlarmManager exact + 通知。
-// 权限前提（manifest 已注释待启用）：POST_NOTIFICATIONS(API 33+)、SCHEDULE_EXACT_ALARM(API 31+)。
+// 权限前提（manifest 已声明）：POST_NOTIFICATIONS(API 33+)、SCHEDULE_EXACT_ALARM(API 31+)。
 object ReminderService {
     const val CHANNEL_ID = "revisit"
     const val EXTRA_DAY_KEY = "com.juxia.app.extra.DAY_KEY"

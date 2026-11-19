@@ -272,8 +272,12 @@ fun SettingsPage() {
                 val parsed = try {
                     BackupOps.parseBackup(zipFile)
                 } finally { zipFile.delete() }
-                selfTestMsg = if (parsed.data.own.size == st.data.own.size) "备份结构自检通过。"
-                              else "备份结构自检失败。数据没有通过一致性检查。"
+                try {
+                    selfTestMsg = if (parsed.data.own.size == st.data.own.size) "备份结构自检通过。"
+                                  else "备份结构自检失败。数据没有通过一致性检查。"
+                } finally {
+                    parsed.cleanup()
+                }
             } catch (e: Exception) {
                 selfTestMsg = "备份结构自检失败，请重启应用后再试。"
             } finally {
@@ -468,8 +472,8 @@ fun SettingsPage() {
                 }
                 Spacer(Modifier.height(8.dp))
                 GhostButton("导入备份（.sj4 / .zip）") {
-                    if (pw.isEmpty()) UiState.showToast("先填密语（zip 导入可随便填）")
-                    else importAny.launch(arrayOf("application/octet-stream", "application/zip", "text/plain", "application/x-zip-compressed"))
+                    // 普通 .zip 不需要密语；.sj4 选完文件后再单独询问
+                    importAny.launch(arrayOf("application/octet-stream", "application/zip", "text/plain", "application/x-zip-compressed"))
                 }
                 Text("数据、句子关系、省身与备注、材料一起打包成 .zip，不加密；拿到文件的人可以直接查看。",
                     color = t.inkSoftColor, fontSize = scaledSp(12.5), fontFamily = FontSans, lineHeight = scaledSp(22))
@@ -572,6 +576,8 @@ fun SettingsPage() {
                     restoreAsk = null
                     scope.launch {
                         busy = true
+                        // 先取消旧闹钟；失败时再按旧数据恢复
+                        try { ReminderService.cancelAll(ctx) } catch (_: Exception) {}
                         val err = BackupOps.doRestore(ctx, p)
                         if (err == null) {
                             BackupOps.pruneMissingMaterials(ctx)
@@ -579,11 +585,19 @@ fun SettingsPage() {
                             UiState.applyBackground()
                             nickInput = st.data.settings.nickname
                             bootInput = st.data.settings.bootText
+                            hourLocal = st.data.settings.revisitHour
+                            minuteLocal = st.data.settings.revisitMinute
+                            bootHoldLocal = st.data.settings.bootHoldMs.toFloat()
+                            bootFontLocal = st.data.settings.bootFontScale.toFloat()
+                            try { ReminderService.rescheduleAll(ctx) } catch (_: Exception) {}
                             UiState.showToast("完整备份已恢复，材料与索引一并回来")
                         } else {
                             when {
                                 err.startsWith("恢复完成") -> UiState.showToast("数据已经恢复；重启应用后会补完材料索引和清理。")
-                                err.contains("JOURNAL_WRITE_FAILED") -> UiState.showToast("数据已恢复，但恢复日志写入失败。")
+                                err.contains("JOURNAL_WRITE_FAILED") -> {
+                                    try { ReminderService.rescheduleAll(ctx) } catch (_: Exception) {}
+                                    UiState.showToast("恢复阶段写入失败；可能只恢复了一部分或没有恢复，重启应用后核对数据。")
+                                }
                                 err.contains("MK_") || err.contains("COPY_FILE") || err.contains("NOT_ENOUGH_SPACE") ->
                                     UiState.showToast("恢复需要额外的临时空间；请清理一些存储后重试。")
                                 restorePlain -> {
@@ -592,6 +606,8 @@ fun SettingsPage() {
                                 }
                                 else -> UiState.showToast("完整备份恢复失败。")
                             }
+                            // 恢复失败也要按当前数据恢复系统闹钟，不能留下已取消的空集合
+                            try { ReminderService.rescheduleAll(ctx) } catch (_: Exception) {}
                         }
                         busy = false
                     }
@@ -620,14 +636,27 @@ fun SettingsPage() {
                     if (wipeStep >= 3) {
                         scope.launch {
                             busy = true
-                            try { st.wipeAll(ctx) }
-                            catch (e: Exception) { UiState.showToast("清空失败。") }
-                            finally { busy = false }
-                            UiState.syncFromStore()
-                            UiState.applyBackground()
-                            nickInput = st.data.settings.nickname
-                            bootInput = st.data.settings.bootText
-                            UiState.showToast("已清空，一切重新开始")
+                            var ok = false
+                            try {
+                                try { ReminderService.cancelAll(ctx) } catch (_: Exception) {}
+                                st.wipeAll(ctx)
+                                ok = true
+                            } catch (e: Exception) {
+                                try { ReminderService.rescheduleAll(ctx) } catch (_: Exception) {}
+                                UiState.showToast("清空失败；数据保留了。")
+                            } finally { busy = false }
+                            if (ok) {
+                                UiState.syncFromStore()
+                                UiState.applyBackground()
+                                nickInput = st.data.settings.nickname
+                                bootInput = st.data.settings.bootText
+                                hourLocal = st.data.settings.revisitHour
+                                minuteLocal = st.data.settings.revisitMinute
+                                bootHoldLocal = st.data.settings.bootHoldMs.toFloat()
+                                bootFontLocal = st.data.settings.bootFontScale.toFloat()
+                                try { ReminderService.rescheduleAll(ctx) } catch (_: Exception) {}
+                                UiState.showToast("已清空，一切重新开始")
+                            }
                         }
                         wipeStep = 0
                     } else wipeStep++
@@ -705,7 +734,7 @@ fun SettingsPage() {
         AlertDialog(
             onDismissRequest = { packPreview?.cleanup(); packPreview = null },
             title = { Text("导入这份材料包？", fontFamily = FontSerif) },
-            text = { Text("恢复将覆盖当前全部数据；若包内不含材料，材料库会为空。", fontFamily = FontSans) },
+            text = { Text("导入会把包中材料去重后并入当前材料库；不会覆盖句子、设置或其他数据。", fontFamily = FontSans) },
             confirmButton = {
                 TextButton(onClick = {
                     val p = pack
@@ -714,12 +743,14 @@ fun SettingsPage() {
                         busy = true
                         try {
                             val (added, skipped, failed) = BackupOps.importMaterialsPack(ctx, p)
-                            p.cleanup()
                             UiState.showToast(
                             "已导入 $added 份材料" +
                             (if (skipped > 0) "，跳过 $skipped 份重复" else "") +
                             (if (failed > 0) "，$failed 份失败已回滚" else ""))
+                        } catch (e: Exception) {
+                            UiState.showToast("材料包导入失败：" + (e.message ?: ""))
                         } finally {
+                            p.cleanup()
                             busy = false
                         }
                     }

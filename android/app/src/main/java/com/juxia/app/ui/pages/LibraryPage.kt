@@ -23,6 +23,7 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -100,7 +101,32 @@ fun LibraryPage() {
     var previewBusy by remember { mutableStateOf(false) }
     var relLibId by remember { mutableStateOf("") }
     var matQuery by remember { mutableStateOf("") }
+    var matContentHits by remember { mutableStateOf(setOf<String>()) }
+    var previewSeq by remember { mutableIntStateOf(0) }
     var relRev by remember { mutableIntStateOf(0) }
+
+    LaunchedEffect(matQuery, dataVersion) {
+        matContentHits = if (matQuery.isBlank()) emptySet() else withContext(Dispatchers.IO) {
+            st.data.materials.filter { m ->
+                m.path.isNotEmpty() && runCatching {
+                    MaterialIndexer.readText(m.path).contains(matQuery, ignoreCase = true)
+                }.getOrDefault(false)
+            }.map { it.id }.toSet()
+        }
+    }
+
+    fun openPreview(id: String, name: String) {
+        val seq = ++previewSeq
+        previewId = id; previewName = name; previewPick = emptySet()
+        scope.launch {
+            previewBusy = true
+            val items = st.materialSentences(id)
+            if (seq == previewSeq) {
+                previewItems = items
+                previewBusy = false
+            }
+        }
+    }
 
     fun replies(): List<OwnEntry> = st.data.own.filter { it.kind == "reply" }.sortedByDescending { it.createdAt }
     fun replySource(r: OwnEntry): String {
@@ -169,7 +195,11 @@ fun LibraryPage() {
             try {
                 val m = st.addMaterial(name, text)
                 matProgress = 100
-                st.reindexMaterial(m.id, text)
+                if (!st.reindexMaterial(m.id, text)) {
+                    st.deleteMaterial(m.id)
+                    UiState.showToast("索引失败，材料未保存")
+                    return@launch
+                }
                 matName = ""; matText = ""
                 UiState.showToast("请稍等，正在保存…")
                 UiState.showToast("已存入材料库")
@@ -238,9 +268,9 @@ fun LibraryPage() {
         matBusy = true
         try {
             st.updateMaterial(matEditId, name, text)
-            st.reindexMaterial(matEditId, text)
+            val indexed = st.reindexMaterial(matEditId, text)
             matEditId = ""; matName = ""; matText = ""
-            UiState.showToast("已保存")
+            if (indexed) UiState.showToast("已保存") else UiState.showToast("正文已保存，但索引失败；重启后可重建")
         } catch (e: Exception) {
             UiState.showToast("保存失败，请重试")
         } finally {
@@ -261,6 +291,10 @@ fun LibraryPage() {
                 val dir = java.io.File(ctx.filesDir, "materials")
                 dir.mkdirs()
                 dest = java.io.File(dir, "mat_$stamp.txt").absolutePath
+                val expected = runCatching {
+                    ctx.contentResolver.openAssetFileDescriptor(uri, "r")?.use { it.length }
+                }.getOrNull() ?: 0L
+                if (expected > 64L * 1024 * 1024) throw java.io.IOException("size")
                 kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
                     ctx.contentResolver.openInputStream(uri)?.use { input ->
                         java.io.File(dest).outputStream().buffered(64 * 1024).use { output ->
@@ -270,9 +304,11 @@ fun LibraryPage() {
                             while (true) {
                                 val n = input.read(buf)
                                 if (n < 0) break
-                                output.write(buf, 0, n)
                                 total += n
-                                val p = minOf(99, (total / (1024 * 20)).toInt())
+                                if (total > 64L * 1024 * 1024) throw java.io.IOException("size")
+                                output.write(buf, 0, n)
+                                val p = if (expected > 0) ((total * 100) / expected).toInt().coerceIn(0, 99)
+                                        else minOf(99, (total / (1024 * 1024)).toInt())
                                 if (p != last) { last = p; matProgress = p }
                             }
                         }
@@ -459,13 +495,10 @@ fun LibraryPage() {
         Card {
             Text("支持 UTF-8 / UTF-16 / GB18030 的 .txt 和 Markdown（.md / .markdown）文本。可以直接导入原始文本；句栖会按空行分句入库。",
                 color = t.inkSoftColor, fontSize = scaledSp(12), fontFamily = FontSans, lineHeight = scaledSp(22))
-            Text("材料只存在本机。检索时只抽原文并注明材料名，不编造。没有固定大小上限，但大文件（数 MB 以上）导入与检索都会明显变慢，建议拆成多份。",
+            Text("材料只存在本机。检索时只抽原文并注明材料名，不编造。单文件上限 64 MiB；大文件会明显变慢，建议拆成多份。",
                 color = t.inkSoftColor, fontSize = scaledSp(11), fontFamily = FontSans, lineHeight = scaledSp(20),
                 modifier = Modifier.padding(top = 6.dp))
-            Text("材料只存在本机。检索时只抽原文并注明材料名，不编造。没有固定大小上限，但大文件（数 MB 以上）导入与检索都会明显变慢，建议拆成多份。",
-                color = t.inkSoftColor, fontSize = scaledSp(11), fontFamily = FontSans, lineHeight = scaledSp(20),
-                modifier = Modifier.padding(top = 6.dp))
-            Spacer(Modifier.height(8.dp))
+                        Spacer(Modifier.height(8.dp))
             if (matProgress >= 0) {
                 Text(if (matProgress < 100) "正在复制文件… $matProgress%" else "请稍等，正在建立句子索引…",
                     color = t.inkSoftColor, fontSize = scaledSp(11), fontFamily = FontSans)
@@ -485,10 +518,10 @@ fun LibraryPage() {
             }
             Spacer(Modifier.height(8.dp))
             com.juxia.app.ui.PaperInput(value = matQuery, onChange = { matQuery = it },
-                placeholder = "搜索材料：名称或内容", multiLine = false)
+                placeholder = "搜索材料：名称或粘贴内容", multiLine = false)
             Spacer(Modifier.height(6.dp))
             val matShown = st.data.materials.filter {
-                matQuery.isEmpty() || it.name.contains(matQuery) || it.text.contains(matQuery)
+                matQuery.isEmpty() || it.name.contains(matQuery) || it.text.contains(matQuery) || it.id in matContentHits
             }
             if (matShown.isEmpty()) {
                 Text(if (matQuery.isNotEmpty()) "没有找到。换个词，或清空搜索。" else "材料库还是空的。把你的摘抄、某本书的文本粘贴进来，或选择一个 .txt / .md 文件。",
@@ -500,26 +533,12 @@ fun LibraryPage() {
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column(Modifier.weight(1f).clickable {
-                        previewId = m.id; previewName = m.name; previewPick = emptySet()
-                        scope.launch {
-                            previewBusy = true
-                            previewItems = st.materialSentences(m.id)
-                            previewBusy = false
-                        }
-                    }) {
+                    Column(Modifier.weight(1f).clickable { openPreview(m.id, m.name) }) {
                         Text(m.name, color = t.inkStrongColor, fontSize = scaledSp(14.5), fontFamily = FontSerif)
                         Text(if (m.path.isNotEmpty()) "文件材料 · 已建立句子索引" else "${m.text.length} 字",
                             color = t.inkSoftColor, fontSize = scaledSp(10.5), fontFamily = FontSans)
                     }
-                    QuietButton("预览") {
-                        previewId = m.id; previewName = m.name; previewPick = emptySet()
-                        scope.launch {
-                            previewBusy = true
-                            previewItems = st.materialSentences(m.id)
-                            previewBusy = false
-                        }
-                    }
+                    QuietButton("预览") { openPreview(m.id, m.name) }
                     QuietButton("编辑") {
                         matEditId = m.id
                         matName = m.name
@@ -576,7 +595,11 @@ fun LibraryPage() {
                     if (previewItems.isEmpty() && !previewBusy) {
                         Text("这份材料还没有切出句子。", color = t.inkSoftColor, fontSize = scaledSp(12), fontFamily = FontSans)
                     }
-                    QuietButton("全选") { previewPick = previewItems.take(200).toSet() }
+                    QuietButton("全选") {
+                        previewPick = previewItems.take(200).filter { s ->
+                            st.data.lib.none { it.text == s } && !inDislikes(s)
+                        }.toSet()
+                    }
                     QuietButton("清空选择") { previewPick = emptySet() }
                 }
             }

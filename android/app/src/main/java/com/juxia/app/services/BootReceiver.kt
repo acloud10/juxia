@@ -23,6 +23,7 @@ class BootReceiver : BroadcastReceiver() {
                 Store.instance.init(ctx.applicationContext)
                 var guard = 0
                 while (!Store.instance.ready.value && guard++ < 200) delay(50)
+                if (!Store.instance.ready.value) return@launch
                 ReminderService.rescheduleAll(ctx.applicationContext)
             } catch (_: Exception) {
             } finally {

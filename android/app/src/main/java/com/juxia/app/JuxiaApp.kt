@@ -5,6 +5,8 @@ import com.juxia.app.data.Store
 import com.juxia.app.services.MaterialRepair
 import com.juxia.app.services.ReminderService
 import com.juxia.app.services.RestoreRecovery
+import com.juxia.app.services.AppError
+import com.juxia.app.state.UiState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -20,6 +22,9 @@ class JuxiaApp : Application() {
         super.onCreate()
         com.juxia.app.ui.theme.Fonts.init(this)
         ReminderService.ensureChannel(this)
+        AppError.listener = { r ->
+            UiState.showToast(if (r.hint.isBlank()) r.title else "${r.title}${r.hint}")
+        }
         appScope.launch {
             try {
                 Store.instance.init(this@JuxiaApp)

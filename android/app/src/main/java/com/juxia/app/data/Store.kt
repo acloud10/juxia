@@ -24,6 +24,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
@@ -42,6 +44,9 @@ class Store {
     private var useDb = false
     private val _ready = MutableStateFlow(false)
     val ready: StateFlow<Boolean> = _ready
+    private val _initError = MutableStateFlow("")
+    val initError: StateFlow<String> = _initError
+    private val initMutex = Mutex()
 
     private var idSeq = 0
     private var prefsJob: Job? = null
@@ -69,7 +74,19 @@ class Store {
 
     @Volatile private var initializing = false
 
-    suspend fun init(context: Context, legacy: AppData? = null) {
+    suspend fun init(context: Context, legacy: AppData? = null) = initMutex.withLock {
+        try {
+            initOnce(context, legacy)
+            _initError.value = ""
+        } catch (e: Exception) {
+            _initError.value = e.message ?: "启动失败"
+            throw e
+        } finally {
+            initializing = false
+        }
+    }
+
+    private suspend fun initOnce(context: Context, legacy: AppData?) {
         // 原子守卫：BOOT 接收器与 Application 可能并发进入，check-then-act 会双初始化
         if (_ready.value || initializing) return
         initializing = true
@@ -279,8 +296,10 @@ class Store {
 
     /** 清空全部：公开入口（UI 用），附带本机痕迹清理 */
     suspend fun wipeAll(context: Context?, next: AppData = AppData()) {
-        wipeLocalArtifacts(context)
+        // 先提交空数据；数据库失败时不能先删材料文件
         resetAll(next)
+        // 无数据库模式由 resetAll 自己清理 prefs；有数据库时才在这里清旧文件
+        if (useDb) wipeLocalArtifacts(context)
     }
 
     /** 恢复路径：换数据 + 换新 restore token */
@@ -493,9 +512,11 @@ class Store {
 
     // ---------- 材料 ----------
 
-    suspend fun reindexMaterial(id: String, text: String) {
-        if (repo == null) return
-        repo!!.replaceSentences(id, splitSentences(text))
+    suspend fun reindexMaterial(id: String, text: String): Boolean {
+        val r = repo ?: return false
+        val sents = splitSentences(text)
+        if (sents.isEmpty()) return false
+        return r.replaceSentences(id, sents)
     }
 
     suspend fun reindexFile(id: String): Boolean {
@@ -540,6 +561,8 @@ class Store {
         val m = data.materials.find { it.id == id } ?: return
         m.name = name
         m.text = text
+        // 编辑后正文以内嵌 text 为准，旧 path 不能再优先
+        m.path = ""
         m.size = text.length.toLong()
         persist()
         bump()

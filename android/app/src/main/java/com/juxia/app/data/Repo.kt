@@ -26,8 +26,8 @@ private typealias ContentValues = android.content.ContentValues
 
 // 句栖 · RDB 持久层（翻译自 Repo.ets）
 // 表结构、写队列、事务快照、FTS5 trigram 索引与鸿蒙版一一对应。
-// 已知差异（待决策）：鸿蒙版 encrypt=true 系统级加密；本实现用 requery sqlite（未加密）。
-// 打开数据库收敛在 openDb() 单点，如需 SQLCipher 只改这一处。
+// 加密：SQLCipher 4.5.6 全库加密，密钥由 Android Keystore 托管（见 DbKey）。
+// 打开数据库收敛在 openDb() 单点。
 class Repo {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val json = Json { encodeDefaults = true; ignoreUnknownKeys = true }
@@ -48,7 +48,7 @@ class Repo {
         var kvOnly: Boolean = false,
     )
 
-    // requery sqlite 的 ContentValues 与 android.content.ContentValues 同名，用别名避免歧义
+    // SQLCipher 的 ContentValues 与 android.content.ContentValues 同名，用别名避免歧义
     // ---------- 生命周期 ----------
 
     suspend fun init(context: Context, legacy: AppData?): AppData {
@@ -89,6 +89,16 @@ class Repo {
             throw IllegalStateException("SQLCIPHER_LOAD_FAILED")
         }
         val dbFile = File(context.filesDir, "juxia.db")
+        // 迁移中断恢复：宁可恢复旧库/临时库，也不要新建空库掩盖旧数据
+        val legacyFile = File(context.filesDir, "juxia_legacy_backup.db")
+        val tmpFile = File(context.filesDir, "juxia_enc_tmp.db")
+        if (!dbFile.exists()) {
+            if (tmpFile.exists() && !isPlaintextDb(tmpFile)) {
+                if (!tmpFile.renameTo(dbFile)) Log.e("juxia", "recover tmp db rename failed")
+            } else if (legacyFile.exists()) {
+                if (!legacyFile.renameTo(dbFile)) Log.e("juxia", "recover legacy db rename failed")
+            }
+        }
         // 新包 sqlcipher-android 4.5.6：AAR 字节级验证——openOrCreateDatabase(File, 密语, Factory, ErrorHandler)
         // 四参重载存在；loadLibs 不存在（native 库自加载），故不调用
         val pass = try {
@@ -302,10 +312,11 @@ class Repo {
 
     // ---------- 材料句子 ----------
 
-    suspend fun replaceSentences(materialId: String, sentences: List<String>) {
-        if (store == null) return
+    suspend fun replaceSentences(materialId: String, sentences: List<String>): Boolean {
+        if (store == null) return false
         clearSentences(materialId)
-        appendSentences(materialId, 0, sentences)
+        if (sentences.isEmpty()) return true
+        return appendSentences(materialId, 0, sentences) >= sentences.size
     }
 
     suspend fun appendSentences(materialId: String, startOrd: Int, sentences: List<String>): Int {
@@ -603,7 +614,11 @@ class Repo {
                 }
             }
         } finally {
-            queueMutex.withLock { rowBusy = false }
+            val hasMore = queueMutex.withLock {
+                rowBusy = false
+                rowTasks.isNotEmpty()
+            }
+            if (hasMore) drainRows()
         }
     }
 

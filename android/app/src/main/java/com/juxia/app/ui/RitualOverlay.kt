@@ -8,6 +8,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -89,6 +91,13 @@ fun RitualOverlay(
 
     // 初始化：按仪式感档位决定起点
     LaunchedEffect(ctx) {
+        // 新一次抽签：所有仪式状态必须跟着 ctx 重置
+        packetOpen = false
+        revealed = false
+        replyOpen = false
+        replyText = ""
+        showSource = false
+        stage = ""
         when (st.data.settings.ritualMode) {
             "off" -> { stage = "reveal"; revealed = true }
             "short" -> { stage = "reveal"; delay(60); revealed = true }
@@ -322,9 +331,10 @@ private fun RevealStage(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun CharReveal(text: String, revealed: Boolean, t: com.juxia.app.ui.theme.Tokens) {
-    Row {
+    FlowRow {
         text.toList().forEachIndexed { i, ch ->
             val alpha by animateFloatAsState(
                 targetValue = if (revealed) 1f else 0f,
@@ -439,7 +449,7 @@ private fun PlainPaper(text: String, revealed: Boolean, appName: String, t: com.
     val cols = vColumns(text, f)
 
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Column(
+        Box(
             Modifier
                 .width(width.dp)
                 .height(420.dp)

@@ -91,11 +91,13 @@ object MaterialIndexer {
                 var ord = 0
                 var batch = mutableListOf<String>()
                 File(path).inputStream().buffered(CHUNK).use { input ->
-                    val buf = ByteArray(CHUNK)
+                    // InputStreamReader + 同一个 decoder 会自动保存跨块的多字节残码
+                    val reader = java.io.InputStreamReader(input, decoder)
+                    val cbuf = CharArray(CHUNK)
                     while (true) {
-                        val n = input.read(buf)
+                        val n = reader.read(cbuf)
                         if (n <= 0) break
-                        pending += decodeChunk(decoder, buf.copyOf(n), false)
+                        pending += String(cbuf, 0, n)
                         val cut = lastBreak(pending)
                         if (cut >= 0) {
                             val complete = pending.substring(0, cut + 1)
@@ -107,11 +109,10 @@ object MaterialIndexer {
                             if (written != batch.size) throw IllegalStateException("INDEX_PARTIAL")
                             ord += written
                             batch = mutableListOf()
-                            yield() // 让出协程，对应鸿蒙版 setTimeout(0) 让出 UI
+                            yield()
                         }
                     }
                 }
-                pending += decodeChunk(decoder, ByteArray(0), true)
                 batch = (batch + splitSentences(clean(pending))).toMutableList()
                 if (batch.isNotEmpty()) {
                     val written = com.juxia.app.data.Store.instance.appendMaterialSentences(id, ord, batch)

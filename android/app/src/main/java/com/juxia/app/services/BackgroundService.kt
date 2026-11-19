@@ -70,7 +70,7 @@ object BackgroundService {
         if (!copied) throw CopyImageFailed()
     }
 
-    /** Bitmap → JPEG q85，tmp+fsync+rename，返回最终路径 */
+    /** Bitmap → JPEG q85，写临时文件后 rename，返回最终路径 */
     suspend fun saveBitmap(ctx: Context, bitmap: Bitmap, key: String): String =
         withContext(Dispatchers.IO) {
             val dir = File(ctx.filesDir, "backgrounds")

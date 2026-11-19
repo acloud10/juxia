@@ -64,7 +64,17 @@ fun BackgroundCropPage(srcPath: String, cropKey: String, onClose: () -> Unit) {
     var bmp by remember(srcPath) { mutableStateOf<Bitmap?>(null) }
     LaunchedEffect(srcPath) {
         bmp = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-            runCatching { BitmapFactory.decodeFile(srcPath) }.getOrNull()
+            runCatching {
+                val dm = ctx.resources.displayMetrics
+                val maxW = dm.widthPixels * 2
+                val maxH = dm.heightPixels * 2
+                val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                BitmapFactory.decodeFile(srcPath, bounds)
+                var sample = 1
+                while (bounds.outWidth / sample > maxW || bounds.outHeight / sample > maxH) sample *= 2
+                val opts = BitmapFactory.Options().apply { inSampleSize = sample }
+                BitmapFactory.decodeFile(srcPath, opts)
+            }.getOrNull()
         }
     }
     val bmpNow = bmp

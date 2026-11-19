@@ -46,7 +46,7 @@ object RestoreRecovery {
                 store.clearMaterialIndex(m.id)
                 if (m.path.isEmpty()) {
                     // 纯文本材料：path 为空不能喂 indexFile（File("").inputStream() 必崩）
-                    store.reindexMaterial(m.id, m.text)
+                    if (!store.reindexMaterial(m.id, m.text)) failed++
                 } else {
                     val r = MaterialIndexer.indexFile(m.id, m.path, markdown = false, quiet = true)
                     if (!r.ok) failed++

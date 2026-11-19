@@ -21,6 +21,7 @@ import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -80,6 +81,10 @@ fun BackgroundSettingsPanel(onClose: () -> Unit) {
     fun closePanel(): Unit {
         restoreExternal()
         onClose()
+    }
+
+    DisposableEffect(Unit) {
+        onDispose { runCatching { restoreExternal() } }
     }
 
     val keys = listOf("light" to "经典 · 日间", "dark" to "经典 · 夜间",

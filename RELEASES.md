@@ -117,7 +117,7 @@ manifest v2 数据/材料 SHA-256
 
 | 版本 | versionCode | 状态 |
 |---|---:|---|
-| 1.0.4 | 1000004 | 当前 |
+| 1.0.4 | 1000004 | 历史 |
 | 1.0.3 | 1000003 | 已发布 |
 | 1.0.2 | 1000002 | 历史 |
 | 1.0.1 | 1000001 | 历史 |
@@ -144,6 +144,6 @@ signing/
 
 ## 相关文档
 
-- [CHANGELOG.md](../CHANGELOG.md)
+- [CHANGELOG.md](CHANGELOG.md)
 - [docs/BACKUP_FORMAT.md](BACKUP_FORMAT.md)
 - [docs/DEBUG_SEED.md](DEBUG_SEED.md)
