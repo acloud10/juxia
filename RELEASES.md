@@ -19,6 +19,39 @@ packages/releases/
 
 ## 最新版本
 
+### 1.0.6
+
+```text
+versionCode: 1000006
+targetSdkVersion: 26.0.0
+compileSdkVersion: 26.0.0
+compatibleSdkVersion: 6.1.0(23)
+buildMode: release
+```
+
+本地包：
+
+```text
+packages/releases/1.0.6/句栖-1.0.6-release.app
+6,083,985 字节
+SHA-256: 87DA57AC304971D7033BFEEB6E7BF2BF91B68BF7071000E69DFE5C5FBDEF2BA1
+
+packages/releases/1.0.6/句栖-1.0.6-release.hap
+8,785,793 字节
+SHA-256: 4300B60483B7F6A7551185DAE0A798E6FC79A83E2967264D50C1A39C27C8CBA9
+```
+
+主要更新：
+
+```text
+新手指引改为晴线 5 步、雨线 6 步的自动演示
+回信区移到「我的」省身上方，默认折叠，保留独立搜索
+设置 → 关于新增评价句栖
+旧事回访默认改为 14 天
+新手指引完整文案增加折纸开场
+修复演示时序、写入弹层、回信死代码等问题
+```
+
 ### 1.0.5
 
 ```text
