@@ -2,6 +2,7 @@
   "src": [
     "pages/Index",
     "pages/PrivacyPage",
+    "pages/GuideTextPage",
     "pages/BackgroundCropPage"
   ]
 }

@@ -38,6 +38,7 @@ export struct ArchivePage {
   @Local q: string = '';
   @Local showRevisit: boolean = false;
   private revisitScroll: Scroller = new Scroller();
+  private demoTimer: number = -1;
   private timelineScroll: Scroller = new Scroller();
   private archScroll: Scroller = new Scroller();
   @Local replyOpenId: string = '';
@@ -49,8 +50,8 @@ export struct ArchivePage {
   @Local coverOpacity: number = 0;
   @Local items: OwnEntry[] = [];
   private tlDs: ArrayDataSource<TlNote> = new ArrayDataSource<TlNote>();
-  @Local revisitDaysValue: number = 7;
-  @Local revisitDaysText: string = '7';
+  @Local revisitDaysValue: number = 14;
+  @Local revisitDaysText: string = '14';
   @Local revisitContentH: number = 380;
   @Local timelineContentH: number = 520;
   @Local archContentH: number = 420;
@@ -75,6 +76,32 @@ export struct ArchivePage {
   @Monitor('ui.dataVersion')
   onData(monitor: IMonitor): void {
     this.reload();
+  }
+
+  @Monitor('ui.demoSeq')
+  onDemoSeq(monitor: IMonitor): void {
+    if (this.ui.demoAction !== 'revisit') return;
+    const id: string = this.ui.demoTarget;
+    if (id.length === 0) return;
+    if (this.demoTimer >= 0) clearInterval(this.demoTimer);
+    this.ui.demoBusy = true;
+    this.showRevisit = true;
+    this.replyOpenId = id;
+    this.replyText = '';
+    this.reload();
+    const text: string = this.ui.demoText;
+    let i: number = 0;
+    this.demoTimer = setInterval(() => {
+      i += 1;
+      this.replyText = text.slice(0, i);
+      if (i >= text.length) {
+        clearInterval(this.demoTimer);
+        this.demoTimer = -1;
+        this.saveRevisitReply(id);
+        this.ui.demoAction = '';
+        this.ui.demoBusy = false;
+      }
+    }, 55);
   }
 
   @Monitor('sheetOpen')

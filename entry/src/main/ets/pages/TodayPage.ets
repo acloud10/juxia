@@ -53,11 +53,88 @@ export struct TodayPage {
   @Local backupDismissed: boolean = false;
   @Local needSource: boolean = false;
   private lastText: string = '';
+  private demoTimer: number = -1;
+  private demoStartTimer: number = -1;
   private refreshHandler: () => void = (): void => { this.load(); };
 
   @Monitor('sheetOpen')
   syncSheet(monitor: IMonitor): void {
     this.ui.sheetOpenToday = this.sheetOpen;
+  }
+
+  @Monitor('ui.openWriteReq')
+  openWriteFromGuide(monitor: IMonitor): void {
+    if (this.ui.demoAction === 'write') {
+      this.startMoreWrite(this.ui.demoBranch === 'rain' ? 'wound' : 'encourage');
+    } else {
+      this.openSheet('write');
+    }
+  }
+
+  @Monitor('ui.demoSeq')
+  runDemoWrite(monitor: IMonitor): void {
+    if (this.demoStartTimer >= 0) clearTimeout(this.demoStartTimer);
+    if (this.demoTimer >= 0) clearInterval(this.demoTimer);
+    if (this.ui.demoAction === 'revisitToday') {
+      const id: string = this.ui.demoTarget;
+      if (id.length === 0) return;
+      this.ui.demoBusy = true;
+      this.replyOpenId = id;
+      this.replyText = '';
+      const text: string = this.ui.demoText;
+      let ri: number = 0;
+      this.demoTimer = setInterval(() => {
+        ri += 1;
+        this.replyText = text.slice(0, ri);
+        if (ri >= text.length) {
+          clearInterval(this.demoTimer);
+          this.demoTimer = -1;
+          this.saveRevisitReply(id);
+          this.ui.demoAction = '';
+          this.ui.demoBusy = false;
+        }
+      }, 180);
+      return;
+    }
+    if (this.ui.demoAction === 'draw') {
+      this.sheetOpen = false;
+      this.mood = this.ui.demoBranch === 'rain' ? 'bad' : 'good';
+      Store.get().data.day.mood = this.mood;
+      this.ui.demoBusy = true;
+      this.draw(this.ui.demoBranch === 'rain' ? 'encourage' : 'wound', true);
+      this.ui.demoAction = '';
+      setTimeout(() => { this.ui.demoBusy = false; }, 1200);
+      return;
+    }
+    if (this.ui.demoAction !== 'write') return;
+    if (this.demoTimer >= 0) clearInterval(this.demoTimer);
+    const text: string = this.ui.demoText;
+    this.mood = this.ui.demoBranch === 'rain' ? 'bad' : 'good';
+    Store.get().data.day.mood = this.mood;
+    Store.get().data.day.wrote = false;
+    Store.get().data.day.drew = false;
+    this.inputText = '';
+    this.startMoreWrite(this.ui.demoBranch === 'rain' ? 'wound' : 'encourage');
+    this.ui.demoBusy = true;
+    if (this.demoStartTimer >= 0) clearTimeout(this.demoStartTimer);
+    this.demoStartTimer = setTimeout(() => {
+      if (this.ui.demoAction !== 'write') return;
+      let i: number = 0;
+      this.demoTimer = setInterval(() => {
+        i += 1;
+        this.inputText = text.slice(0, i);
+        if (i >= text.length) {
+          clearInterval(this.demoTimer);
+          this.demoTimer = -1;
+          this.demoStartTimer = setTimeout(() => {
+            this.saveOwn();
+            this.choice = '';
+            this.ui.demoAction = '';
+            this.ui.demoBusy = false;
+          }, 900);
+        }
+      }, 180);
+    }, 700);
   }
 
   aboutToAppear(): void {
@@ -988,7 +1065,14 @@ export struct TodayPage {
           this.MoodCard('good', '今天还不错', '存一句鼓励', '可处理一件旧事')
           this.MoodCard('bad', '今天有点糟', '树洞写下来', '抽一句陪着你')
         }
-        .width('100%')
+        .width('100%')        .onAreaChange((_old, area) => {
+          const ui = UiState.get();
+          ui.guideX = Number(area.globalPosition.x);
+          ui.guideY = Number(area.globalPosition.y);
+          ui.guideW = Number(area.width);
+          ui.guideH = Number(area.height);
+          ui.guideRectReady = true;
+        })
 
         if (this.mood.length > 0 && !this.wrote && !this.drew && this.choice.length === 0) {
           this.ChoiceCard()

@@ -1,260 +1,298 @@
-// 句栖 · 新手指引：折纸展开 → 使用说明
+// 句栖 · 新手指引：折纸 → 一屏说明 → 晴雨选择 → 分支演示 → 真实第一句
 import { Tokens, getTokens, FONT_SERIF, FONT_SANS } from '../theme/Theme';
 import { UiState } from '../state/UiState';
-import { scalePath, pathScale } from '../utils/PathScale';
+import { Store } from '../data/Store';
+import { FoldCover } from './FoldCover';
 
-const FLAP_CMDS: string[] = [
-  'M 0 0 L 220 0 L 110 110 Z',
-  'M 220 0 L 220 220 L 110 110 Z',
-  'M 0 220 L 220 220 L 110 110 Z',
-  'M 0 0 L 0 220 L 110 110 Z'
-];
-
-const GUIDE_TEXT: string = `这是一个越用越好用（复利效应）的栖息空间。你可以向树洞（完全本地，无云端）倾诉烦恼，也可以把积极的能量储蓄在里面，在能量不足时提取使用；还可以尝试反省自身（板块主体设置可关闭），从而在栖息中获得成长。
-
-晴（写一句）：建议写“对自己说的一句鼓励”，储蓄自我能量
-晴（抽一句）：可以抽“一件旧事”，完善心境
-雨（写一句）：建议写“让自己难过的事”，倾诉树洞
-雨（抽一句）：可以抽“让自己感觉好些的话”，汲取能量
-
-省身（设置中可以关闭）：建议写“我发现了什么 + 下次怎么做”，反思进步
-材料：建议只放让自己舒服的文字，详细格式见材料区的“？”，借力外界能量
-关联与备注：鼓励、旧事、句库三者可以互相关联，或者各自备注，留下注脚。
-回忆与回访：收纳已经归档的文字；旧事按“已解决 / 已放下”分类，鼓励按“看起来很蠢 / 听腻了”分类；而且旧事可以设置回访，继续打磨心境。
-
-个性化：可调整界面（包括印章是否显示、字体大小）、外观（两套UI）、仪式感、抽签来源、应用名（应用内部显示的名字，也就是你给你的App起的名字）、称呼（应用对你的称呼）、启动（可设置启动显示自己喜欢的话，额外的能量）、省身和回访设置等
-备份：记得定期备份；恢复会覆盖当前全部数据；没有云同步
-
-隐私：数据只在本机加密保存，材料在应用私有目录；无账号、无广告、无云端统计，不申请网络权限；回访通知是本地提醒；备份由你主动导出！
-
-很棒！接下来你可以写下第一句，也可以给空间起个名字（设置中），还可以告诉空间你的称呼（设置中）。相信这个栖息的空间，你会越用越顺手的。加油！`;
+const SUN_SAMPLE: string = '今天已经做得够好了。\n慢一点，也没有关系。';
+const RAIN_SAMPLE: string = '那件事，我还是会想起。';
 
 @ComponentV2
 export struct WelcomeGuide {
-  @Local ui: UiState = UiState.get();
+  @Param replay: boolean = false;
+  @Param startStage: string = '';
+  @Param startBranch: string = 'sun';
   @Event onDone: () => void = () => {};
-  @Local stage: string = 'fold'; // fold、guide
+  @Event onWriteAnother: () => void = () => {};
+  @Event onGoMine: () => void = () => {};
+  @Event onSkip: () => void = () => {};
+  @Event onBeginDemo: () => void = () => {};
+
+  @Local ui: UiState = UiState.get();
+  @Local stage: string = 'fold';
   @Local open: boolean = false;
   @Local entered: boolean = false;
+  @Local branch: string = 'sun';
+  @Local writeText: string = '';
+  @Local writeBusy: boolean = false;
   private timer: number = -1;
 
   private get dark(): boolean { return this.ui.dark; }
   private get skin(): string { return this.ui.skin; }
-
-  private t(): Tokens {
-    return getTokens(this.skin, this.dark);
-  }
+  private t(): Tokens { return getTokens(this.skin, this.dark); }
 
   aboutToAppear(): void {
-    this.timer = setTimeout(() => {
+    if (this.startStage.length > 0) {
+      this.branch = this.startBranch;
+      this.stage = this.startStage;
       this.entered = true;
-    }, 40);
+      return;
+    }
+    this.timer = setTimeout(() => { this.entered = true; }, 40);
   }
 
   aboutToDisappear(): void {
-    if (this.timer >= 0) {
-      clearTimeout(this.timer);
-    }
+    if (this.timer >= 0) clearTimeout(this.timer);
   }
 
   private unfold(): void {
     if (this.open) return;
     this.open = true;
-    this.timer = setTimeout(() => {
-      this.stage = 'guide';
-    }, 1100);
+    this.timer = setTimeout(() => { this.stage = 'intro'; }, 900);
   }
 
-  private flapFill(index: number): string {
-    if (this.skin === 'plain') {
-      if (this.dark) {
-        const p: string[] = ['#332E26', '#2B261F', '#373229', '#302B23'];
-        return p[index];
-      }
-      return this.t().cardSolid;
+  private startWrite(): void {
+    this.writeText = '';
+    this.stage = 'write';
+  }
+
+  private saveFirst(): void {
+    const text = this.writeText.trim();
+    if (text.length === 0) {
+      this.toast('先写一句。');
+      return;
     }
-    if (this.dark) {
-      const c: string[] = ['#2E2E29', '#272722', '#31312B', '#2A2A25'];
-      return c[index];
+    if (this.writeBusy) return;
+    this.writeBusy = true;
+    try {
+      const st = Store.get();
+      st.data.day.mood = this.branch === 'rain' ? 'bad' : 'good';
+      st.addOwn(this.branch === 'rain' ? 'wound' : 'encourage', text);
+      this.stage = 'done';
+    } catch (e) {
+      this.toast('没有保存成功，再试一次。');
+    } finally {
+      this.writeBusy = false;
     }
-    const cols: string[] = ['#fdf9ee', '#f9f5ea', '#f7f2e6', '#fbf6ec'];
-    return cols[index];
+  }
+
+  private toast(msg: string): void {
+    try {
+      this.getUIContext().getPromptAction().showToast({ message: msg });
+    } catch (e) {
+    }
   }
 
   private guideScrim(): string {
-    if (this.dark) {
-      return this.skin === 'plain' ? '#F21B1A17' : '#F21C1915';
-    }
+    if (this.dark) return this.skin === 'plain' ? '#F21B1A17' : '#F21C1915';
     return this.skin === 'plain' ? '#F2F5EFE2' : '#F2F6F0E3';
-  }
-
-  private packetFill(): string {
-    if (this.dark) return this.skin === 'plain' ? '#2F2A22' : '#2B2B26';
-    return this.skin === 'plain' ? this.t().cardSolid : '#fdf9ee';
-  }
-
-  @Builder
-  Flap(index: number) {
-    Shape() {
-      Path()
-        .commands(scalePath(FLAP_CMDS[index], pathScale(220, 220)))
-        .fill(this.flapFill(index))
-        .stroke(Color.Transparent)
-        .strokeWidth(0)
-    }
-    .width(`${this.getUIContext().vp2px(220)}px`)
-    .height(`${this.getUIContext().vp2px(220)}px`)
-    .rotate({
-      x: (index === 0 || index === 2) ? 1 : 0,
-      y: (index === 1 || index === 3) ? 1 : 0,
-      z: 0,
-      angle: this.open ? (index === 2 || index === 1 ? -178 : 178) : 0,
-      centerX: index === 1 ? 220 : (index === 3 ? 0 : 110),
-      centerY: index === 0 ? 0 : (index === 2 ? 220 : 110),
-      perspective: 900
-    })
-    .animation({ duration: 850, delay: index * 80, curve: Curve.EaseInOut })
   }
 
   @Builder
   FoldStage() {
-    Column({ space: 22 }) {
-      Stack() {
-        Column()
-          .width(220)
-          .height(220)
-          .borderRadius(4)
-          .backgroundColor(this.packetFill())
-          .border({ width: 1, color: this.dark ? (this.skin === 'plain' ? '#33e9e4d5' : '#3de9e4d5') : '#1a5a5032' })
-          .shadow({ radius: 34, color: this.dark ? '#66000000' : '#3d5a5032', offsetY: 12 })
-
-        this.Flap(0)
-        this.Flap(1)
-        this.Flap(2)
-        this.Flap(3)
-
-        Column()
-          .width(1)
-          .height(220)
-          .backgroundColor(this.dark ? '#33e9e4d5' : '#175a5032')
-          .opacity(this.open ? 0 : 1)
-          .animation({ duration: 300 })
-        Column()
-          .width(220)
-          .height(1)
-          .backgroundColor(this.dark ? '#33e9e4d5' : '#175a5032')
-          .opacity(this.open ? 0 : 1)
-          .animation({ duration: 300 })
-
-        Text('展开')
-          .fontSize(14)
-          .fontFamily(FONT_SERIF)
-          .letterSpacing(8)
-          .fontColor(this.dark ? this.t().inkSoft : (this.skin === 'plain' ? this.t().inkSoft : '#6b5a5032'))
-          .opacity(this.open ? 0 : 1)
-          .animation({ duration: 300 })
-      }
-      .width(220)
-      .height(220)
-      .onClick(() => {
-        this.unfold();
-      })
-
-      Text('点一下，展开')
-        .fontFamily(FONT_SANS)
-        .fontSize(12)
-        .letterSpacing(3)
-        .fontColor(this.t().inkSoft)
-        .opacity(this.open ? 0 : 1)
-        .animation({ duration: 300 })
-    }
-    .width('100%')
-    .height('100%')
-    .justifyContent(FlexAlign.Center)
-    .alignItems(HorizontalAlign.Center)
-    .opacity(this.entered ? 1 : 0)
-    .scale({ x: this.entered ? 1 : 0.88, y: this.entered ? 1 : 0.88 })
-    .animation({ duration: 500, curve: Curve.EaseOut })
-    .transition(TransitionEffect.OPACITY.animation({ duration: 200, curve: Curve.EaseOut }))
+    FoldCover({
+      open: this.open,
+      hint: '点一下，展开',
+      onUnfold: () => this.unfold()
+    })
   }
 
   @Builder
-  GuideStage() {
+  GuideButton(label: string, primary: boolean, action: () => void) {
+    Text(label)
+      .fontFamily(FONT_SANS)
+      .fontSize(14)
+      .letterSpacing(1)
+      .fontColor(primary ? this.t().bg : this.t().seal)
+      .textAlign(TextAlign.Center)
+      .width('100%')
+      .padding({ top: 12, bottom: 12 })
+      .borderRadius(this.t().radiusBtn)
+      .backgroundColor(primary ? this.t().ink : this.t().card)
+      .border({ width: 1, color: primary ? this.t().ink : this.t().line })
+      .onClick(action)
+  }
+
+  @Builder
+  IntroStage() {
     Column() {
-      Column({ space: 8 }) {
+      Row() {
         Text('新手指引')
           .fontFamily(FONT_SERIF)
-          .fontSize(32)
-          .letterSpacing(6)
-          .fontColor(this.t().inkStrong)
-        Text('（建议耐心看完，对于日后大有助益哦！也可以稍后在设置-关于查看）')
-          .fontFamily(FONT_SANS)
-          .fontSize(13)
-          .lineHeight(22)
-          .fontColor(this.t().inkSoft)
-          .textAlign(TextAlign.Center)
+          .fontSize(30)
+          .letterSpacing(5)
+          .fontColor(this.t().ink)
+        Blank()
+        if (this.replay) {
+          Text('跳过')
+            .fontFamily(FONT_SANS)
+            .fontSize(12)
+            .fontColor(this.t().inkSoft)
+            .onClick(() => this.onSkip())
+        }
       }
       .width('100%')
-      .padding({ top: 30, bottom: 14 })
+      .padding({ top: 34, bottom: 6 })
+
+      Text('（完整指引文案可见：设置 → 关于 → 新手指引完整文案）')
+        .fontFamily(FONT_SANS)
+        .fontSize(11.5)
+        .lineHeight(20)
+        .fontColor(this.t().inkSoft)
+        .width('100%')
 
       Scroll() {
-        Text(GUIDE_TEXT)
-          .fontFamily(FONT_SANS)
-          .fontSize(13.5)
-          .lineHeight(25)
-          .fontColor(this.t().ink)
-          .width('100%')
-          .textAlign(TextAlign.Start)
-          .textShadow({
-            radius: 6,
-            color: this.dark ? '#99000000' : '#40FFFFFF',
-            offsetX: 0,
-            offsetY: 1
-          })
+        Column({ space: 12 }) {
+          Text('这是一个越用越好用的栖息空间。')
+            .fontFamily(FONT_SANS)
+            .fontSize(15)
+            .lineHeight(28)
+            .fontColor(this.t().inkStrong)
+            .width('100%')
+
+          Text('晴，写一句对自己的鼓励，储蓄能量；\n抽到一件旧事，完善心境。\n雨，把难过放进树洞，倾诉烦恼；\n抽到让自己感觉好些的话，汲取能量。')
+            .fontFamily(FONT_SANS)
+            .fontSize(13.5)
+            .lineHeight(25)
+            .fontColor(this.t().ink)
+            .width('100%')
+
+          Text('写下的句子会被收好。\n抽到它时，可以回一句话。\n备注随时可以留下注脚。\n回信会独立收进「回信」，不是备注。')
+            .fontFamily(FONT_SANS)
+            .fontSize(13.5)
+            .lineHeight(25)
+            .fontColor(this.t().ink)
+            .width('100%')
+
+          Text('旧事归档后，可以约一次回访，继续打磨心境。\n鼓励归档后，不再回访。')
+            .fontFamily(FONT_SANS)
+            .fontSize(13.5)
+            .lineHeight(25)
+            .fontColor(this.t().ink)
+            .width('100%')
+
+          Text('鼓励、旧事、句库可以互相关联，各自留下注脚。')
+            .fontFamily(FONT_SANS)
+            .fontSize(13.5)
+            .lineHeight(25)
+            .fontColor(this.t().ink)
+            .width('100%')
+
+          Text('数据只在本机加密保存。\n无账号，无广告，无云端统计，不申请网络权限。\n记得备份，没有云同步。')
+            .fontFamily(FONT_SANS)
+            .fontSize(12.5)
+            .lineHeight(23)
+            .fontColor(this.t().inkSoft)
+            .width('100%')
+        }
+        .width('100%')
+        .padding({ top: 12, bottom: 12 })
       }
       .layoutWeight(1)
-      .width('100%')
       .scrollBar(BarState.Off)
-      .padding({ left: 24, right: 24 })
 
-      Text('开始使用')
-        .fontFamily(FONT_SANS)
-        .fontSize(14)
-        .letterSpacing(2)
-        .fontColor(this.t().bg)
-        .textAlign(TextAlign.Center)
-        .width('100%')
-        .padding({ top: 14, bottom: 14 })
-        .backgroundColor(this.t().ink)
-        .borderRadius(this.t().radiusBtn)
-        .margin({ top: 16, bottom: 22 })
-        .onClick(() => {
-          this.onDone();
-        })
+      this.GuideButton('先看晴雨两条线', true, () => this.onBeginDemo())
     }
     .width('100%')
     .height('100%')
-    .padding({
-      left: 18,
-      right: 18,
-      top: this.ui.safeTop + 18,
-      bottom: this.ui.safeBottom + 10
-    })
-    .backgroundColor(this.guideScrim())
-    .transition(TransitionEffect.OPACITY.animation({ duration: 200, curve: Curve.EaseOut }))
+    .padding({ left: 22, right: 22, top: 8, bottom: 22 })
+  }
+
+  @Builder
+  WriteStage() {
+    Column() {
+      Row() {
+        Text('写我的第一句')
+          .fontFamily(FONT_SERIF)
+          .fontSize(24)
+          .letterSpacing(3)
+          .fontColor(this.t().ink)
+        Blank()
+      }
+      .width('100%')
+      .padding({ top: 34, bottom: 6 })
+
+      Text(this.branch === 'rain' ? '雨 · 旧事' : '晴 · 鼓励')
+        .fontFamily(FONT_SANS)
+        .fontSize(12)
+        .fontColor(this.t().seal)
+        .width('100%')
+        .margin({ bottom: 12 })
+
+      TextArea({
+        text: this.writeText,
+        placeholder: this.branch === 'rain' ? '把难过放进树洞……' : '写一句对自己的鼓励……'
+      })
+        .height(170)
+        .fontSize(17)
+        .fontFamily(FONT_SERIF)
+        .fontColor(this.t().ink)
+        .backgroundColor(this.t().card)
+        .borderRadius(this.t().radiusCard)
+        .border({ width: 1, color: this.t().line })
+        .padding(14)
+        .onChange((v: string) => { this.writeText = v; })
+
+      Blank()
+
+      this.GuideButton('收好', true, () => this.saveFirst())
+    }
+    .width('100%')
+    .height('100%')
+    .padding({ left: 22, right: 22, top: 8, bottom: 22 })
+  }
+
+  @Builder
+  DoneStage() {
+    Column() {
+      Blank()
+      Text('这句话已经收好了')
+        .fontFamily(FONT_SERIF)
+        .fontSize(25)
+        .letterSpacing(3)
+        .fontColor(this.t().inkStrong)
+        .width('100%')
+        .textAlign(TextAlign.Center)
+
+      Text('你可以再写一句，\n也可以去「我的」看看它。\n\n想让它更像你的空间，\n可以在设置里给它起个名字，\n或在设置里告诉我怎么称呼你。\n\n相信这个栖息的空间，你会越用越顺手的。')
+        .fontFamily(FONT_SANS)
+        .fontSize(13.5)
+        .lineHeight(26)
+        .fontColor(this.t().ink)
+        .textAlign(TextAlign.Center)
+        .width('100%')
+        .margin({ top: 18 })
+
+      Blank()
+
+      Row({ space: 10 }) {
+        this.GuideButton('再写一句', false, () => this.onWriteAnother())
+        this.GuideButton('去「我的」看看', true, () => this.onGoMine())
+      }
+    }
+    .width('100%')
+    .height('100%')
+    .padding({ left: 22, right: 22, top: 20, bottom: 26 })
   }
 
   build() {
     Stack() {
+      Column()
+        .width('100%')
+        .height('100%')
+        .backgroundColor(this.stage === 'fold' && !this.open ? '#00000000' : this.guideScrim())
+        .animation({ duration: 500, curve: Curve.EaseOut })
       if (this.stage === 'fold') {
         this.FoldStage()
+      } else if (this.stage === 'intro') {
+        this.IntroStage()
+      } else if (this.stage === 'write') {
+        this.WriteStage()
       } else {
-        this.GuideStage()
+        this.DoneStage()
       }
     }
     .width('100%')
     .height('100%')
-    .backgroundColor(Color.Transparent)
-    .transition(TransitionEffect.OPACITY.animation({ duration: 200, curve: Curve.EaseOut }))
   }
 }

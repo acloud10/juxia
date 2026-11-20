@@ -27,21 +27,19 @@ export struct LibraryPage {
   @Local dislikes: DislikeEntry[] = [];
   @Local qLib: string = '';
   @Local qDis: string = '';
-  @Local qReply: string = '';
-  @Local replyLimit: number = 20;
   @Local disLimit: number = 20;
   @Local showLib: boolean = true;
   @Local showMaterials: boolean = false;
   @Local showMatRules: boolean = false;
   @Local showDislikes: boolean = false;
-  @Local showReplies: boolean = false;
-  @Local replies: OwnEntry[] = [];
   @Local matName: string = '';
   @Local matText: string = '';
   @Local matEditId: string = '';
   @Local matQuery: string = '';
   @Local matCount: number = 0;
   @Local matContentH: number = 420;
+  @Local libContentH: number = 360;
+  @Local disContentH: number = 320;
   @Local matIndexing: boolean = false;
   @Local matSaving: boolean = false;
   @Local matProgress: string = '';
@@ -61,7 +59,6 @@ export struct LibraryPage {
   private lastFind: string = '';
   private scroller: Scroller = new Scroller();
   private libScroll: Scroller = new Scroller();
-  private replyScroll: Scroller = new Scroller();
   private disScroll: Scroller = new Scroller();
   private matScroll: Scroller = new Scroller();
   @Local showTop: boolean = false;
@@ -96,9 +93,6 @@ export struct LibraryPage {
     const st = Store.get();
     this.libs = st.data.lib.slice();
     this.dislikes = st.data.dislikes.slice();
-    this.replies = st.data.own
-      .filter((e: OwnEntry) => e.kind === 'reply')
-      .sort((a: OwnEntry, b: OwnEntry) => b.createdAt - a.createdAt);
     this.matCount = st.data.materials.length;
     this.libDs.setData(this.filteredLibs());
     this.matDs.setData(this.materials());
@@ -593,144 +587,6 @@ export struct LibraryPage {
     .onClick(() => {
       this.showLib = !this.showLib;
     })
-  }
-
-  @Builder
-  ReplyHeader() {
-    Row() {
-      Text('回信')
-        .fontSize(14)
-        .letterSpacing(1.5)
-        .fontFamily(FONT_SERIF)
-        .fontColor(this.t().inkStrong)
-      Text(`${this.replies.length} 句`)
-        .fontFamily(FONT_SANS)
-        .fontSize(10)
-        .fontColor(this.t().inkSoft)
-        .backgroundColor(this.t().card)
-        .border({ width: 1, color: this.t().line })
-        .borderRadius(999)
-        .padding({ left: 9, right: 9, top: 2, bottom: 2 })
-        .margin({ left: 8 })
-      Blank()
-      Text(this.showReplies ? '−' : '＋')
-        .fontFamily(FONT_SANS)
-        .fontSize(16)
-        .fontColor(this.t().seal)
-    }
-    .width('100%')
-    .padding({ left: 18, right: 18, top: 14, bottom: 14 })
-    .backgroundColor(this.t().card).backdropBlur(this.dark ? 0 : 10)
-    .borderRadius(this.t().radiusCard)
-    .border({ width: 1, color: this.t().line })
-    .onClick(() => {
-      this.showReplies = !this.showReplies;
-    })
-  }
-
-  private replySource(e: OwnEntry): string {
-    const p: OwnEntry | undefined = Store.get().data.own.find((x: OwnEntry) => x.id === e.replyToId);
-    return p === undefined ? '' : p.text;
-  }
-
-  private replyFromLabel(e: OwnEntry): string {
-    if (e.replyFrom === 'revisit') return '回访回信';
-    if (e.replyFrom === 'draw') return '抽签回信';
-    return '回信';
-  }
-
-  private deleteReply(e: OwnEntry): void {
-    this.getUIContext().showAlertDialog({
-      title: '删除这条回信？',
-      message: '只会删除这条回信，不会删除它回的原句。删除后无法恢复。',
-      primaryButton: {
-        value: '取消',
-        action: () => {}
-      },
-      secondaryButton: {
-        value: '删除',
-        action: () => {
-          Store.get().removeOwn(e.id);
-          this.reload();
-          this.toast('回信已删除');
-        }
-      }
-    });
-  }
-
-  private replySourceLabel(e: OwnEntry): string {
-    const p: OwnEntry | undefined = Store.get().data.own.find((x: OwnEntry) => x.id === e.replyToId);
-    if (p === undefined) return '回的是';
-    if (p.kind === 'encourage') return '回的是鼓励';
-    if (p.kind === 'wound') return '回的是旧事';
-    return '回的是';
-  }
-
-  private pagedReplies(): OwnEntry[] {
-    return this.filteredReplies().slice(0, this.replyLimit);
-  }
-
-  private filteredReplies(): OwnEntry[] {
-    const kw: string = this.qReply.trim().toLowerCase();
-    if (kw.length === 0) return this.replies;
-    return this.replies.filter((e: OwnEntry) =>
-      e.text.toLowerCase().includes(kw) || this.replySource(e).toLowerCase().includes(kw));
-  }
-
-  @Builder
-  ReplyRow(e: OwnEntry) {
-    Column({ space: 0 }) {
-      Text(e.text)
-        .fontSize(14.5)
-        .lineHeight(28)
-        .fontFamily(FONT_SERIF)
-        .fontColor(this.t().ink)
-        .width('100%')
-      Row({ space: 6 }) {
-        Text(this.replyFromLabel(e))
-          .fontFamily(FONT_SANS)
-          .fontSize(9.5)
-          .fontColor(this.t().sealInk)
-          .backgroundColor(this.t().seal)
-          .borderRadius(999)
-          .padding({ left: 8, right: 8, top: 2, bottom: 2 })
-        if (this.replySource(e).length > 0) {
-          Text(`${this.replySourceLabel(e)}：${this.replySource(e)}`)
-            .fontFamily(FONT_SANS)
-            .fontSize(11.5)
-            .lineHeight(21)
-            .fontColor(this.t().inkSoft)
-            .maxLines(2)
-            .textOverflow({ overflow: TextOverflow.Ellipsis })
-            .layoutWeight(1)
-        } else {
-          Text('原句已删除')
-            .fontFamily(FONT_SANS)
-            .fontSize(11)
-            .fontColor(this.t().inkSoft)
-            .layoutWeight(1)
-        }
-        Blank()
-        Text('删除')
-          .fontFamily(FONT_SANS)
-          .fontSize(11)
-          .fontColor(this.t().seal)
-          .padding({ left: 8, top: 4, bottom: 4 })
-          .onClick(() => {
-            this.deleteReply(e);
-          })
-      }
-      .width('100%')
-      .margin({ top: 4 })
-      Text(fmtDate(e.createdAt))
-        .fontFamily(FONT_SANS)
-        .fontSize(10)
-        .fontColor(this.t().inkSoft)
-        .margin({ top: 4 })
-    }
-    .width('100%')
-    .padding({ top: 12, bottom: 10 })
-    .border({ width: { top: 1 }, color: this.t().lineSoft })
   }
 
   @Builder
@@ -1512,71 +1368,18 @@ export struct LibraryPage {
                   }, (e: LibEntry) => `${e.id}-${e.text.length}-${e.source.length}-${e.tag.length}`)
                 }
                 .width('100%')
+                .onAreaChange((_old, area) => {
+                  this.libContentH = Number(area.height);
+                })
               }
-              .height(360)
+              .height(this.libContentH > 360 ? 360 : this.libContentH)
               .scrollBar(BarState.Off)
               .edgeEffect(EdgeEffect.Spring)
               .width('100%')
-              InnerScrollNav({
-                onTop: () => { this.libScroll.scrollTo({ xOffset: 0, yOffset: 0, animation: { duration: 300, curve: Curve.EaseOut } }); },
-                onBottom: () => { this.libScroll.scrollEdge(Edge.Bottom); }
-              })
-            }
-          }
-          .width('100%')
-          .padding({ left: 18, right: 18, top: 4, bottom: 8 })
-          .backgroundColor(this.t().card).backdropBlur(this.dark ? 0 : 10)
-          .borderRadius(this.t().radiusCard)
-          .border({ width: 1, color: this.t().line })
-        }
-
-        this.ReplyHeader()
-        if (this.showReplies) {
-          Column({ space: 0 }) {
-            if (this.replies.length === 0) {
-              Text('还没有回信。抽到自己的句子时，可以回一句话。')
-                .fontFamily(FONT_SANS)
-                .fontSize(12.5)
-                .lineHeight(24)
-                .fontColor(this.t().inkSoft)
-                .width('100%')
-            } else {
-              this.SearchBox('搜索回信或原句', this.qReply, (v: string) => {
-                this.qReply = v;
-              this.replyLimit = 20;
-              })
-              if (this.filteredReplies().length === 0) {
-                Text('没有找到。换个词，或清空搜索。')
-                  .fontFamily(FONT_SANS)
-                  .fontSize(12.5)
-                  .lineHeight(24)
-                  .fontColor(this.t().inkSoft)
-                  .width('100%')
-                  .padding({ top: 8, bottom: 8 })
-              } else {
-                Scroll(this.replyScroll) {
-                  Column({ space: 0 }) {
-                    ForEach(this.pagedReplies(), (e: OwnEntry) => {
-                      this.ReplyRow(e)
-                    }, (e: OwnEntry) => `${e.id}-${e.text.length}`)
-                    if (this.filteredReplies().length > this.replyLimit) {
-                      Text(`加载更多（还有 ${this.filteredReplies().length - this.replyLimit} 条）`)
-                        .fontFamily(FONT_SANS)
-                        .fontSize(12)
-                        .fontColor(this.t().seal)
-                        .padding({ top: 10, bottom: 10 })
-                        .onClick(() => { this.replyLimit += 20; })
-                    }
-                  }
-                  .width('100%')
-                }
-                .height(360)
-                .scrollBar(BarState.Off)
-                .edgeEffect(EdgeEffect.Spring)
-                .width('100%')
+              if (this.libContentH > 360) {
                 InnerScrollNav({
-                  onTop: () => { this.replyScroll.scrollTo({ xOffset: 0, yOffset: 0, animation: { duration: 300, curve: Curve.EaseOut } }); },
-                  onBottom: () => { this.replyScroll.scrollEdge(Edge.Bottom); }
+                  onTop: () => { this.libScroll.scrollTo({ xOffset: 0, yOffset: 0, animation: { duration: 300, curve: Curve.EaseOut } }); },
+                  onBottom: () => { this.libScroll.scrollEdge(Edge.Bottom); }
                 })
               }
             }
@@ -1586,7 +1389,6 @@ export struct LibraryPage {
           .backgroundColor(this.t().card).backdropBlur(this.dark ? 0 : 10)
           .borderRadius(this.t().radiusCard)
           .border({ width: 1, color: this.t().line })
-          .margin({ top: 10 })
         }
 
         this.MaterialHeader()
@@ -1648,15 +1450,20 @@ export struct LibraryPage {
                   }
                 }
                 .width('100%')
+                .onAreaChange((_old, area) => {
+                  this.disContentH = Number(area.height);
+                })
               }
-              .height(320)
+              .height(this.disContentH > 320 ? 320 : this.disContentH)
               .scrollBar(BarState.Off)
               .edgeEffect(EdgeEffect.Spring)
               .width('100%')
-              InnerScrollNav({
-                onTop: () => { this.disScroll.scrollTo({ xOffset: 0, yOffset: 0, animation: { duration: 300, curve: Curve.EaseOut } }); },
-                onBottom: () => { this.disScroll.scrollEdge(Edge.Bottom); }
-              })
+              if (this.disContentH > 320) {
+                InnerScrollNav({
+                  onTop: () => { this.disScroll.scrollTo({ xOffset: 0, yOffset: 0, animation: { duration: 300, curve: Curve.EaseOut } }); },
+                  onBottom: () => { this.disScroll.scrollEdge(Edge.Bottom); }
+                })
+              }
             }
           }
           .width('100%')

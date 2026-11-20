@@ -31,6 +31,16 @@ struct Index {
   @Local ready: boolean = false;
   @Local privacyOpen: boolean = false;
   @Local guideOpen: boolean = false;
+  @Local guideReplay: boolean = false;
+  @Local demoActive: boolean = false;
+  @Local guideStartStage: string = '';
+  @Local demoBranch: string = 'sun';
+  @Local demoStep: number = 0;
+  @Local demoSavedReplay: boolean = false;
+  private demoTimer: number = -1;
+  @Local demoFinished: boolean = false;
+  @Local demoSunSeen: boolean = false;
+  @Local demoRainSeen: boolean = false;
   @Local bootOpacity: number = 1;
   @Local bootDone: boolean = false;
   @Local bootTextOpacity: number = 0;
@@ -211,6 +221,7 @@ struct Index {
     this.bootFontScale = st.data.settings.bootFontScale;
     this.privacyOpen = !st.data.settings.privacyAccepted;
     this.guideOpen = st.data.settings.privacyAccepted && !st.data.meta.seen && !st.guideDone();
+    if (this.guideOpen) this.guideReplay = false;
     const sysScale: number = ctx.config.fontSizeScale !== undefined ? ctx.config.fontSizeScale : 1.0;
     UiState.get().systemFontScale = sysScale;
     this.applyFontScale(st.data.settings.fontScaleFollow ? sysScale : st.data.settings.fontScale);
@@ -555,6 +566,7 @@ struct Index {
               st.saveKv();
               this.privacyOpen = false;
               if (!st.data.meta.seen && !st.guideDone()) {
+                this.guideReplay = false;
                 this.guideOpen = true;
               }
             })
@@ -572,6 +584,311 @@ struct Index {
     .width('100%')
     .height('100%')
     .transition(TransitionEffect.OPACITY.animation({ duration: 200, curve: Curve.EaseOut }))
+  }
+
+  @Monitor('ui.dataVersion')
+  demoMoodChanged(monitor: IMonitor): void {
+    if (!this.demoActive || this.demoStep !== 0) return;
+    const mood: string = Store.get().data.day.mood;
+    if (mood !== 'good' && mood !== 'bad') return;
+    const branch: string = mood === 'bad' ? 'rain' : 'sun';
+    Store.get().switchDemo(branch);
+    this.demoBranch = branch;
+    this.demoStep = 1;
+    this.ui.demoBusy = true;
+    this.runDemoStep();
+  }
+
+  private demoMax(): number {
+    return this.demoBranch === 'rain' ? 6 : 5;
+  }
+
+  private demoArchivedId(): string {
+    const list = Store.get().data.own.filter((e: OwnEntry) => e.kind === 'wound' && e.archAt > 0);
+    return list.length > 0 ? list[list.length - 1].id : '';
+  }
+
+  private demoId(): string {
+    const kind: string = this.demoBranch === 'rain' ? 'wound' : 'encourage';
+    const list = Store.get().data.own.filter((e: OwnEntry) => e.kind === kind && e.archAt === 0);
+    return list.length > 0 ? list[list.length - 1].id : '';
+  }
+
+  private demoCaption(): string {
+    if (this.demoStep === 0) return '先选一条线：晴，写鼓励；雨，写旧事。';
+    if (this.demoStep === 1) return this.demoBranch === 'rain' ? '雨线：把难过写进树洞。' : '晴线：写一句对自己的鼓励。';
+    if (this.demoStep === 2) return this.demoBranch === 'rain' ? '抽到一句鼓励，陪着你。' : '抽到一件旧事，完善心境。';
+    if (this.demoStep === 3) return '抽到之后，可以回一句话。';
+    if (this.demoStep === 4) return '在「我的」里，给这句话留一条备注，也可以关联别的句子。';
+    if (this.demoStep === 5) return this.demoBranch === 'rain' ? '旧事归档为「已解决 / 已放下」，约定 14 天后回访。' : '鼓励归档为「看起来很蠢 / 听腻了」，不再回访。';
+    return '14 天后，回访卡回来；可以再回一句。';
+  }
+
+  private demoStepLabel(): string {
+    if (this.demoStep === 0) return '开始演示';
+    return this.demoBranch === 'rain' ? `雨线 · 第 ${this.demoStep} 步` : `晴线 · 第 ${this.demoStep} 步`;
+  }
+
+  private hasDemoReply(text: string): boolean {
+    return Store.get().data.own.some((e: OwnEntry) =>
+      e.kind === 'reply' && e.replyToId === this.demoId() && e.text === text);
+  }
+
+  private executeDemoStep(): void {
+    const st = Store.get();
+    const id: string = this.demoId();
+    if (this.demoStep === 1) {
+      st.data.own = [];
+      st.data.day.mood = this.demoBranch === 'rain' ? 'bad' : 'good';
+      st.data.day.wrote = false;
+      st.data.day.drew = false;
+      st.bump();
+      this.switchTab(0);
+      setTimeout(() => {
+        if (!this.demoActive || this.demoStep !== 1) return;
+        this.ui.demoBranch = this.demoBranch;
+        this.ui.demoText = this.demoBranch === 'rain' ? '那件事，我还是会想起。' : '今天已经做得够好了。慢一点，也没有关系。';
+        this.ui.demoAction = 'write';
+        this.ui.demoSeq = this.ui.demoSeq + 1;
+        this.ui.openWriteReq = this.ui.openWriteReq + 1;
+      }, 300);
+      return;
+    }
+    if (this.demoStep === 2) {
+      st.ensureDemoCross(this.demoBranch);
+      this.ui.demoBranch = this.demoBranch;
+      this.ui.demoAction = 'draw';
+      this.ui.demoSeq = this.ui.demoSeq + 1;
+      this.switchTab(0);
+      return;
+    }
+    if (this.demoStep === 3) {
+      this.ui.demoAction = 'reply';
+      this.ui.demoText = '原来那天我已经做得够好了。';
+      this.ui.demoSeq = this.ui.demoSeq + 1;
+      return;
+    }
+    if (this.demoStep === 4) {
+      this.ritualVisible = false;
+      if (id.length === 0) return;
+      this.switchTab(1);
+      setTimeout(() => {
+        if (!this.demoActive || this.demoStep !== 4) return;
+        this.ui.demoTarget = id;
+        this.ui.demoText = '这句话，随时可以补一条备注。';
+        this.ui.demoAction = 'note';
+        this.ui.demoSeq = this.ui.demoSeq + 1;
+      }, 180);
+      return;
+    }
+    if (this.demoStep === 5) {
+      this.ritualVisible = false;
+      if (id.length === 0) return;
+      this.switchTab(1);
+      setTimeout(() => {
+        if (!this.demoActive || this.demoStep !== 5) return;
+        this.ui.demoTarget = id;
+        this.ui.demoBranch = this.demoBranch;
+        this.ui.demoAction = 'archive';
+        this.ui.demoSeq = this.ui.demoSeq + 1;
+      }, 180);
+      setTimeout(() => {
+        if (!this.demoActive || this.demoStep !== 5) return;
+        this.switchTab(3);
+      }, 4800);
+      return;
+    }
+    if (this.demoStep === 6) {
+      this.ritualVisible = false;
+      const archivedId: string = this.demoArchivedId();
+      if (archivedId.length === 0) return;
+      const entry = st.data.own.find((e: OwnEntry) => e.id === archivedId);
+      if (entry !== undefined) {
+        entry.revisitAt = Date.now();
+        entry.snoozeUntil = 0;
+        st.bump();
+      }
+      this.switchTab(0);
+      setTimeout(() => {
+        if (!this.demoActive || this.demoStep !== 6) return;
+        this.ui.demoTarget = archivedId;
+        this.ui.demoText = '现在再看，它没有当时那么重了。';
+        this.ui.demoAction = 'revisitToday';
+        this.ui.demoSeq = this.ui.demoSeq + 1;
+      }, 250);
+    }
+  }
+
+  private markDemoSeen(): void {
+    this.demoFinished = true;
+    if (this.demoBranch === 'rain') this.demoRainSeen = true;
+    else this.demoSunSeen = true;
+  }
+
+  private runDemoStep(): void {
+    if (this.demoTimer >= 0) clearTimeout(this.demoTimer);
+    this.executeDemoStep();
+  }
+
+  private nextDemoStep(): void {
+    if (this.ui.demoBusy) return;
+    if (this.demoTimer >= 0) clearTimeout(this.demoTimer);
+    if (this.demoStep === 0 && Store.get().data.day.mood.length === 0) {
+      return;
+    }
+    if (this.demoStep >= this.demoMax()) {
+      this.markDemoSeen();
+      return;
+    }
+    this.demoStep += 1;
+    this.runDemoStep();
+  }
+
+  private startRealDemo(branch: string): void {
+    const st = Store.get();
+    if (!st.startDemo('blank')) {
+      this.guideOpen = false;
+      this.demoActive = false;
+      return;
+    }
+    this.demoBranch = branch === 'blank' ? 'sun' : branch;
+    this.demoStep = 0;
+    this.demoSavedReplay = this.guideReplay;
+    this.demoActive = true;
+    this.demoFinished = false;
+    this.guideOpen = false;
+    this.guideStartStage = '';
+    this.switchTab(0);
+  }
+
+  private finishRealDemo(): void {
+    if (this.demoTimer >= 0) clearTimeout(this.demoTimer);
+    const st = Store.get();
+    st.endDemo();
+    this.demoActive = false;
+    if (this.demoSavedReplay) {
+      this.guideReplay = false;
+      this.switchTab(4);
+      return;
+    }
+    this.guideReplay = false;
+    this.guideOpen = true;
+    this.guideStartStage = 'write';
+  }
+
+  private switchDemoBranch(): void {
+    const next: string = this.demoBranch === 'rain' ? 'sun' : 'rain';
+    Store.get().switchDemo(next);
+    this.demoBranch = next;
+    this.demoStep = 1;
+    this.demoFinished = false;
+    this.runDemoStep();
+  }
+
+  @Builder
+  DemoFinish() {
+    Stack({ alignContent: Alignment.Center }) {
+      Column({ space: 14 }) {
+        Text(this.demoBranch === 'rain' ? '雨线看完了' : '晴线看完了')
+          .fontFamily(FONT_SERIF)
+          .fontSize(22)
+          .fontColor(this.t().inkStrong)
+        Text(this.demoBranch === 'rain'
+          ? '旧事归档后，14 天后会回访；回访时还能再回一句。'
+          : '鼓励归档后，不再回访。')
+          .fontFamily(FONT_SANS)
+          .fontSize(13)
+          .lineHeight(23)
+          .fontColor(this.t().inkSoft)
+          .textAlign(TextAlign.Center)
+        if (!(this.demoBranch === 'sun' ? this.demoRainSeen : this.demoSunSeen)) {
+          Text('另一条也看看')
+            .fontFamily(FONT_SANS)
+            .fontSize(15)
+            .fontColor(this.t().bg)
+            .textAlign(TextAlign.Center)
+            .width('100%')
+            .padding({ top: 12, bottom: 12 })
+            .borderRadius(this.t().radiusBtn)
+            .backgroundColor(this.t().ink)
+            .onClick(() => this.switchDemoBranch())
+        }
+        Row({ space: 10 }) {
+          if (this.demoSavedReplay) {
+            Text('退出演示')
+              .fontFamily(FONT_SANS)
+              .fontSize(12)
+              .fontColor(this.t().inkSoft)
+              .onClick(() => this.finishRealDemo())
+          } else {
+            Text('写我的第一句')
+              .fontFamily(FONT_SANS)
+              .fontSize(13)
+              .fontColor(this.t().seal)
+              .onClick(() => this.finishRealDemo())
+          }
+        }
+        .width('100%')
+        .justifyContent(FlexAlign.Center)
+      }
+      .width('82%')
+      .padding(20)
+      .borderRadius(this.t().radiusCard)
+      .backgroundColor(this.t().card)
+      .border({ width: 2, color: this.t().seal })
+    }
+    .width('100%')
+    .height('100%')
+  }
+
+  @Builder
+  DemoBanner() {
+    Column({ space: 8 }) {
+      Row() {
+        Text(this.demoStepLabel() + (this.demoBranch === 'rain' ? ' · 雨线' : ' · 晴线'))
+          .fontFamily(FONT_SANS)
+          .fontSize(12)
+          .fontColor(this.t().seal)
+        Blank()
+        if (this.demoSavedReplay) {
+          Text('退出演示')
+            .fontFamily(FONT_SANS)
+            .fontSize(12)
+            .fontColor(this.t().inkSoft)
+            .onClick(() => this.finishRealDemo())
+        }
+      }
+      .width('100%')
+      Text('演示数据 · 不会保存')
+        .fontFamily(FONT_SANS)
+        .fontSize(11)
+        .fontColor(this.t().inkSoft)
+        .width('100%')
+      Text(this.demoCaption())
+        .fontFamily(FONT_SANS)
+        .fontSize(14)
+        .lineHeight(24)
+        .fontColor(this.t().inkStrong)
+        .width('100%')
+      Row({ space: 10 }) {
+        Blank()
+        Text(this.demoStep >= this.demoMax() ? '结束演示' : '下一步')
+          .fontFamily(FONT_SANS)
+          .fontSize(14)
+          .fontColor(this.t().bg)
+          .padding({ left: 20, right: 20, top: 9, bottom: 9 })
+          .borderRadius(this.t().radiusBtn)
+          .backgroundColor(this.t().ink)
+          .onClick(() => this.nextDemoStep())
+      }
+      .width('100%')
+    }
+    .width('88%')
+    .padding(14)
+    .borderRadius(this.t().radiusCard)
+    .backgroundColor(this.t().card)
+    .border({ width: 1, color: this.t().seal })
+    .margin({ bottom: 96 })
   }
 
   build() {
@@ -754,6 +1071,7 @@ struct Index {
                   skin: this.skin,
                   dark: this.dark,
                   onOpenGuide: () => {
+                    this.guideReplay = true;
                     this.guideOpen = true;
                   }
                 })
@@ -798,6 +1116,25 @@ struct Index {
           }
         })
       }
+      if (this.demoActive && !this.demoFinished) {
+        Row() {
+          Text('自动演示 · 不会保存')
+            .fontFamily(FONT_SANS)
+            .fontSize(11.5)
+            .letterSpacing(1)
+            .fontColor(this.t().sealInk)
+            .padding({ left: 12, right: 12, top: 5, bottom: 5 })
+            .borderRadius(999)
+            .backgroundColor(this.t().seal)
+        }
+        .position({ x: 0, y: this.ui.safeTop + 8 })
+        .width('100%')
+        .justifyContent(FlexAlign.Center)
+        this.DemoBanner()
+      }
+      if (this.demoActive && this.demoFinished) {
+        this.DemoFinish()
+      }
       if (!this.bootDone) {
         Column() {
           if (this.bootLong && this.bootText.trim().length > 0) {
@@ -829,10 +1166,40 @@ struct Index {
       }
       if (this.ready && this.bootDone && this.guideOpen) {
         WelcomeGuide({
+          replay: this.guideReplay,
+          startStage: this.guideStartStage,
+          startBranch: this.demoBranch,
+          onBeginDemo: () => this.startRealDemo('blank'),
           onDone: () => {
             const st = Store.get();
-            st.markGuideDone();
+            if (!this.guideReplay) st.markGuideDone();
             this.guideOpen = false;
+            this.guideReplay = false;
+            this.guideStartStage = '';
+          },
+          onSkip: () => {
+            const st = Store.get();
+            if (!this.guideReplay) st.markGuideDone();
+            this.guideOpen = false;
+            this.guideReplay = false;
+            this.guideStartStage = '';
+          },
+          onWriteAnother: () => {
+            const st = Store.get();
+            if (!this.guideReplay) st.markGuideDone();
+            this.guideOpen = false;
+            this.guideReplay = false;
+            this.guideStartStage = '';
+            this.switchTab(0);
+            this.ui.openWriteReq = this.ui.openWriteReq + 1;
+          },
+          onGoMine: () => {
+            const st = Store.get();
+            if (!this.guideReplay) st.markGuideDone();
+            this.guideOpen = false;
+            this.guideReplay = false;
+            this.guideStartStage = '';
+            this.switchTab(1);
           }
         })
       }

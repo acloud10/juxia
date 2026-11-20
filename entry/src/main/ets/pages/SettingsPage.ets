@@ -4,6 +4,7 @@ import { common, ConfigurationConstant } from '@kit.AbilityKit';
 import { picker, fileIo as fs, hash, statfs } from '@kit.CoreFileKit';
 import { util } from '@kit.ArkTS';
 import { zlib } from '@kit.BasicServicesKit';
+
 import { Store } from '../data/Store';
 import { AppData, MaterialEntry } from '../model/Types';
 import { BackgroundStyle, BgImageStyle } from '../model/BackgroundStyle';
@@ -16,6 +17,7 @@ import { UiState } from '../state/UiState';
 import { AppError } from '../services/AppError';
 import { RestoreJournal, RestoreJournalData } from '../services/RestoreJournal';
 import { BackgroundSettingsPanel } from '../components/BackgroundSettingsPanel';
+import { AboutGuideActions } from '../components/AboutGuideActions';
 
 
 const MIN_FREE_RESERVE_BYTES: number = 64 * 1024 * 1024;
@@ -93,7 +95,7 @@ export struct SettingsPage {
   @Local plainIncludeMaterials: boolean = true;
   @Local busy: boolean = false;
   @Local selfTestMsg: string = '';
-  @Local revisitDays: number = 90;
+  @Local revisitDays: number = 14;
   @Local revisitHour: number = 9;
   @Local revisitMinute: number = 0;
   @Local draftHour: number = 9;
@@ -1781,7 +1783,7 @@ export struct SettingsPage {
             .fontColor(this.t().inkSoft)
             .width('100%')
           Flex({ wrap: FlexWrap.Wrap }) {
-            ForEach([7, 30, 90, 180, 365], (d: number) => {
+            ForEach([7, 14, 30, 90, 180, 365], (d: number) => {
               Text(`${d} 天`)
                 .fontFamily(FONT_SANS)
                 .fontSize(12.5)
@@ -1881,7 +1883,7 @@ export struct SettingsPage {
             .margin({ top: 4 })
           }
 
-          Text(`当前：${this.revisitDays} 天（默认 90 天），回访时间 ${this.revisitHour.toString().padStart(2, '0')}:${this.revisitMinute.toString().padStart(2, '0')}。所有约定都收在「回忆 · 回访一览」里，可提前或取消。`)
+          Text(`当前：${this.revisitDays} 天（默认 14 天），回访时间 ${this.revisitHour.toString().padStart(2, '0')}:${this.revisitMinute.toString().padStart(2, '0')}。所有约定都收在「回忆 · 回访一览」里，可提前或取消。`)
             .fontFamily(FONT_SANS)
             .fontSize(11.5)
             .lineHeight(20)
@@ -2568,6 +2570,7 @@ export struct SettingsPage {
         if (this.openSection === 'about') {
         this.GroupTitle('关于')
         Column({ space: 6 }) {
+
           Row() {
             Text('句栖')
               .fontFamily(FONT_SANS)
@@ -2586,6 +2589,7 @@ export struct SettingsPage {
               })
           }
           .width('100%')
+          AboutGuideActions()
           Text(`存储：${Store.get().storageMode()} · 备份由你导出`)
             .fontFamily(FONT_SANS)
             .fontSize(12)

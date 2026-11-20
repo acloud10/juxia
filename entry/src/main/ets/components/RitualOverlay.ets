@@ -33,6 +33,7 @@ export struct RitualOverlay {
   @Local replyCount: number = 0;
   private timer: number = -1;
   private revealTimer: number = -1;
+  private demoTimer: number = -1;
 
   private t(): Tokens {
     return getTokens(this.skin, this.dark);
@@ -48,6 +49,10 @@ export struct RitualOverlay {
       this.revealTimer = setTimeout(() => {
         this.revealed = true;
       }, 60);
+    }
+    if (Store.get().demoRunning()) {
+      this.stage = 'reveal';
+      this.revealTimer = setTimeout(() => { this.revealed = true; }, 700);
     }
     if (this.ctx.entry !== null) {
       this.replyCount = Store.get().repliesOf(this.ctx.entry!.id).length;
@@ -96,6 +101,28 @@ export struct RitualOverlay {
       Store.get().markDrew();
     }
     this.onClose();
+  }
+
+  @Monitor('ui.demoSeq')
+  onDemoReply(monitor: IMonitor): void {
+    if (this.ui.demoAction !== 'reply') return;
+    if (this.ctx.type !== 'own' || this.ctx.entry === null) return;
+    if (this.demoTimer >= 0) clearInterval(this.demoTimer);
+    this.ui.demoBusy = true;
+    this.openReply();
+    const text: string = this.ui.demoText;
+    let i: number = 0;
+    this.demoTimer = setInterval(() => {
+      i += 1;
+      this.replyText = text.slice(0, i);
+      if (i >= text.length) {
+        clearInterval(this.demoTimer);
+        this.demoTimer = -1;
+        this.saveReply();
+        this.ui.demoAction = '';
+        this.ui.demoBusy = false;
+      }
+    }, 55);
   }
 
   private openReply(): void {

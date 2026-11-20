@@ -4,7 +4,7 @@ export const DAY_MS: number = 86400000;
 
 export class Settings {
   ritualMode: string = 'full'; // 可选：full、short、off
-  revisitDays: number = 90;
+  revisitDays: number = 14;
   revisitHour: number = 9;
   revisitMinute: number = 0;
   theme: string = 'system'; // 可选：system、light、dark

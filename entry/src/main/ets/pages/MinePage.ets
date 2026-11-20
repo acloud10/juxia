@@ -10,6 +10,7 @@ import { ArrayDataSource } from '../utils/DataSource';
 import { UiState } from '../state/UiState';
 import { RefreshBus } from '../state/RefreshBus';
 import { InnerScrollNav } from '../components/InnerScrollNav';
+import { ReplySection } from '../components/ReplySection';
 
 class ReflectGroup {
   key: string = '';
@@ -70,6 +71,8 @@ export struct MinePage {
   @Local kbHeight: number = 0;
   private win: window.Window | null = null;
   private refreshHandler: () => void = (): void => { this.reload(); };
+  private demoTimer: number = -1;
+  private demoOpenTimer: number = -1;
 
   aboutToAppear(): void {
     RefreshBus.register(this.refreshHandler);
@@ -116,6 +119,56 @@ export struct MinePage {
     if (this.sheetOpen) {
       this.sheetOpen = false;
     }
+  }
+
+  @Monitor('ui.demoSeq')
+  onDemoSeq(monitor: IMonitor): void {
+    const id: string = this.ui.demoTarget;
+    if (id.length === 0) return;
+    if (this.demoTimer >= 0) clearTimeout(this.demoTimer);
+    if (this.ui.demoAction === 'archive') {
+      this.ui.demoBusy = true;
+      this.targetId = id;
+      this.panel = 'archive';
+      this.archCat = this.ui.demoBranch === 'rain' ? 'resolved' : 'silly';
+      this.archNote = this.ui.demoBranch === 'rain' ? '放下了，但还愿意再回看一次。' : '现在看，已经不需要再证明什么。';
+      this.withRevisit = this.ui.demoBranch === 'rain';
+      this.sheetOpen = true;
+      this.demoTimer = setTimeout(() => {
+        if (!Store.get().demoRunning()) return;
+        Store.get().archiveOwn(id, this.archCat, this.archNote, this.ui.demoBranch === 'rain' ? 14 : 0);
+        this.closePanel();
+        this.ui.demoAction = '';
+        this.ui.demoBusy = false;
+      }, 4500);
+      return;
+    }
+    if (this.ui.demoAction !== 'note') return;
+    this.ui.demoBusy = true;
+    if (this.ui.demoBranch === 'rain') this.showWnd = true;
+    else this.showEnc = true;
+    this.reload();
+    if (this.demoOpenTimer >= 0) clearTimeout(this.demoOpenTimer);
+    this.demoOpenTimer = setTimeout(() => {
+      if (this.ui.demoAction !== 'note') return;
+      this.targetId = id;
+      this.panel = 'note';
+      this.noteInput = '';
+      this.sheetOpen = true;
+      const text: string = this.ui.demoText;
+      let i: number = 0;
+      this.demoTimer = setInterval(() => {
+        i += 1;
+        this.noteInput = text.slice(0, i);
+        if (i >= text.length) {
+          clearInterval(this.demoTimer);
+          this.demoTimer = -1;
+          this.saveNote();
+          this.ui.demoAction = '';
+          this.ui.demoBusy = false;
+        }
+      }, 150);
+    }, 1400);
   }
 
   @Monitor('ui.mineOpenRev')
@@ -1429,6 +1482,7 @@ export struct MinePage {
           '树洞是空的。难过的事写下来，就已经轻了一点。')
 
         if (this.showRef) {
+          ReplySection()
           this.ReflectSection()
         }
 

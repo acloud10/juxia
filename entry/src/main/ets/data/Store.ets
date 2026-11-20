@@ -106,8 +106,20 @@ export class Store {
     await clearLegacyKey();
     if (this.data.day.date.length === 0) this.data.day.date = todayStr();
     this.ready = true;
+    this.clearDemoResidue();
     this.rollDay();
     this.persist();
+  }
+
+  private clearDemoResidue(): void {
+    const p = this.prefs;
+    if (p === null) return;
+    try {
+      p.deleteSync('demo_active');
+      p.deleteSync('demo_snapshot');
+      p.flushSync();
+    } catch (e) {
+    }
   }
 
   storageMode(): string {
@@ -235,6 +247,7 @@ export class Store {
   }
 
   private persist(): void {
+    if (this.demoMode) return;
     if (this.useDb && this.repo !== null) {
       this.repo.saveAll(this.data);
       return;
@@ -243,6 +256,7 @@ export class Store {
   }
 
   private writeOwn(e: OwnEntry): void {
+    if (this.demoMode) return;
     if (this.useDb && this.repo !== null) {
       this.repo.saveOwnRow(e);
       return;
@@ -251,6 +265,7 @@ export class Store {
   }
 
   private writeLib(e: LibEntry): void {
+    if (this.demoMode) return;
     if (this.useDb && this.repo !== null) {
       this.repo.saveLibRow(e);
       return;
@@ -274,6 +289,7 @@ export class Store {
   }
 
   private persistPrefs(): void {
+    if (this.demoMode) return;
     const p = this.prefs;
     if (p === null) return;
     try {
@@ -930,6 +946,10 @@ export class Store {
   }
 
   saveKv(): void {
+    if (this.demoMode) {
+      this.bump();
+      return;
+    }
     if (this.useDb && this.repo !== null) {
       this.repo.saveKv(this.data);
       this.bump();
@@ -952,6 +972,76 @@ export class Store {
     } catch (e) {
       return false;
     }
+  }
+
+  private demoActive: boolean = false;
+  private demoMode: boolean = false;
+  private demoSnapshot: AppData | null = null;
+
+  demoRunning(): boolean { return this.demoActive; }
+
+  private buildDemo(branch: string, base: AppData): AppData {
+    const now: number = Date.now();
+    base.own = [];
+    base.lib = [];
+    base.materials = [];
+    base.dislikes = [];
+    base.settings.revisitDays = 14;
+    base.day.mood = branch === 'blank' ? '' : (branch === 'rain' ? 'bad' : 'good');
+    base.day.wrote = branch !== 'blank';
+    return base;
+
+  }
+
+  ensureDemoCross(branch: string): void {
+    if (!this.demoMode) return;
+    const exists = this.data.own.some((e: OwnEntry) =>
+      (branch === 'rain' && e.kind === 'encourage') || (branch === 'sun' && e.kind === 'wound'));
+    if (exists) return;
+    const now: number = Date.now();
+    const e = new OwnEntry();
+    e.id = 'demo_cross_' + branch;
+    e.kind = branch === 'rain' ? 'encourage' : 'wound';
+    e.text = branch === 'rain' ? '今天已经做得够好了。慢一点，也没有关系。' : '那件事，我还是会想起。';
+    e.createdAt = now;
+    this.data.own.push(e);
+    this.bump();
+  }
+
+  startDemo(branch: string): boolean {
+    try {
+      if (!this.demoActive) {
+        this.demoSnapshot = this.data;
+      }
+      if (this.demoSnapshot === null) return false;
+      const clone: AppData = JSON.parse(JSON.stringify(this.demoSnapshot)) as AppData;
+      this.data = this.buildDemo(branch, clone);
+      this.demoActive = true;
+      this.demoMode = true;
+      this.bump();
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  switchDemo(branch: string): void {
+    if (!this.demoActive || this.demoSnapshot === null) return;
+    try {
+      const clone: AppData = JSON.parse(JSON.stringify(this.demoSnapshot)) as AppData;
+      this.data = this.buildDemo(branch, clone);
+      this.bump();
+    } catch (e) {
+    }
+  }
+
+  endDemo(): void {
+    if (!this.demoActive) return;
+    if (this.demoSnapshot !== null) this.data = this.demoSnapshot;
+    this.demoSnapshot = null;
+    this.demoActive = false;
+    this.demoMode = false;
+    this.bump();
   }
 
   markGuideDone(): void {
