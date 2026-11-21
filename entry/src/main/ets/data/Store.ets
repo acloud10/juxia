@@ -964,6 +964,42 @@ export class Store {
     this.bump();
   }
 
+  reviewInviteAllowed(): boolean {
+    const p = this.prefs;
+    if (p === null) return false;
+    try {
+      if ((p.getSync('review_never', '0') as string) === '1') return false;
+      if ((p.getSync('review_invited', '0') as string) === '1') return false;
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  markReviewInvited(): void {
+    const p = this.prefs;
+    if (p === null) return;
+    try {
+      p.putSync('review_invited', '1');
+      p.flushSync();
+    } catch (e) {
+    }
+  }
+
+  neverReview(): void {
+    const p = this.prefs;
+    if (p === null) return;
+    try {
+      p.putSync('review_never', '1');
+      p.flushSync();
+    } catch (e) {
+    }
+  }
+
+  hasRevisitReply(): boolean {
+    return this.data.own.some((e: OwnEntry) => e.kind === 'reply' && e.replyFrom === 'revisit');
+  }
+
   guideDone(): boolean {
     const p = this.prefs;
     if (p === null) return false;

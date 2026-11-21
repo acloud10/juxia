@@ -8,6 +8,7 @@ import {
 import { Tokens, getTokens, FONT_SERIF, FONT_SANS } from '../theme/Theme';
 import { MoodIcon } from '../components/Chrome';
 import { ReminderService } from '../services/ReminderService';
+import { ReviewService } from '../services/ReviewService';
 import { UiState } from '../state/UiState';
 import { RefreshBus } from '../state/RefreshBus';
 
@@ -162,6 +163,17 @@ export struct TodayPage {
     this.nickname = st.data.settings.nickname;
     this.showGreeting = st.data.settings.showGreeting;
     this.backupDismissed = st.data.day.backupDismissed;
+    if (!st.demoRunning() && st.reviewInviteAllowed()) {
+      const eligible: boolean = st.hasRevisitReply() ||
+        (this.dayCount >= 3 && (this.encCount + this.woundCount) >= 2);
+      if (eligible) {
+        st.markReviewInvited();
+        setTimeout(() => {
+          const ctx = this.getUIContext().getHostContext() as common.UIAbilityContext;
+          ReviewService.open(ctx, (msg: string) => this.toast(msg));
+        }, 700);
+      }
+    }
     UiState.get().dayCount = this.dayCount;
     UiState.get().showDays = st.data.settings.showDays;
     this.ui.skin = st.data.settings.skin;
