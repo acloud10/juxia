@@ -7,7 +7,7 @@
 - **HarmonyOS**：GitHub 不提供 HAP/APP 安装包；请到华为应用市场搜索「句栖」下载。
 - 仓库不保存任何签名证书、Profile、私钥或密码。
 
-> Android 版目前仍不完备，不能保证没有 bug。升级、迁移或清空数据前请先导出备份。
+> Android 版仍有功能与 UI 差异，存在未知 bug。升级、迁移或清空数据前请先导出备份。
 
 HarmonyOS 的签名 `.app` / `.hap` 不提交到 Git，也不上传到 GitHub Release。
 
@@ -44,7 +44,7 @@ SHA-256: 8E0569C7E875AA0DA75E425552C61BDC7449A874203F495B124D29E73B2C21E2
 主要更新：
 
 ```text
-新手指引改为晴线 5 步、雨线 6 步的自动演示
+新手指引改为晴线 5 步、雨线 6 步的分步演示
 回信区移到「我的」省身上方，默认折叠，保留独立搜索
 设置 → 关于新增评价句栖
 旧事回访默认改为 14 天
@@ -92,7 +92,7 @@ CN=Juxia, OU=Android, O=Juxia, C=CN
 证书 SHA-256: 191C4899BC862FA26AC3D6585670EA0DA7CACC7246FEB4093A9B092987A31B27
 ```
 
-Android 版目前仍不完备，不能保证没有 bug。升级、迁移或清空数据前请先导出备份。
+Android 版仍有功能与 UI 差异，存在未知 bug。升级、迁移或清空数据前请先导出备份。
 
 ### HarmonyOS 1.0.5
 
@@ -150,6 +150,8 @@ manifest v2 数据/材料 SHA-256
 
 | 版本 | versionCode | 状态 |
 |---|---:|---|
+| 1.0.6 | 1000006 | 当前 |
+| 1.0.5 | 1000005 | 历史 |
 | 1.0.4 | 1000004 | 历史 |
 | 1.0.3 | 1000003 | 已发布 |
 | 1.0.2 | 1000002 | 历史 |
@@ -178,5 +180,5 @@ signing/
 ## 相关文档
 
 - [CHANGELOG.md](CHANGELOG.md)
-- [docs/BACKUP_FORMAT.md](BACKUP_FORMAT.md)
-- [docs/DEBUG_SEED.md](DEBUG_SEED.md)
+- [docs/BACKUP_FORMAT.md](docs/BACKUP_FORMAT.md)
+- [docs/DEBUG_SEED.md](docs/DEBUG_SEED.md)

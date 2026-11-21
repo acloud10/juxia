@@ -1,8 +1,9 @@
-# 句栖 · Debug 演示种子记录
+# 句栖 · Debug 演示种子记录（历史）
 
 > 用途：只在 debug 构建、虚拟机上复用，用来填满今日、我的、句库、回忆、省身、回信。
 > 正式 release 不包含任何演示数据或种子代码。
-> 记录时间：2026-11-14 / 1.0.4
+> 记录时间：2026-11-14 / 1.0.4（历史记录，日期为当时固定窗口）
+> 当前 debug 种子已整体后移，不要照抄这里的日期。
 
 ## 1. 复用方式
 
@@ -25,7 +26,7 @@
 await Store.get().init(ctx);
 const st = Store.get();
 if (st.data.own.length === 0 && st.data.materials.length === 0) {
-  await st.replaceAll(DemoSeedV2.build());
+  await st.replaceAll(DemoSeedV2.build(), '');
 }
 ```
 

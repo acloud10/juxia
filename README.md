@@ -14,7 +14,7 @@
 https://github.com/acloud10/juxia/releases
 ```
 
-Android 版目前仍不完备，功能和 UI 可能与鸿蒙版存在差异，不能保证没有 bug。升级、迁移或清空数据前请先导出备份；重要数据不要只留一份。
+Android 版仍有功能与 UI 差异，存在未知 bug。升级、迁移或清空数据前请先导出备份；重要数据不要只留一份。
 
 ### HarmonyOS
 
@@ -64,7 +64,7 @@ GitHub 网页的 **Download ZIP** 会下载整个仓库；只有 `git clone` + `
 
 Android 工程在 `android/`，使用 Kotlin + Jetpack Compose。
 
-- 仍不完备，不能保证没有 bug。
+- 仍有功能与 UI 差异，存在未知 bug。
 - 备份 `.sj4` 与鸿蒙版共享格式，但真实跨端互导仍需自行验证。
 - 正式 APK 由固定 release keystore 签名；仓库不包含密钥。
 - 构建与签名说明见 `android/README.md`。
