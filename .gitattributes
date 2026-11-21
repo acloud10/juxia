@@ -1,4 +1,4 @@
-# Normalize text files to LF in the repository
+﻿# Normalize text files to LF in the repository
 * text=auto eol=lf
 
 # Binary resources
@@ -22,5 +22,8 @@
 *.keystore binary
 
 # GitHub language stats: ArkTS (.ets) as TypeScript
-*.ets linguist-language=TypeScript
-*.ets linguist-detectable=true
+entry/**/*.ets linguist-language=TypeScript
+entry/**/*.ets linguist-detectable=true
+**/*.d.ets linguist-detectable=false
+**/build/** linguist-vendored
+**/oh_modules/** linguist-vendored
