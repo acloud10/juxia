@@ -193,13 +193,13 @@ Store.toggleLibBind()
 ## 11. 日期约束
 
 ```text
-openDays：10月23日–11月14日 = 23 天
+openDays：最近 23 天，以运行当天为终点
 所有内容 createdAt / archAt 必须落在这 23 天内
 archAt 必须晚于 createdAt
 日期去重总数不得超过 openDays.length
 ```
 
-当前去重：
+初版示例（2026-11-14）：
 
 ```text
 鼓励：10月25日–11月8日

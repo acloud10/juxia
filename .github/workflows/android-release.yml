@@ -85,18 +85,15 @@ jobs:
 
             下载下方 `juxia-android-*.apk`。
 
-            Android 版目前仍不完备，功能和 UI 可能与鸿蒙版存在差异，
-            不能保证没有 bug。升级、迁移或清空数据前请先导出备份，
-            重要数据不要只留一份。
+            Android 版仍有功能与 UI 差异，存在未知 bug。升级、迁移或清空数据前请先导出备份；重要数据不要只留一份。
 
             ## HarmonyOS
 
-            GitHub 不提供 HAP/APP 安装包。
-            请到华为应用市场搜索「句栖」下载。
+            GitHub 不提供 HAP/APP 安装包。请到华为应用市场搜索「句栖」下载。
 
             ## 校验
 
-            下载后请核对下方的 `SHA256SUMS.txt`。
+            下载后请核对下方 `SHA256SUMS.txt`。
           files: |
             android/juxia-android-*.apk
             android/SHA256SUMS.txt
