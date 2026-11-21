@@ -1065,6 +1065,7 @@ export struct LibraryPage {
                 }
               }, (t: string) => t)
             }
+            .cachedCount(6)
             .layoutWeight(1)
             .width('100%')
             .scrollBar(BarState.Off)

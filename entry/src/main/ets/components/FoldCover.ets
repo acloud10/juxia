@@ -78,7 +78,7 @@ export struct FoldCover {
             .width(220)
             .height(220)
             .hitTestBehavior(HitTestMode.Transparent)
-        })
+        }, (i: number) => `flap-${i}`)
         if (!this.open) {
           Text('展开')
             .fontFamily(FONT_SERIF)
