@@ -2,4 +2,5 @@
 <resources>
     <!-- 对齐鸿蒙 resources/base/element/color.json 的 start_window_background -->
     <color name="juxia_window_bg">#EDE6D3</color>
+    <color name="ic_launcher_background">#F6F0E3</color>
 </resources>
