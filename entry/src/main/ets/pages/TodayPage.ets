@@ -141,10 +141,23 @@ export struct TodayPage {
   aboutToAppear(): void {
     RefreshBus.register(this.refreshHandler);
     this.load();
+    this.maybeInviteReview();
   }
 
   aboutToDisappear(): void {
     RefreshBus.unregister(this.refreshHandler);
+  }
+
+  private maybeInviteReview(): void {
+    const st = Store.get();
+    if (st.demoRunning() || this.sheetOpen || !st.reviewInviteAllowed()) return;
+    const eligible: boolean = st.hasRevisitReply() ||
+      (this.dayCount >= 3 && (this.encCount + this.woundCount) >= 2);
+    if (!eligible) return;
+    st.markReviewInvited();
+    if (this.sheetOpen || st.demoRunning()) return;
+    const ctx = this.getUIContext().getHostContext() as common.UIAbilityContext;
+    ReviewService.open(ctx, (msg: string) => this.toast(msg));
   }
 
   private load(): void {
@@ -163,17 +176,7 @@ export struct TodayPage {
     this.nickname = st.data.settings.nickname;
     this.showGreeting = st.data.settings.showGreeting;
     this.backupDismissed = st.data.day.backupDismissed;
-    if (!st.demoRunning() && st.reviewInviteAllowed()) {
-      const eligible: boolean = st.hasRevisitReply() ||
-        (this.dayCount >= 3 && (this.encCount + this.woundCount) >= 2);
-      if (eligible) {
-        st.markReviewInvited();
-        setTimeout(() => {
-          const ctx = this.getUIContext().getHostContext() as common.UIAbilityContext;
-          ReviewService.open(ctx, (msg: string) => this.toast(msg));
-        }, 700);
-      }
-    }
+
     UiState.get().dayCount = this.dayCount;
     UiState.get().showDays = st.data.settings.showDays;
     this.ui.skin = st.data.settings.skin;
@@ -773,6 +776,7 @@ export struct TodayPage {
     this.replyOpenId = '';
     this.load();
     this.toast('回好了，收进句库的「回信」里');
+    this.maybeInviteReview();
   }
 
   @Builder
