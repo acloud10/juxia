@@ -20,3 +20,7 @@
 *.cer binary
 *.jks binary
 *.keystore binary
+
+# GitHub language stats: ArkTS (.ets) as TypeScript
+*.ets linguist-language=TypeScript
+*.ets linguist-detectable=true
