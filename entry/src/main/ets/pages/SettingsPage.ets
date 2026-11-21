@@ -18,6 +18,7 @@ import { AppError } from '../services/AppError';
 import { RestoreJournal, RestoreJournalData } from '../services/RestoreJournal';
 import { BackgroundSettingsPanel } from '../components/BackgroundSettingsPanel';
 import { AboutGuideActions } from '../components/AboutGuideActions';
+import { GuideTextOverlay } from './GuideTextPage';
 
 
 const MIN_FREE_RESERVE_BYTES: number = 64 * 1024 * 1024;
@@ -70,6 +71,7 @@ export struct SettingsPage {
   @Param dark: boolean = false;
   @Event onOpenGuide: () => void = () => {};
   @Local ui: UiState = UiState.get();
+  @Local guideTextOpen: boolean = false;
   private get appName(): string { return this.ui.appName; }
   private get settingsSection(): string { return this.ui.settingsSection; }
   @Local openSection: string = 'about';
@@ -1645,6 +1647,11 @@ export struct SettingsPage {
     })
   }
 
+  @Builder
+  GuideTextCover() {
+    GuideTextOverlay({ onClose: () => { this.guideTextOpen = false; } })
+  }
+
   build() {
     Scroll() {
       Column() {
@@ -2589,7 +2596,7 @@ export struct SettingsPage {
               })
           }
           .width('100%')
-          AboutGuideActions()
+          AboutGuideActions({ onOpenGuideText: () => { this.guideTextOpen = true; } })
           Text(`存储：${Store.get().storageMode()} · 备份由你导出`)
             .fontFamily(FONT_SANS)
             .fontSize(12)
@@ -2639,6 +2646,7 @@ export struct SettingsPage {
     .width('100%')
     .height('100%')
     .align(Alignment.Top)
+    .bindContentCover(this.guideTextOpen, this.GuideTextCover(), { modalTransition: ModalTransition.NONE, backgroundColor: Color.Transparent })
   }
 }
 

@@ -20,9 +20,9 @@ const FULL_GUIDE: string = `这是一个越用越好用的栖息空间。你可�
 
 隐私：数据只在本机加密保存，材料在应用私有目录；无账号、无广告、无云端统计，不申请网络权限；回访通知是本地提醒；备份由你主动导出！`;
 
-@Entry
 @ComponentV2
-struct GuideTextPage {
+export struct GuideTextOverlay {
+  @Event onClose: () => void = () => {};
   @Local ui: UiState = UiState.get();
   @Local open: boolean = false;
   @Local ready: boolean = false;
@@ -62,12 +62,12 @@ struct GuideTextPage {
             .fontSize(13)
             .fontColor(this.t().inkSoft)
             .onClick(() => {
-              this.getUIContext().getRouter().back();
+              this.onClose();
             })
         }
         .width('100%')
         .padding({ left: 20, right: 20, top: this.safeTop + 10, bottom: 12 })
-        .backgroundColor(this.t().bg)
+        .backgroundColor(this.ready ? this.t().bg : Color.Transparent)
 
         Scroll() {
           Text(FULL_GUIDE)
@@ -86,11 +86,7 @@ struct GuideTextPage {
     }
     .width('100%')
     .height('100%')
-    .backgroundColor(this.ready ? this.t().bg : '#00000000')
+    .backgroundColor(this.ready ? this.t().bg : Color.Transparent)
   }
 
-  onBackPress(): boolean {
-    this.getUIContext().getRouter().back();
-    return true;
-  }
 }

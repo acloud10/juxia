@@ -6,6 +6,7 @@ import { ReviewService } from '../services/ReviewService';
 @ComponentV2
 export struct AboutGuideActions {
   @Local ui: UiState = UiState.get();
+  @Event onOpenGuideText: () => void = () => {};
   @Local reviewBusy: boolean = false;
 
   private t(): Tokens {
@@ -50,7 +51,7 @@ export struct AboutGuideActions {
   build() {
     Column({ space: 2 }) {
       this.LinkRow('新手指引完整文案', '›', () => {
-        this.getUIContext().getRouter().pushUrl({ url: 'pages/GuideTextPage' }).catch(() => {});
+        this.onOpenGuideText();
       })
       Row() {
         Column({ space: 2 }) {
